@@ -1,24 +1,11 @@
-import json
-
-from beebop import __version__
+from beebop import __version__ as beebop_version
 
 
-def get_version(components):
+def get_version():
     """
-    report version numbers for all components requested
-
-    input : list with components like beebop (also poppunk & ska in the future)
+    report version numbers for all components
 
     output : json according to 'version' schema
     """
-
-    arr = []
-    for x in components:
-        entry = {
-            "name": x,
-            "version": __version__  # needs to be adapted if including other components
-        }
-        arr.append(entry)
-
-    result = json.dumps(arr)
-    return result
+    arr = [{"name": "beebop", "version": beebop_version}]
+    return arr

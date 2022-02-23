@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 
 from beebop import __version__, versions
 
@@ -10,5 +10,6 @@ def report_version():
     """
     report version of beebop (and poppunk,ska in the future)
     """
-    vers_json=versions.get_version(["beebop"])
+    vers = versions.get_version()
+    vers_json = jsonify(vers)
     return vers_json
