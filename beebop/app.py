@@ -10,6 +10,6 @@ def report_version():
     """
     report version of beebop (and poppunk,ska in the future)
     """
-    vers = versions.get_version()
+    vers=versions.get_version()
     vers_json = jsonify(vers)
     return vers_json
