@@ -1,9 +1,12 @@
-def add(a, b):
-    return a+b
+'''This module defines the addition function and runs a simple example'''
+
+def add(addend_a, addend_b):
+    '''Takes two numbers, returns sum'''
+    return addend_a + addend_b
 
 
-x = 3
-y = 5
+X = 3
+Y = 5
 
-result = add(x, y)
-print(result)
+RESULT = add(X,Y)
+print(RESULT)

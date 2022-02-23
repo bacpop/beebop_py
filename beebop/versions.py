@@ -1,3 +1,5 @@
+'''definition of function to be called at /version endpoint'''
+
 from beebop import __version__ as beebop_version
 
 
