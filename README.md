@@ -11,7 +11,7 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 You will need Python installed, as well as [Poetry](https://python-poetry.org/), which you can get on Linux with 
 ```
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 To install all required dependencies go into the project folder and run 
@@ -20,8 +20,7 @@ poetry install
 ```
 Start the flask app with
 ```
-export FLASK_APP=beebop/app.py
-flask run
+export FLASK_APP=beebop/app.py flask run
 ```
 In a second terminal, you can now query the flask endpoints:
 - /version
