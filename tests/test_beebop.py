@@ -15,16 +15,14 @@ def test_add():
 
 
 def test_get_version():
-    assert versions.get_version(["beebop"]) =="[{\"name\": \"beebop\", \"version\": \"0.1.0\"}]"
+    assert versions.get_version() == [{"name": "beebop", "version": "0.1.0"}]
 
 
 def test_request_version(client):
     response = client.get("/version")
-    
+
     with open('spec/version.schema.json', 'r') as f:
         schema_data = f.read()
     schema = json.loads(schema_data)
 
-    assert jsonschema.validate(json.loads(response.data.decode("utf-8")) , schema) == None
-    assert response.data == b"[{\"name\": \"beebop\", \"version\": \"0.1.0\"}]"
-    
+    assert jsonschema.validate(json.loads(response.data.decode("utf-8")), schema) == None
