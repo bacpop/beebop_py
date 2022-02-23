@@ -1,6 +1,7 @@
 import pytest
 from beebop.app import app as flask_app
 
+
 @pytest.fixture()
 def app():
     app = flask_app
