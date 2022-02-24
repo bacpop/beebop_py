@@ -19,4 +19,4 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Analysing the code with pycodestyle
-      run: poetry run pycodestyle $(git ls-files '*.py')
+      run: poetry run pycodestyle .
