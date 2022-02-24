@@ -1,5 +1,3 @@
-'''Flask API for beebop'''
-
 from flask import Flask, jsonify
 
 from beebop import __version__, versions
