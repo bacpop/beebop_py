@@ -20,7 +20,7 @@ poetry install
 ```
 Start the flask app with
 ```
-export FLASK_APP=beebop/app.py flask run
+FLASK_APP=beebop/app.py poetry run flask run
 ```
 In a second terminal, you can now query the flask endpoints:
 - /version
