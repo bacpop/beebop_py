@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 
-from beebop import __version__, versions
+from beebop import versions
 
 app = Flask(__name__)
 
