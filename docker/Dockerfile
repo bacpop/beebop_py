@@ -7,6 +7,5 @@ RUN poetry config virtualenvs.create false \
     && poetry config virtualenvs.create true 
 
 COPY beebop /beebop
-EXPOSE 5000
-ENV FLASK_APP=/beebop/app.py 
-CMD poetry run flask run
+EXPOSE 8080
+CMD poetry run waitress-serve 'beebop.app:app'
