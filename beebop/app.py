@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from waitress import serve
 
 from beebop import versions
 
@@ -24,3 +25,7 @@ def report_version():
     response = response_success(vers)
     response_json = jsonify(response)
     return response_json
+
+
+if __name__ == "__main__":
+    serve(app)
