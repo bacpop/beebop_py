@@ -26,7 +26,10 @@ jobs:
         activate-environment: beebop_py
     - name: install poppunk & poetry
       run: |
-        conda install -c bioconda pp-sketchlib
+        conda config --add channels defaults
+        conda config --add channels bioconda
+        conda config --add channels conda-forge
+        conda install poppunk
         conda install poetry
     - name: Install dependencies
       run: poetry install
