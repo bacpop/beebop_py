@@ -20,12 +20,14 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: "3.9"
-    - name: create env and install poppunk & poetry
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v2.1.1
+      with:
+        activate-environment: beebop_py
+    - name: install poppunk & poetry
       run: |
-        $CONDA/bin/conda create --name beebop_py 
-        $CONDA/bin/conda activate $CONDA/bin/env/beebop_py
-        $CONDA/bin/conda install -c bioconda poppunk
-        $CONDA/bin/conda install poetry
+        conda install -c bioconda poppunk
+        conda install poetry
     - name: Install dependencies
       run: poetry install
     - name: Test with pytest
