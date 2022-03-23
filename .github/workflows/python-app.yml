@@ -25,7 +25,7 @@ jobs:
     - name: create env and install poppunk & poetry
       run: |
         conda create --name beebop_py 
-        conda activate beebop_py
+        source activate beebop_py
         conda install -c bioconda poppunk
         conda install poetry
     - name: Install dependencies
