@@ -5,7 +5,7 @@ import numpy as np
 
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.uint64):  # this only applies to attributes, not the datasets
+        if isinstance(obj, np.uint64):  # this only applies to attributes
             return int(obj)
         if isinstance(obj, np.ndarray):
             if type(obj[0]) == np.uint64:  # this applies to the datasets
@@ -17,7 +17,8 @@ class NpEncoder(json.JSONEncoder):
 
 
 class MySketch:
-    def __init__(self, bases, bbits, codon_phased, length, missing_bases, sketchsize64, sketch_version):
+    def __init__(self, bases, bbits, codon_phased, length, missing_bases,
+                 sketchsize64, sketch_version):
         self.bases = bases
         self.bbits = bbits
         self.codon_phased = codon_phased
@@ -67,8 +68,3 @@ def h5_to_json(input_file, output_folder=None):
     else:
         sketch_json = obj_to_json(sketch)
     return sketch_json
-
-
-#filepath = '/home/mmg220/Documents/poppunk/GPS_v4/GPS_v4.refs.h5'
-#sketch_json = h5_to_json(filepath, '.')
-#print(sketch_json[:500]+"\n [...] \n"+sketch_json[-500:])
