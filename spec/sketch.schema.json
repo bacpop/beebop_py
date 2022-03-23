@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "bases": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "bbits": {
+      "type": "number",
+      "minimum": 0
+    },
+    "codon_phased": {
+      "type": "boolean"
+    },
+    "densified": {
+      "type": "boolean"
+    },
+    "length": {
+      "type": "number",
+      "minimum": 0
+    },
+    "missing_bases": {
+      "type": "number",
+      "minimum": 0
+    },
+    "sketchsize64": {
+      "type": "number",
+      "minimum": 156,
+      "maximum": 156
+    },
+    "version": {
+      "type": "string"
+    },
+    "14": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "17": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "20": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "23": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "26": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "29": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    }
+  }
+}
