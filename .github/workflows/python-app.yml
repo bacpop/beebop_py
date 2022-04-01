@@ -36,8 +36,9 @@ jobs:
         virtualenvs-create: false
     - name: Install dependencies
       run: poetry install
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+    #- name: Setup tmate session
+    #  uses: mxschmitt/action-tmate@v3
     - name: Test with pytest
       run: |
+        export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
