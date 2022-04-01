@@ -28,4 +28,4 @@ In a second terminal, you can now query the flask endpoints:
   curl http://127.0.0.1:5000/version
   ```
 ### Testing
-Testing can be done by running `pytest`
+Testing can be done by running `poetry run pytest`
