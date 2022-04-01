@@ -1,12 +1,17 @@
 name: Debugging with tmate
 
 on:
-  workflow_dispatch:
-    inputs:
-      debug_enabled:
-        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'     
-        required: false
-        default: false
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      debug_enabled:
+#        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'     
+#        required: false
+#        default: false
         
 jobs:
   build:
