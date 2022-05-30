@@ -35,6 +35,8 @@ jobs:
       run: poetry install
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Run Redis & rqworker
       working-directory: .
       run: |
