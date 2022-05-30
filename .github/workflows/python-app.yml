@@ -19,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with: 
+        path: main
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
@@ -39,6 +41,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository:  bacpop/PopPUNK 
+        path: poppunk
     - name: tmate session
       uses: mxschmitt/action-tmate@v3
     - name: Install Poetry
