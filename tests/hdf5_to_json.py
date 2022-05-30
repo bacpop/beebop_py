@@ -58,13 +58,15 @@ def h5_to_json(input_file, output_folder=None):
     # extract top level attributes
     sketch_version = sketches.attrs['sketch_version']
     codon_phased = bool(sketches.attrs['codon_phased'])
-    # use first element
-    element_name = list(sketches.keys())[0]
-    element = sketches[element_name]
-    sketch = h5_to_obj(element, sketch_version, codon_phased)
+    # loop through all elements and add them to a dict
+    sketches_dict = {}
+    for element_name in list(sketches.keys()):
+        element = sketches[element_name]
+        sketch = h5_to_obj(element, sketch_version, codon_phased)
+        sketch_encoded = json.loads(obj_to_json(sketch))
+        sketches_dict[element_name] = sketch_encoded
     if output_folder:
-        sketch_json = obj_to_json(
-            sketch, output_folder+'/'+element_name+'_sketch.json')
-    else:
-        sketch_json = obj_to_json(sketch)
-    return sketch_json
+        with open(output_folder+'/test_sketches.json', 'w',
+                  encoding='utf-8') as f:
+            json.dump(sketches_dict, f, indent=4)
+    return json.dumps(sketches_dict)
