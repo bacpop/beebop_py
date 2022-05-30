@@ -47,6 +47,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
     - name: install poppunk & dependencies
+      working-directory: ./poppunk
       run: |
         conda install pybind11
         conda install pp-sketchlib
@@ -63,6 +64,7 @@ jobs:
         conda install flask_cors
         conda install flask-apscheduler
         sudo apt-get install libeigen3-dev
+        cd poppunk
         python setup.py install
         python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
     - name: Install Poetry
@@ -74,13 +76,14 @@ jobs:
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
     - name: Run Redis & rqworker
-      working-directory: .
+      working-directory: ./main
       run: |
         export PATH="/usr/share/miniconda/bin:$PATH"
         ./scripts/start_redis
     - name: tmate session
       uses: mxschmitt/action-tmate@v3
     - name: Test with pytest
+      working-directory: ./main
       run: |
         export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
