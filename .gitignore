@@ -8,3 +8,4 @@ ignored
 !*.schema.json
 !args.json
 storage/poppunk_output
+node_modules
