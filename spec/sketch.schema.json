@@ -19,9 +19,6 @@
     "codon_phased": {
       "type": "boolean"
     },
-    "densified": {
-      "type": "boolean"
-    },
     "length": {
       "type": "number",
       "minimum": 0

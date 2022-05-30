@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "projectHash": {
+      "type": "string"
+    },
+    "sketches": {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "properties": {
+            "bases": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "bbits": {
+            "type": "number",
+            "minimum": 0
+          },
+          "codon_phased": {
+            "type": "boolean"
+          },
+          "length": {
+            "type": "number",
+            "minimum": 0
+          },
+          "missing_bases": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sketchsize64": {
+            "type": "number",
+            "minimum": 156,
+            "maximum": 156
+          },
+          "version": {
+            "type": "string"
+          },
+          "14": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "17": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "20": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "23": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "26": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "29": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "bases",
+            "bbits",
+            "codon_phased",
+            "length",
+            "missing_bases",
+            "sketchsize64",
+            "version",
+            "14",
+            "17",
+            "20",
+            "23",
+            "26",
+            "29"
+          ],
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
