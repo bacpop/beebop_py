@@ -33,6 +33,14 @@ jobs:
         conda install poetry
     - name: Install dependencies
       run: poetry install
+    - name: Use Node.js for pm2
+      uses: actions/setup-node@v2
+    - name: Run Redis & rqworker
+      working-directory: .
+      run: ./scripts/start_redis 
     - name: Test with pytest
       run: |
         poetry run pytest
+    - name: Stop redis
+      working-directory: .
+      run: ./scripts/stop_redis
