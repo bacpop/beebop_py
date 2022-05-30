@@ -19,8 +19,6 @@ jobs:
         python-version: "3.9"
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2.1.1
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
     - name: Install poppunk
       run: |
         conda config --add channels defaults
@@ -31,6 +29,8 @@ jobs:
       uses: snok/install-poetry@v1
       with:
         virtualenvs-create: false
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Install dependencies
       run: poetry install
     - name: Use Node.js for pm2
