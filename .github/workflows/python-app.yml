@@ -27,21 +27,26 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
         activate-environment: beebop_py
-        auto-activate-base: false
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-    - name: Install poppunk
+        channels: bioconda, conda-forge
+    - name: activate environment
       run: |
-        conda config --add channels defaults
-        conda config --add channels bioconda
-        conda config --add channels conda-forge
-        conda install poppunk
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+    - name: Install poppunk
+      run: conda install poppunk
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
         virtualenvs-create: false
     - name: Install dependencies
       run: poetry install
+    - name: Use Node.js for pm2
+      uses: actions/setup-node@v2
+    - name: Run Redis & rqworker
+      working-directory: .
+      run: |
+        export PATH="/usr/share/miniconda/bin:$PATH"
+        ./scripts/start_redis
     - name: Test with pytest
       run: |
         export PATH="/usr/share/miniconda/bin:$PATH"
