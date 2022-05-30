@@ -24,6 +24,9 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
         activate-environment: beebop_py
+        auto-activate-base: false
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: Install poppunk
       run: |
         conda config --add channels defaults
