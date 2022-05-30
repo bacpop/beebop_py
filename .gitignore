@@ -1,3 +1,10 @@
 *__pycache__
 ignored
 *.h5
+*.json
+!storage/json/02ff334f17f17d775b9ecd69046ed296.json
+!storage/json/9c00583e2f24fed5e3c6baa87a4bfa4c.json
+!storage/json/99965c83b1839b25c3c27bd2910da00a.json
+!*.schema.json
+!args.json
+storage/poppunk_output
