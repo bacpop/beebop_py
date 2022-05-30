@@ -18,12 +18,13 @@ def generate_json():
 
     # translate hdf5 into json and validate against schema
     filepath = 'tests/files/pneumo_sample.h5'
-    sketch_json = json.loads(hdf5_to_json.h5_to_json(filepath))
+    sketches_json = json.loads(hdf5_to_json.h5_to_json(filepath))
+    for sketch_name in list(sketches_json.keys()):
+        if (type(sketches_json[sketch_name]['14'][0]) == str and
+                re.match('0x.*', sketches_json[sketch_name]['14'][0])):
+            for x in range(14, 30, 3):
+                sketches_json[sketch_name][str(x)] = list(
+                    map(lambda x: int(x, 16),
+                        sketches_json[sketch_name][str(x)]))
 
-    if (type(sketch_json['14'][0]) == str and
-            re.match('0x.*', sketch_json['14'][0])):
-        for x in range(14, 30, 3):
-            sketch_json[str(x)] = list(
-                map(lambda x: int(x, 16), sketch_json[str(x)]))
-
-    return json.dumps(sketch_json)
+    return json.dumps(sketches_json)
