@@ -1,7 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Python application
+name: Python tests
 
 on:
   push:
@@ -24,7 +21,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
         activate-environment: beebop_py
-    - name: install poppunk
+    - name: Install poppunk
       run: |
         conda config --add channels defaults
         conda config --add channels bioconda
@@ -40,9 +37,12 @@ jobs:
       uses: actions/setup-node@v2
     - name: Run Redis & rqworker
       working-directory: .
-      run: ./scripts/start_redis 
+      run: |
+        export PATH="/usr/share/miniconda/bin:$PATH"
+        ./scripts/start_redis 
     - name: Test with pytest
       run: |
+        export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
     - name: Stop redis
       working-directory: .
