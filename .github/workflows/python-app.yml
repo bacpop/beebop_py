@@ -64,7 +64,6 @@ jobs:
         conda install flask_cors
         conda install flask-apscheduler
         sudo apt-get install libeigen3-dev
-        cd poppunk
         python setup.py install
         python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
     - name: Install Poetry
