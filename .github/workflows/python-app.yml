@@ -106,4 +106,5 @@ jobs:
         export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
     - name: tmate session
+      if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
