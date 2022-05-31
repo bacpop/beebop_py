@@ -71,6 +71,7 @@ jobs:
       with:
         virtualenvs-create: false
     - name: Install dependencies
+      working-directory: ./main
       run: poetry install
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
