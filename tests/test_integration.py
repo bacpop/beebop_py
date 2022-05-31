@@ -31,7 +31,7 @@ def test_run_poppunk(client, qtbot):
         status = client.get("/status/integration_test_run_poppunk")
         assert status.data.decode("utf-8") == 'finished'
 
-    qtbot.waitUntil(status_finished, timeout=200000)
+    qtbot.waitUntil(status_finished, timeout=2000000)
     result = client.get("/result/integration_test_run_poppunk")
     result_object = json.loads(result.data.decode("utf-8"))
     assert result_object["status"] == "success"
