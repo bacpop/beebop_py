@@ -29,7 +29,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
         activate-environment: beebop_py
-        python-version: 3.9
         channels: bioconda, conda-forge
     - name: activate environment
       run: |
@@ -38,7 +37,7 @@ jobs:
 #    - name: Install poppunk
 #      run: conda install poppunk
 # currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
-    - name: Install poppunk from source
+    - name: Get poppunk source code
       uses: actions/checkout@v3
       with:
         repository:  bacpop/PopPUNK 
@@ -48,6 +47,7 @@ jobs:
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
+        conda install python=3.9
         conda install pybind11
         conda install pp-sketchlib
         conda install dendropy
@@ -59,10 +59,10 @@ jobs:
         conda install cmake
         conda install tqdm
         conda install networkx
-        conda install pytest
         conda install flask_cors
         conda install flask-apscheduler
         sudo apt-get install libeigen3-dev
+        conda install pytest
     - name: tmate session
       uses: mxschmitt/action-tmate@v3
         # python setup.py install
