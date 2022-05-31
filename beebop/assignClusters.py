@@ -28,7 +28,7 @@ def get_clusters(hashes_list, p_hash):
     args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
     # set database path
-    db_path = '/home/mmg220/Documents/run_poppunk'
+    db_path = './storage'
     db_name = 'GPS_v4'
     species_db = db_path + '/' + db_name
 

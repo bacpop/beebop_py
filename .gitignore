@@ -9,3 +9,4 @@ ignored
 !args.json
 storage/poppunk_output
 node_modules
+storage/GPS_v4
