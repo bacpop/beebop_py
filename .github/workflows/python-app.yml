@@ -29,6 +29,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
         activate-environment: beebop_py
+        python-version: 3.9
         channels: bioconda, conda-forge
     - name: activate environment
       run: |
@@ -42,13 +43,11 @@ jobs:
       with:
         repository:  bacpop/PopPUNK 
         path: poppunk
-    - name: activate environment
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
     - name: install poppunk & dependencies
       working-directory: ./poppunk
       run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
         conda install pybind11
         conda install pp-sketchlib
         conda install dendropy
@@ -72,12 +71,17 @@ jobs:
         virtualenvs-create: false
     - name: Install dependencies
       working-directory: ./main
-      run: poetry install
+      run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+        poetry install
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
     - name: Run Redis & rqworker
       working-directory: ./main
       run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         ./scripts/start_redis
     - name: tmate session
@@ -85,5 +89,7 @@ jobs:
     - name: Test with pytest
       working-directory: ./main
       run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
