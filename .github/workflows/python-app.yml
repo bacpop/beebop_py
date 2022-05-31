@@ -67,7 +67,6 @@ jobs:
         sudo apt-get install -y libxcb-image0
         sudo apt-get install -y libxcb-keysyms1
         sudo apt-get install -y libxcb-render-util0
-        conda install pytest
         conda install requests
         conda install -c conda-forge pp-sketchlib=1.7
         sed -i -z 's/sketch_dict = json.loads(top_value)/if type(top_value) == str:\n            sketch_dict = json.loads(top_value)\n        else:\n            sketch_dict = top_value/' PopPUNK/web.py
@@ -83,6 +82,8 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         poetry install
+        conda install pytest
+        conda install pytest-xvfb
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
     - name: Run Redis & rqworker
@@ -103,6 +104,6 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
-        poetry run pytest tests/test_unit.py
+        poetry run pytest
     - name: tmate session
       uses: mxschmitt/action-tmate@v3
