@@ -68,6 +68,9 @@ jobs:
         sudo apt-get install -y libxcb-keysyms1
         sudo apt-get install -y libxcb-render-util0
         conda install pytest
+        conda install requests
+        conda install -c conda-forge pp-sketchlib=1.7
+        sed -i -z 's/sketch_dict = json.loads(top_value)/if type(top_value) == str:\n            sketch_dict = json.loads(top_value)\n        else:\n            sketch_dict = top_value/' PopPUNK/web.py
         python setup.py install
         python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
     - name: Install Poetry
@@ -89,12 +92,17 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         ./scripts/start_redis
-    - name: tmate session
-      uses: mxschmitt/action-tmate@v3
+    - name: Download and extract database
+      working-directory: ./main/storage
+      run: |
+        wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
+        tar -xf GPS_v4_full.tar.bz2
     - name: Test with pytest
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
-        poetry run pytest
+        poetry run pytest tests/test_unit.py
+    - name: tmate session
+      uses: mxschmitt/action-tmate@v3
