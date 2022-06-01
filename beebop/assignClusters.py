@@ -12,6 +12,7 @@ from beebop.filestore import FileStore
 storageLocation = './storage'
 fs_json = FileStore(storageLocation+'/json')
 
+
 def get_clusters(hashes_list, p_hash):
     """
     assign clusterIDs to sketches

@@ -21,6 +21,7 @@ redis = Redis()
 storageLocation = './storage'
 fs_json = FileStore(storageLocation+'/json')
 
+
 def response_success(data):
     response = {
         "status": "success",

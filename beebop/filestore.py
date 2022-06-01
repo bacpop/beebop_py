@@ -9,7 +9,7 @@ class FileStore:
 
     def filename(self, hash):
         return os.path.join(self._path, hash + '.json')
-    
+
     def get(self, hash):
         src = self.filename(hash)
         if not os.path.exists(src):
@@ -18,7 +18,7 @@ class FileStore:
             with open(src, 'r') as fp:
                 sketch = json.load(fp)
         return sketch
-        
+
     def exists(self, hash):
         return os.path.exists(self.filename(hash))
 
