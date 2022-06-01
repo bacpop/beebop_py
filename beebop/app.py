@@ -10,6 +10,7 @@ import os
 
 from beebop import versions
 from beebop import assignClusters
+from beebop.filestore import FileStore
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -18,9 +19,7 @@ app = Flask(__name__)
 redis = Redis()
 
 storageLocation = './storage'
-if not os.path.exists(storageLocation + '/json'):
-    os.mkdir(storageLocation + '/json')
-
+fs_json = FileStore(storageLocation+'/json')
 
 def response_success(data):
     response = {
@@ -64,8 +63,7 @@ def run_poppunk():
     hashes_list = []
     for key, value in request.json['sketches'].items():
         hashes_list.append(key)
-        with open(storageLocation+'/json/'+key+'.json', 'w') as fp:
-            json.dump(value, fp)
+        fs_json.put(key, value)
     # submit list of hashes to redis worker
     q = Queue(connection=redis)
     job = q.enqueue(assignClusters.get_clusters,

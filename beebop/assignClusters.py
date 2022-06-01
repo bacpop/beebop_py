@@ -6,9 +6,11 @@ from types import SimpleNamespace
 import re
 import os
 
+from beebop.filestore import FileStore
+
 # this depends on where the rqworker is running
 storageLocation = './storage'
-
+fs_json = FileStore(storageLocation+'/json')
 
 def get_clusters(hashes_list, p_hash):
     """
@@ -41,8 +43,7 @@ def get_clusters(hashes_list, p_hash):
     # transform json to dict
     sketches_dict = {}
     for hash in hashes_list:
-        with open(storageLocation+'/json/'+hash+'.json', 'r') as fp:
-            sketches_dict[hash] = json.load(fp)
+        sketches_dict[hash] = fs_json.get(hash)
 
     # convert hex to decimal
     for sample in list(sketches_dict.values()):
