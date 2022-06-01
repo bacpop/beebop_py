@@ -82,9 +82,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         poetry install
-        conda install pytest
         conda install pytest-xvfb
-        conda install rq
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
     - name: Run Redis & rqworker
