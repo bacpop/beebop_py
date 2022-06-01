@@ -21,6 +21,11 @@ jobs:
     - uses: actions/checkout@v2
       with: 
         path: main
+    - name: Download and extract GPS database
+      working-directory: ./main/storage
+      run: |
+        wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
+        tar -xf GPS_v4_full.tar.bz2
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
@@ -85,23 +90,12 @@ jobs:
         conda install pytest-xvfb
     - name: Use Node.js for pm2
       uses: actions/setup-node@v2
-    - name: Run Redis & rqworker
+    - name: Run Redis & rqworker and test with pytest
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
-        export PATH="/usr/share/miniconda/bin:$PATH"
         ./scripts/start_redis
-    - name: Download and extract database
-      working-directory: ./main/storage
-      run: |
-        wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
-        tar -xf GPS_v4_full.tar.bz2
-    - name: Test with pytest
-      working-directory: ./main
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         poetry run pytest
     - name: tmate session
