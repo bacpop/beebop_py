@@ -85,7 +85,7 @@ def get_status(hash):
         redis.ping()
         id = redis.hget("beebop:hash:job", hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
-        return job.get_status()
+        return jsonify(response_success(job.get_status()))
     except AttributeError:
         return jsonify(response_failure("Unknown project hash"))
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
