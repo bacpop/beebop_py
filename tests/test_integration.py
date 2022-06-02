@@ -24,12 +24,12 @@ def test_run_poppunk(client, qtbot):
     assert response.status_code == 200
     # retrieve job status
     status = client.get("/status/integration_test_run_poppunk")
-    assert status.data.decode("utf-8") in ['queued', 'started', 'finished']
+    assert json.loads(status.data.decode("utf-8"))['data'] in ['queued', 'started', 'finished']
     # retrieve result when finished
 
     def status_finished():
         status = client.get("/status/integration_test_run_poppunk")
-        assert status.data.decode("utf-8") == 'finished'
+        assert json.loads(status.data.decode("utf-8"))['data'] == 'finished'
 
     qtbot.waitUntil(status_finished, timeout=2000000)
     result = client.get("/result/integration_test_run_poppunk")
