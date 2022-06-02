@@ -67,4 +67,7 @@ docker pull redis
 docker run --rm -d --name=redis -p 6379:6379 redis
 rqworker
 ```
-Testing can be done in a second terminal (make sure to activate 'beebop_py') by running `pytest`
+Testing can be done in a second terminal (make sure to activate 'beebop_py') by running 
+```
+TESTING=True poetry run pytest
+```

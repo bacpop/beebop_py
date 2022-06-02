@@ -8,16 +8,14 @@ import os
 
 from beebop.filestore import FileStore
 
-# this depends on where the rqworker is running
-storageLocation = './storage'
-fs_json = FileStore(storageLocation+'/json')
 
-
-def get_clusters(hashes_list, p_hash):
+def get_clusters(hashes_list, p_hash, storageLocation):
     """
     assign clusterIDs to sketches
     hashes_list: list of json objects stored json object of multiple sketches
     """
+    fs_json = FileStore(storageLocation+'/json')
+
     # set output directory
     outdir = storageLocation + '/poppunk_output/' + p_hash
     if not os.path.exists(storageLocation + '/poppunk_output'):

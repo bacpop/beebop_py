@@ -9,6 +9,7 @@ import beebop.schemas
 from tests import setup
 
 schemas = beebop.schemas.Schema()
+storageLocation = './tests/files'
 
 
 def test_get_version():
@@ -30,7 +31,7 @@ def test_poppunk_assign():
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
             '99965c83b1839b25c3c27bd2910da00a'
-        ], 'unit_test_poppunk_assign') == {
+        ], 'unit_test_poppunk_assign', storageLocation) == {
             0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'},
             2: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'}}

@@ -18,7 +18,11 @@ schemas = beebop.schemas.Schema()
 app = Flask(__name__)
 redis = Redis()
 
-storageLocation = './storage'
+
+if os.environ.get('TESTING') == 'True':
+    storageLocation = './tests/files'
+else:
+    storageLocation = './storage'
 fs_json = FileStore(storageLocation+'/json')
 
 
@@ -68,7 +72,7 @@ def run_poppunk():
     # submit list of hashes to redis worker
     q = Queue(connection=redis)
     job = q.enqueue(assignClusters.get_clusters,
-                    hashes_list, request.json['projectHash'])
+                    hashes_list, request.json['projectHash'], storageLocation)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job", request.json['projectHash'], job.id)
     return job.id
