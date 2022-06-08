@@ -47,6 +47,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository:  bacpop/PopPUNK 
+        ref: fix-json-serialisation
         path: poppunk
     - name: install poppunk & dependencies
       working-directory: ./poppunk
@@ -74,7 +75,6 @@ jobs:
         sudo apt-get install -y libxcb-render-util0
         conda install requests
         conda install -c conda-forge pp-sketchlib=1.7
-        sed -i -z 's/sketch_dict = json.loads(top_value)/if type(top_value) == str:\n            sketch_dict = json.loads(top_value)\n        else:\n            sketch_dict = top_value/' PopPUNK/web.py
         python setup.py install
         python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
     - name: Install Poetry
