@@ -21,7 +21,14 @@ jobs:
     - uses: actions/checkout@v2
       with: 
         path: main
+    - name: Cache database
+      id: cache-db
+      uses: actions/cache@v3
+      with:
+        path: ./main/storage/GPS_v4
+        key: GPS_v4
     - name: Download and extract GPS database
+      if: steps.cache-db.outputs.cache-hit != 'true'
       working-directory: ./main/storage
       run: |
         wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
