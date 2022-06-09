@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-docker pull redis
-docker run --rm -d --name=redis -p 6379:6379 redis
-npm install pm2
-
-node ./node_modules/pm2/bin/pm2 --name rqworker start "/usr/share/miniconda/envs/beebop_py/bin/rqworker" --interpreter python3 

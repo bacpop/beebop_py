@@ -102,7 +102,9 @@ jobs:
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
-        ./scripts/start_redis
+        docker pull redis
+        docker run --rm -d --name=redis -p 6379:6379 redis
+        rqworker &
         export PATH="/usr/share/miniconda/bin:$PATH"
         TESTING=True poetry run pytest
     - name: tmate session
