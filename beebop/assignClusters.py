@@ -1,25 +1,31 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
+from pathlib import PurePath
 import json
 from types import SimpleNamespace
 import re
 import os
+from beebop.filestore import DatabaseFileStore
 
-from beebop.filestore import FileStore
+
+def hex_to_decimal(sketches_dict):
+    for sample in list(sketches_dict.values()):
+        if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
+            for x in range(14, 30, 3):
+                sample[str(x)] = list(map(lambda x: int(x, 16),
+                                          sample[str(x)]))
 
 
-def get_clusters(hashes_list, p_hash, storageLocation):
+def get_clusters(hashes_list, p_hash, fs):
     """
     assign clusterIDs to sketches
     hashes_list: list of json objects stored json object of multiple sketches
     """
-    fs_json = FileStore(storageLocation+'/json')
-
     # set output directory
-    outdir = storageLocation + '/poppunk_output/' + p_hash
-    if not os.path.exists(storageLocation + '/poppunk_output'):
-        os.mkdir(storageLocation + '/poppunk_output')
+    outdir = fs.output(p_hash)
+    if not os.path.exists(fs.output_base):
+        os.mkdir(fs.output_base)
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
@@ -28,10 +34,8 @@ def get_clusters(hashes_list, p_hash, storageLocation):
         args_json = a.read()
     args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
-    # set database path
-    db_path = './storage'
-    db_name = 'GPS_v4_references'
-    species_db = db_path + '/' + db_name
+    # set database paths
+    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 
     # create qc_dict
     qc_dict = {'run_qc': False}
@@ -42,30 +46,24 @@ def get_clusters(hashes_list, p_hash, storageLocation):
     # transform json to dict
     sketches_dict = {}
     for hash in hashes_list:
-        sketches_dict[hash] = fs_json.get(hash)
+        sketches_dict[hash] = fs.input.get(hash)
 
     # convert hex to decimal
-    for sample in list(sketches_dict.values()):
-        if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
-            for x in range(14, 30, 3):
-                sample[str(x)] = list(map(lambda x: int(x, 16),
-                                          sample[str(x)]))
+    hex_to_decimal(sketches_dict)
 
     # create hdf5 db
     qNames = sketch_to_hdf5(sketches_dict, outdir)
 
-    print(qNames)
-
     # run query assignment
     assign_query_hdf5(
         dbFuncs=dbFuncs,
-        ref_db=species_db,
+        ref_db=db_paths.db,
         qNames=qNames,
         output=outdir,
         qc_dict=qc_dict,
         update_db=args.assign.update_db,
         write_references=args.assign.write_references,
-        distances=species_db + '/' + db_name + '.dists.pkl',
+        distances=db_paths.distances,
         threads=args.assign.threads,
         overwrite=args.assign.overwrite,
         plot_fit=args.assign.plot_fit,
@@ -73,9 +71,9 @@ def get_clusters(hashes_list, p_hash, storageLocation):
         max_a_dist=args.assign.max_a_dist,
         max_pi_dist=args.assign.max_pi_dist,
         type_isolate=args.assign.type_isolate,
-        model_dir=species_db,
+        model_dir=db_paths.db,
         strand_preserved=args.assign.strand_preserved,
-        previous_clustering=species_db,
+        previous_clustering=db_paths.db,
         external_clustering=args.assign.external_clustering,
         core=args.assign.core_only,
         accessory=args.assign.accessory_only,
@@ -87,7 +85,7 @@ def get_clusters(hashes_list, p_hash, storageLocation):
     )
 
     queries_names, queries_clusters, _, _, _, _, _ = \
-        summarise_clusters(outdir, args.assign.species, species_db, qNames)
+        summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 
     result = {}
     for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
