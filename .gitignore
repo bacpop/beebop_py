@@ -10,4 +10,4 @@ ignored
 tests/files/poppunk_output
 storage/poppunk_output
 node_modules
-storage/GPS_v4
+storage/GPS_v4*
