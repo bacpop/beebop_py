@@ -25,8 +25,8 @@ jobs:
     - name: Download and extract GPS database
       working-directory: ./main/storage
       run: |
-        wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_references.tar.bz2
-        tar -xf GPS_v4_references.tar.bz2 --directory
+        wget --progress=dot:giga https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_references.tar.bz2
+        tar -xf GPS_v4_references.tar.bz2
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
