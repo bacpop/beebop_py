@@ -1,5 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "int64HexArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^0x[0-9a-f]{,16}$"
+      }
+    }
+  },
   "type": "object",
   "properties": {
     "bases": {
@@ -36,46 +45,38 @@
       "type": "string"
     },
     "14": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     },
     "17": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     },
     "20": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     },
     "23": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     },
     "26": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     },
     "29": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "minimum": 0
-      }
+      "$ref": "#/definitions/int64HexArray"
     }
-  }
+  },
+  "required": [
+    "bases",
+    "bbits",
+    "codon_phased",
+    "length",
+    "missing_bases",
+    "sketchsize64",
+    "version",
+    "14",
+    "17",
+    "20",
+    "23",
+    "26",
+    "29"
+  ],
+  "additionalProperties": true
 }

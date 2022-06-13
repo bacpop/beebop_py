@@ -1,5 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "int64HexArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^0x[0-9a-f]{,16}$"
+      }
+    }
+  },
   "type": "object",
   "properties": {
     "projectHash": {
@@ -20,65 +29,47 @@
               },
               "minItems": 4,
               "maxItems": 4
-            }
-          },
-          "bbits": {
-            "type": "number",
-            "minimum": 0
-          },
-          "codon_phased": {
-            "type": "boolean"
-          },
-          "length": {
-            "type": "number",
-            "minimum": 0
-          },
-          "missing_bases": {
-            "type": "number",
-            "minimum": 0
-          },
-          "sketchsize64": {
-            "type": "number",
-            "minimum": 156,
-            "maximum": 156
-          },
-          "version": {
-            "type": "string"
-          },
-          "14": {
-            "type": "array",
-            "items": {
+            },
+            "bbits": {
+              "type": "number",
+              "minimum": 0
+            },
+            "codon_phased": {
+              "type": "boolean"
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            },
+            "missing_bases": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sketchsize64": {
+              "type": "number",
+              "minimum": 156,
+              "maximum": 156
+            },
+            "version": {
               "type": "string"
-            }
-          },
-          "17": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "20": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "23": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "26": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "29": {
-            "type": "array",
-            "items": {
-              "type": "string"
+            },
+            "14": {
+              "$ref": "#/definitions/int64HexArray"
+            },
+            "17": {
+              "$ref": "#/definitions/int64HexArray"
+            },
+            "20": {
+              "$ref": "#/definitions/int64HexArray"
+            },
+            "23": {
+              "$ref": "#/definitions/int64HexArray"
+            },
+            "26": {
+              "$ref": "#/definitions/int64HexArray"
+            },
+            "29": {
+              "$ref": "#/definitions/int64HexArray"
             }
           },
           "required": [
