@@ -16,15 +16,8 @@ def generate_json():
         cwd='tests/files'
     )
 
-    # translate hdf5 into json and validate against schema
+    # translate hdf5 into json
     filepath = 'tests/files/pneumo_sample.h5'
     sketches_json = json.loads(hdf5_to_json.h5_to_json(filepath))
-    for sketch_name in list(sketches_json.keys()):
-        if (type(sketches_json[sketch_name]['14'][0]) == str and
-                re.match('0x.*', sketches_json[sketch_name]['14'][0])):
-            for x in range(14, 30, 3):
-                sketches_json[sketch_name][str(x)] = list(
-                    map(lambda x: int(x, 16),
-                        sketches_json[sketch_name][str(x)]))
 
     return json.dumps(sketches_json)
