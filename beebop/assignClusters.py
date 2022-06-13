@@ -30,7 +30,7 @@ def get_clusters(hashes_list, p_hash, storageLocation):
 
     # set database path
     db_path = './storage'
-    db_name = 'GPS_v4'
+    db_name = 'GPS_v4_references'
     species_db = db_path + '/' + db_name
 
     # create qc_dict

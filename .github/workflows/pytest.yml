@@ -22,22 +22,12 @@ jobs:
       with: 
         path: main
 
-    - name: Cache database
-      id: cache-db
-      uses: actions/cache@v3
-      with:
-        path: ./GPS_v4_full.tar.bz2
-        key: GPS_v4
-
-    - name: Download GPS database
-      if: steps.cache-db.outputs.cache-hit != 'true'
-      working-directory: .
-      run: wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
+    - name: Download and extract GPS database
+      working-directory: ./main/storage
+      run: |
+        wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_references.tar.bz2
+        tar -xf GPS_v4_references.tar.bz2 --directory
         
-    - name: extract database into ./main/storage
-      working-directory: .
-      run: tar -xf GPS_v4_full.tar.bz2 --directory main/storage
-
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
