@@ -1,8 +1,6 @@
-from importlib.metadata import files
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask_expects_json import expects_json
 from waitress import serve
-import json
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
@@ -46,9 +44,18 @@ def response_failure(error):
 def check_connection(redis):
     try:
         redis.ping()
-        return True
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
-        return jsonify(response_failure("Connection to redis failed"))
+        abort(500, description="Redis not found")
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return jsonify(error=response_failure(str(e))), 500
+
+
+@app.errorhandler(404)
+def resource_not_found(e):
+    return jsonify(error=response_failure(str(e))), 404
 
 
 @app.route('/version')
@@ -83,17 +90,14 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis):
         hashes_list.append(key)
         fs.input.put(key, value)
     # check connection to redis
-    check = check_connection(redis)
-    if check:
-        # submit list of hashes to redis worker
-        q = Queue(connection=redis)
-        job = q.enqueue(assignClusters.get_clusters,
-                        hashes_list, project_hash, fs)
-        # save p-hash with job.id in redis server
-        redis.hset("beebop:hash:job", project_hash, job.id)
-        return job.id
-    else:
-        return check
+    check_connection(redis)
+    # submit list of hashes to redis worker
+    q = Queue(connection=redis)
+    job = q.enqueue(assignClusters.get_clusters,
+                    hashes_list, project_hash, fs)
+    # save p-hash with job.id in redis server
+    redis.hset("beebop:hash:job", project_hash, job.id)
+    return job.id
 
 
 # get job status
@@ -103,16 +107,13 @@ def get_status(hash):
 
 
 def get_status_internal(hash, redis):
-    check = check_connection(redis)
-    if check:
-        try:
-            id = redis.hget("beebop:hash:job", hash).decode("utf-8")
-            job = Job.fetch(id, connection=redis)
-            return jsonify(response_success(job.get_status()))
-        except AttributeError:
-            return jsonify(response_failure("Unknown project hash"))
-    else:
-        return check
+    check_connection(redis)
+    try:
+        id = redis.hget("beebop:hash:job", hash).decode("utf-8")
+        job = Job.fetch(id, connection=redis)
+        return jsonify(response_success(job.get_status()))
+    except AttributeError:
+        return jsonify(response_failure("Unknown project hash"))
 
 
 # get job result
@@ -122,20 +123,17 @@ def get_result(hash):
 
 
 def get_result_internal(hash, redis):
-    check = check_connection(redis)
-    if check:
-        try:
-            id = redis.hget("beebop:hash:job", hash).decode("utf-8")
-            job = Job.fetch(id, connection=redis)
-            if job.result is None:
-                return jsonify(response_failure("Result not ready yet"))
-            else:
-                return jsonify(response_success(job.result))
-        except AttributeError:
-            return jsonify(response_failure("Unknown project hash"))
-    else:
-        return check
+    check_connection(redis)
+    try:
+        id = redis.hget("beebop:hash:job", hash).decode("utf-8")
+        job = Job.fetch(id, connection=redis)
+        if job.result is None:
+            return jsonify(response_failure("Result not ready yet"))
+        else:
+            return jsonify(response_success(job.result))
+    except AttributeError:
+        return jsonify(response_failure("Unknown project hash"))
 
 
 if __name__ == "__main__":
-    serve(app)
+    serve(app)  # pragma: no cover
