@@ -13,7 +13,7 @@ git clone git@github.com:bacpop/beebop_py.git
 You will need the GPS_v4 database, please download and extract it into `/storage`:
 ```
 wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
-tar -xf GPS_v4_full.tar.bz2
+tar -xf GPS_v4_references.tar.bz2
 ```
 #### Install dependencies
 ##### Poetry
@@ -29,17 +29,13 @@ Since PopPUNK is not available via pip yet, it must be installed separately.
 First, create a new conda environment: `conda create --name beebop_py` and activate it with `conda activate beebop_py`
 
 
-Then clone the most recent version of poppunk to your computer: `git clone git@github.com:bacpop/PopPUNK.git`
+Then clone the following branch of poppunk to your computer: `git clone -b fix-json-serialisation git@github.com:bacpop/PopPUNK.git`
 Please make sure you have all required dependencies installed as specified [here](https://poppunk.readthedocs.io/en/latest/installation.html#clone-the-code):
 ```
 conda install pybind11 pp-sketchlib dendropy hdbscan matplotlib graph-tool pandas sharedmem cmake tqdm networkx flask_cors flask-apscheduler requests
 ```
 
 
-Currently, the PopPUNK code needs a small tweak to work with beebop_py (This should change once version 2.5 is available). Go to the root of the PopPUNK repository and run 
-```
-sed -i -z 's/sketch_dict = json.loads(top_value)/if type(top_value) == str:\n            sketch_dict = json.loads(top_value)\n        else:\n            sketch_dict = top_value/' PopPUNK/web.py
-```
 Next, install the package with:
 ```
 python setup.py install
