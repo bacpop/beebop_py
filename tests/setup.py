@@ -1,9 +1,7 @@
 import subprocess
 import beebop.schemas
 from tests import hdf5_to_json
-import jsonschema
 import json
-import re
 
 schemas = beebop.schemas.Schema()
 
