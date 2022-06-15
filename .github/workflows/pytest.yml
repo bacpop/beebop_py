@@ -116,7 +116,6 @@ jobs:
         TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
 
     - name: Upload Coverage to Codecov
-      working-directory: ./main
       uses: codecov/codecov-action@v2
         
     - name: tmate session
