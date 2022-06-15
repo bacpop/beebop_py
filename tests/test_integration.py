@@ -40,3 +40,10 @@ def test_run_poppunk(client, qtbot):
     result_object = json.loads(result.data.decode("utf-8"))
     assert result_object["status"] == "success"
     assert jsonschema.validate(result_object["data"], schemas.cluster) is None
+
+
+def test_404(client):
+    response = client.get("/random_path")
+    assert response.status_code == 404
+    response_data = response.data.decode("utf-8")
+    assert json.loads(response_data)["error"]["status"] == "failure"
