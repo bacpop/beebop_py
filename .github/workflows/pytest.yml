@@ -114,6 +114,7 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
+        poetry run coverage xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
