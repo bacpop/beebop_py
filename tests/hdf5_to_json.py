@@ -4,6 +4,7 @@ import numpy as np
 
 
 class NpEncoder(json.JSONEncoder):
+    # The encoder translates k-mer datasets from decimal to hex
     def default(self, obj):
         if isinstance(obj, np.uint64):  # this only applies to attributes
             return int(obj)
@@ -13,7 +14,6 @@ class NpEncoder(json.JSONEncoder):
                 return obj_hex.tolist()
             else:  # this applies to base_freq
                 return obj.tolist()
-        return super(NpEncoder, self).default(obj)
 
 
 class MySketch:
@@ -43,16 +43,12 @@ def h5_to_obj(element, sketch_version, codon_phased):
     return sketch
 
 
-def obj_to_json(sketch, filename=None):
+def obj_to_json(sketch):
     jsonStr = json.dumps(sketch.__dict__, cls=NpEncoder)
-    if filename:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(sketch.__dict__, f, ensure_ascii=False,
-                      indent=4, cls=NpEncoder)
     return jsonStr
 
 
-def h5_to_json(input_file, output_folder=None):
+def h5_to_json(input_file):
     f = h5py.File(input_file, 'r')
     sketches = f['sketches']
     # extract top level attributes
@@ -65,8 +61,4 @@ def h5_to_json(input_file, output_folder=None):
         sketch = h5_to_obj(element, sketch_version, codon_phased)
         sketch_encoded = json.loads(obj_to_json(sketch))
         sketches_dict[element_name] = sketch_encoded
-    if output_folder:
-        with open(output_folder+'/test_sketches.json', 'w',
-                  encoding='utf-8') as f:
-            json.dump(sketches_dict, f, indent=4)
     return json.dumps(sketches_dict)
