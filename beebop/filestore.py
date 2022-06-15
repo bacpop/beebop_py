@@ -36,6 +36,7 @@ class PoppunkFileStore:
         self.storage_location = storage_location
         self.input = FileStore(storage_location + '/json')
         self.output_base = PurePath(storage_location, 'poppunk_output')
+        os.makedirs(self.output_base, exist_ok=True)
 
     def output(self, p_hash):
         return str(PurePath(self.output_base, p_hash))

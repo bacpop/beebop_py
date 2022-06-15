@@ -1,7 +1,6 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-from pathlib import PurePath
 import json
 from types import SimpleNamespace
 import re
@@ -24,8 +23,6 @@ def get_clusters(hashes_list, p_hash, fs):
     """
     # set output directory
     outdir = fs.output(p_hash)
-    if not os.path.exists(fs.output_base):
-        os.mkdir(fs.output_base)
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
@@ -93,4 +90,4 @@ def get_clusters(hashes_list, p_hash, fs):
             "hash": name,
             "cluster": cluster
         }
-    return(result)
+    return result
