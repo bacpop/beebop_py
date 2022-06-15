@@ -20,10 +20,3 @@ def client(app):
     ctx.push()
 
     return app.test_client()
-
-    ctx.pop()
-
-
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
