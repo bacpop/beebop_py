@@ -20,7 +20,14 @@ pytest = "^7.1.2"
 rq = "^1.10.1"
 
 [tool.poetry.dev-dependencies]
+coverage = {extras = ["toml"], version = "^6.4.1"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*","*test_*"]
+
+[tool.coverage.report]
+fail_under = 90
