@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "patternProperties": {
+    "[0-9]*": {
+      "type": "object",
+      "properties": {
+        "hash": {
+          "type": "string"
+        },
+        "cluster": {
+          "type": ["integer", "string"]
+        }
+      }
+    }
+  }
+}

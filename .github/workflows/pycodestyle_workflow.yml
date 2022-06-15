@@ -1,4 +1,4 @@
-name: pycodestyle
+name: Linting with pycodestyle
 
 on:
   push:

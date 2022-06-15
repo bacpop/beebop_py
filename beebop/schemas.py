@@ -11,4 +11,7 @@ def read_schema(name):
 class Schema:
     def __init__(self):
         self.version = read_schema("version")
+        self.sketch = read_schema("sketch")
+        self.sketches = read_schema("sketches")
+        self.cluster = read_schema("cluster")
         # add new schemas here

@@ -1,1 +1,16 @@
 *__pycache__
+*coverage*
+ignored
+*.h5
+*.json
+!tests/files/json/02ff334f17f17d775b9ecd69046ed296.json
+!tests/files/json/9c00583e2f24fed5e3c6baa87a4bfa4c.json
+!tests/files/json/99965c83b1839b25c3c27bd2910da00a.json
+!tests/files/e868c76fec83ee1f69a95bd27b8d5e76.json
+!tests/files/f3d9b387e311d5ab59a8c08eb3545dbb.json
+!*.schema.json
+!args.json
+tests/files/poppunk_output
+storage/poppunk_output
+node_modules
+storage/GPS_v4*

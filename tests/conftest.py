@@ -15,9 +15,8 @@ def app():
 
 @pytest.fixture()
 def client(app):
+    # Establish an application context before running the tests.
+    ctx = app.app_context()
+    ctx.push()
+
     return app.test_client()
-
-
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
