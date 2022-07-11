@@ -9,16 +9,15 @@ import pytest
 from werkzeug.exceptions import InternalServerError
 import string
 import random
-import numpy as np
+import os
+from types import SimpleNamespace
 
 from beebop import __version__ as beebop_version
 from beebop import app
 from beebop import versions
 from beebop import assignClusters
-from beebop.filestore import PoppunkFileStore, FileStore
+from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 import beebop.schemas
-from tests import setup
-from tests import hdf5_to_json
 
 
 schemas = beebop.schemas.Schema()
@@ -35,6 +34,10 @@ def read_data(response):
     return json.loads(response.get_data().decode("utf-8"))
 
 
+def read_redis(name, key, redis):
+    return redis.hget(name, key).decode("utf-8")
+
+
 def test_get_version():
     assert versions.get_version() == [
         {"name": "beebop", "version": beebop_version},
@@ -43,24 +46,30 @@ def test_get_version():
                                schemas.version) is None
 
 
-def test_setup():
-    assert jsonschema.validate(json.loads(
-        setup.generate_json()), schemas.sketches) is None
-
-
 def test_assign_clusters():
+    with open("./beebop/resources/args.json") as a:
+        args_json = a.read()
+    args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
+    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
+    outdir = fs.output('unit_test_poppunk_assign')
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
     assert assignClusters.get_clusters(
         [
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
             '99965c83b1839b25c3c27bd2910da00a'
-        ], 'unit_test_poppunk_assign', fs) == {
+        ],
+        fs,
+        outdir,
+        db_paths,
+        args) == {
             0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'},
             2: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'}}
 
 
-def test_run_poppunk_internal():
+def test_run_poppunk_internal(qtbot):
     fs_test = FileStore('./tests/files')
     sketches = {
         'e868c76fec83ee1f69a95bd27b8d5e76':
@@ -71,28 +80,45 @@ def test_run_poppunk_internal():
     project_hash = 'unit_test_run_poppunk_internal'
     storage_location = storageLocation
     redis = Redis()
-    job_id = app.run_poppunk_internal(sketches,
-                                      project_hash,
-                                      storage_location,
-                                      redis)
+    job_ids = app.run_poppunk_internal(sketches,
+                                       project_hash,
+                                       storage_location,
+                                       redis)
     # stores sketches in storage
     assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
     assert fs.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
-    # submits job to queue
-    job = Job.fetch(job_id, connection=redis)
-    assert job.get_status() in ['queued', 'started', 'finished', 'scheduled']
+    # submits assign job to queue
+    job_assign = Job.fetch(job_ids["assign"], connection=redis)
+    status_options = ['queued', 'started', 'finished', 'scheduled']
+    assert job_assign.get_status() in status_options
     # saves p-hash with job id in redis
-    assert redis.hget("beebop:hash:job",
-                      project_hash).decode("utf-8") == job_id
+    assert read_redis("beebop:hash:job",
+                      project_hash+'_assign', redis) == job_ids["assign"]
+
+    # wait for assign job to be finished
+    def assign_status_finished():
+        job = Job.fetch(job_ids["assign"], connection=redis)
+        assert job.get_status() == 'finished'
+    qtbot.waitUntil(assign_status_finished, timeout=20000)
+    # submits visualisation jobs to queue
+    job_microreact = Job.fetch(job_ids["microreact"], connection=redis)
+    assert job_microreact.get_status() in status_options
+    assert read_redis("beebop:hash:job",
+                      project_hash+'_microreact',
+                      redis) == job_ids["microreact"]
+    job_network = Job.fetch(job_ids["network"], connection=redis)
+    assert job_network.get_status() in status_options
+    assert read_redis("beebop:hash:job",
+                      project_hash+'_network', redis) == job_ids["network"]
 
 
-def test_get_result_internal():
+def test_get_result_internal(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=redis)
     job = q.enqueue(dummy_fct)
     hash = "unit_test_get_result_internal"
-    redis.hset("beebop:hash:job", hash, job.id)
+    redis.hset("beebop:hash:job", hash+'_assign', job.id)
     result1 = app.get_result_internal(hash, redis)
     assert read_data(result1) == {
         "status": "failure",
@@ -118,19 +144,19 @@ def test_get_result_internal():
     }
 
 
-def test_get_status_internal():
+def test_get_status_internal(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=redis)
     job = q.enqueue(dummy_fct)
     hash = "unit_test_get_status_internal"
-    redis.hset("beebop:hash:job", hash, job.id)
+    redis.hset("beebop:hash:job", hash+'_assign', job.id)
     result = app.get_status_internal(hash, redis)
     assert read_data(result)['status'] == 'success'
-    assert read_data(result)['data'] in ['queued',
-                                         'started',
-                                         'finished',
-                                         'scheduled']
+    status_options = ['queued', 'started', 'finished', 'scheduled', 'waiting']
+    assert read_data(result)['data']['assign'] in status_options
+    assert read_data(result)['data']['microreact'] in status_options
+    assert read_data(result)['data']['network'] in status_options
     assert read_data(app.get_status_internal("wrong-hash", redis)) == {
         "status": "failure",
         "errors": ["Unknown project hash"],
@@ -194,56 +220,3 @@ def test_check_connection():
         app.check_connection(redis_mock)
     redis = Redis()
     app.check_connection(redis)
-
-
-def test_encoder():
-    sketch_dec = {
-        # these attributes should not be converted
-        "codon_phased": False,
-        "sketchsize64": np.uint64(156),
-        "version": "c42cd0e22f6ef6d5c9a2900fa16367e096519170",
-        "bases": np.array([
-            0.300634,
-            0.207509,
-            0.188758,
-            0.303098
-        ]),
-        # these arrays should be converted
-        "14": np.array([
-            np.uint64(1235257003518336777),
-            np.uint64(14030650254064228360),
-            np.uint64(488260933813288744),
-            np.uint64(13271593282997563722)
-        ]),
-        "26": np.array([
-            np.uint64(8801399391270942979),
-            np.uint64(3035910811177971819),
-            np.uint64(5773981271656401042),
-            np.uint64(6376812912998502619)
-        ])
-    }
-    sketch_hex_expected = {
-        "codon_phased": False,
-        "sketchsize64": 156,
-        "version": "c42cd0e22f6ef6d5c9a2900fa16367e096519170",
-        "bases": [
-            0.300634,
-            0.207509,
-            0.188758,
-            0.303098
-        ],
-        "14": [
-            "0x112483b335061f09",
-            "0xc2b6e211893e1808",
-            "0x6c6a6bb7da43f28",
-            "0xb82e2bc66487b14a"
-        ],
-        "26": [
-            "0x7a24da1d530b3903",
-            "0x2a21b8cc3e07f06b",
-            "0x50214d5fecd68892",
-            "0x587efd8efe6650db"
-        ]
-    }
-    sketch_hex = json.dumps(sketch_dec, cls=hdf5_to_json.NpEncoder)
-    assert json.loads(sketch_hex) == sketch_hex_expected
