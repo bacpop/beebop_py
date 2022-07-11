@@ -6,10 +6,11 @@ import redis.exceptions as redis_exceptions
 from rq import Queue
 from rq.job import Job
 import os
+import json
+from types import SimpleNamespace
 
-from beebop import versions
-from beebop import assignClusters
-from beebop.filestore import PoppunkFileStore
+from beebop import versions, assignClusters, visualise
+from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -72,9 +73,8 @@ def report_version():
 @expects_json(schemas.sketches)
 def run_poppunk():
     """
-    run poppunks assing_query()
+    run poppunks assing_query() and generate_visualisations().
     input: multiple sketches in json format
-    output: clusters assigned to sketches
     """
     sketches = request.json['sketches'].items()
     project_hash = request.json['projectHash']
@@ -84,6 +84,16 @@ def run_poppunk():
 def run_poppunk_internal(sketches, project_hash, storageLocation, redis):
     # create FS
     fs = PoppunkFileStore(storageLocation)
+    # set output directory
+    outdir = fs.output(project_hash)
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    # read arguments
+    with open("./beebop/resources/args.json") as a:
+        args_json = a.read()
+    args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
+    # set database paths
+    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
     # store json sketches in storage
     hashes_list = []
     for key, value in sketches:
@@ -93,11 +103,25 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis):
     check_connection(redis)
     # submit list of hashes to redis worker
     q = Queue(connection=redis)
-    job = q.enqueue(assignClusters.get_clusters,
-                    hashes_list, project_hash, fs)
+    job_assign = q.enqueue(assignClusters.get_clusters,
+                           hashes_list, fs, outdir, db_paths, args)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job", project_hash, job.id)
-    return job.id
+    redis.hset("beebop:hash:job", project_hash+'_assign', job_assign.id)
+    # create visualisations
+    # microreact
+    job_microreact = q.enqueue(visualise.microreact,
+                               args=(project_hash, outdir, db_paths, args),
+                               depends_on=job_assign)
+    redis.hset("beebop:hash:job", project_hash+'_microreact',
+               job_microreact.id)
+    # network
+    job_network = q.enqueue(visualise.network,
+                            args=(project_hash, outdir, db_paths, args),
+                            depends_on=job_assign)
+    redis.hset("beebop:hash:job", project_hash+'_network', job_network.id)
+    return {"assign": job_assign.id,
+            "microreact": job_microreact.id,
+            "network": job_network.id}
 
 
 # get job status
@@ -109,9 +133,25 @@ def get_status(hash):
 def get_status_internal(hash, redis):
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job", hash).decode("utf-8")
-        job = Job.fetch(id, connection=redis)
-        return jsonify(response_success(job.get_status()))
+        id_assign = redis.hget("beebop:hash:job",
+                               hash+'_assign').decode("utf-8")
+        job_assign = Job.fetch(id_assign, connection=redis)
+        status_assign = job_assign.get_status()
+        if status_assign == "finished":
+            id_microreact = redis.hget("beebop:hash:job",
+                                       hash+'_microreact').decode("utf-8")
+            job_microreact = Job.fetch(id_microreact, connection=redis)
+            status_microreact = job_microreact.get_status()
+            id_network = redis.hget("beebop:hash:job",
+                                    hash+'_network').decode("utf-8")
+            job_network = Job.fetch(id_network, connection=redis)
+            status_network = job_network.get_status()
+        else:
+            status_microreact = "waiting"
+            status_network = "waiting"
+        return jsonify(response_success({"assign": status_assign,
+                                         "microreact": status_microreact,
+                                         "network": status_network}))
     except AttributeError:
         return jsonify(response_failure("Unknown project hash"))
 
@@ -125,7 +165,7 @@ def get_result(hash):
 def get_result_internal(hash, redis):
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job", hash).decode("utf-8")
+        id = redis.hget("beebop:hash:job", hash+'_assign').decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
             return jsonify(response_failure("Result not ready yet"))
