@@ -1,11 +1,7 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-import json
-from types import SimpleNamespace
 import re
-import os
-from beebop.filestore import DatabaseFileStore
 
 
 def hex_to_decimal(sketches_dict):
@@ -16,23 +12,11 @@ def hex_to_decimal(sketches_dict):
                                           sample[str(x)]))
 
 
-def get_clusters(hashes_list, p_hash, fs):
+def get_clusters(hashes_list, fs, outdir, db_paths, args):
     """
     assign clusterIDs to sketches
     hashes_list: list of json objects stored json object of multiple sketches
     """
-    # set output directory
-    outdir = fs.output(p_hash)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-
-    # read arguments
-    with open("./beebop/resources/args.json") as a:
-        args_json = a.read()
-    args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
-
-    # set database paths
-    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 
     # create qc_dict
     qc_dict = {'run_qc': False}
