@@ -22,5 +22,5 @@ docker run -d --rm --name $NAME_WORKER --network=$NETWORK \
 docker run -d --rm --name $NAME_API --network=$NETWORK \
        --env=REDIS_URL="redis://$NAME_REDIS:6379" \
        -v $VOLUME:/beebop/storage \
-       -p 8080:8080\
+       -p 8080:8080 \
        $TAG_SHA
