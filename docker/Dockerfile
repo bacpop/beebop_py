@@ -1,10 +1,10 @@
 FROM mrcide/poppunk:bacpop-20
+WORKDIR /
 
 RUN pip install poetry
 COPY  *.toml *.lock /
 RUN poetry config virtualenvs.create false \
-    && poetry install \ 
-    && poetry config virtualenvs.create true 
+    && poetry install
 
 COPY beebop /beebop
 EXPOSE 8080
