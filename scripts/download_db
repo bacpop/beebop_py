@@ -39,7 +39,7 @@ else
     FILENAME=GPS_v4_references.tar.bz2
 fi
 
-if [ -f "$DEST/GPS_v4" ]; then
+if [ -d "$DEST/GPS_v4" ]; then
     echo "Database already exists at $DEST"
     echo "To redownload, please remove $DEST/GPS_v4 and run $0 again"
     exit 0
