@@ -6,9 +6,8 @@ COPY  *.toml *.lock /
 RUN poetry config virtualenvs.create false \
     && poetry install
 
-COPY beebop /beebop
-COPY scripts/download_db /usr/bin/beebop_download_db
+COPY . /beebop
+WORKDIR /beebop
 EXPOSE 8080
 
-WORKDIR /beebop-run
 CMD poetry run waitress-serve 'beebop.app:app'
