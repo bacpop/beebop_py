@@ -1,4 +1,4 @@
-FROM python:3
+FROM mrcide/poppunk:bacpop-20
 
 RUN pip install poetry
 COPY  *.toml *.lock /
