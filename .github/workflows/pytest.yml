@@ -23,9 +23,9 @@ jobs:
         path: main
 
     - name: Download and extract GPS database
-      working-directory: ./main/storage
+      working-directory: ./main
       run: |
-        ./scripts/download_db --small .
+        ./scripts/download_db --small storage
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
