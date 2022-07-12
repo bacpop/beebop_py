@@ -7,9 +7,8 @@ RUN poetry config virtualenvs.create false \
     && poetry install
 
 COPY beebop /beebop
+COPY scripts/download_db /usr/bin/beebop_download_db
 EXPOSE 8080
 
 WORKDIR /beebop-run
-RUN mkdir -p /beebop-run/storage
-
 CMD poetry run waitress-serve 'beebop.app:app'
