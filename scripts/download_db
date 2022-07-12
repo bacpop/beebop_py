@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 USAGE="Usage: $0 [--small] [<dest>]"
 
