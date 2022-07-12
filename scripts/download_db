@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -ex
+
+USAGE="Usage: $0 [--small] [<dest>]"
+
+SMALL=0
+DEST=
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --small)
+            SMALL=1
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            echo $USAGE
+            exit 1
+            ;;
+        *)
+            if [ ! -z $DEST ]; then
+                echo "Too many positional arguments"
+                echo $USAGE
+                exit 1
+            fi
+            DEST=$1
+            shift
+            ;;
+    esac
+done
+
+if [ -z $DEST ]; then
+    DEST=storage
+fi
+
+if [ $SMALL == 0 ]; then
+    FILENAME=GPS_v4_full.tar.bz2
+else
+    FILENAME=GPS_v4_references.tar.bz2
+fi
+
+if [ -f "$DEST/GPS_v4" ]; then
+    echo "Database already exists at $DEST"
+    echo "To redownload, please remove $DEST/GPS_v4 and run $0 again"
+    exit 0
+fi
+
+echo "Downloading $FILENAME"
+URL=https://sketchdb.blob.core.windows.net/public-dbs/$FILENAME
+DBBZ2=$(mktemp).tar.bz2
+wget  --progress=dot:giga $URL -O $DBBZ2
+echo "Unpacking to $DEST"
+mkdir -p $DEST
+(cd $DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
+
+# Rename the destination directory so that both the reference and full
+# databases end up at the same path.
+if [ $SMALL == 1 ]; then
+    mv $DEST/GPS_v4_references $DEST/GPS_v4
+fi

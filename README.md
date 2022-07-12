@@ -10,11 +10,15 @@
 git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
+
 You will need the GPS_v4 database, please download and extract it into `/storage`:
+
 ```
-wget https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_full.tar.bz2
-tar -xf GPS_v4_references.tar.bz2
+./scripts/download_db --small storage
 ```
+
+(omit the `--small` to download the full 10GB database, which is more than you'll typically want for development)
+
 #### Install dependencies
 ##### Poetry
 You will need Python installed, as well as [Poetry](https://python-poetry.org/), which you can get on Linux with 
