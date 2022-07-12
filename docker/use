@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -ex
+HERE=$(dirname $0)
+. $HERE/common
+
+NETWORK=beebop_nw
+VOLUME=beebop-storage
+NAME_REDIS=beebop-redis
+NAME_API=beebop-py-api
+NAME_WORKER=beebop-py-worker
+
+docker volume create $VOLUME
+docker run --rm -v $VOLUME:/beebop/storage $TAG_SHA \
+       ./scripts/download_db --small storage
+docker network create $NETWORK > /dev/null || /bin/true
+
+docker run -d --name $NAME_REDIS --network=$NETWORK redis:5.0
+docker run -d --name $NAME_WORKER --network=$NETWORK \
+       --env=REDIS_URL=$NAME_REDIS:6379 \
+       -v $VOLUME:/beebop/storage \
+       $TAG_SHA rqworker
+docker run --name $NAME_API --network=$NETWORK \
+       --env=REDIS_URL=$NAME_REDIS:6379 \
+       -v $VOLUME:/beebop/storage \
+       -p 8080:8080\
+       $TAG_SHA
