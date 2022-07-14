@@ -8,6 +8,6 @@ RUN poetry config virtualenvs.create false \
 
 COPY . /beebop
 WORKDIR /beebop
-EXPOSE 8080
+EXPOSE 5000
 
-CMD poetry run waitress-serve 'beebop.app:app'
+CMD poetry run waitress-serve --port=5000 'beebop.app:app'
