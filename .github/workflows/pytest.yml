@@ -126,7 +126,11 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         root_dir: ./main
-        
+
+    # Uncomment the next three lines to debug on failure with
+    # tmate. However, don't leave them uncommented on merge as that
+    # causes failing builds to hang forever.
+    #
     # - name: tmate session
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
