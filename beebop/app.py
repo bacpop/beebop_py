@@ -18,7 +18,7 @@ app = Flask(__name__)
 redis = Redis()
 
 if os.environ.get('TESTING') == 'True':
-    storageLocation = './tests/files/results'
+    storageLocation = './tests/results'
 else:
     storageLocation = './storage'
 

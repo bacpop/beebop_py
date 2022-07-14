@@ -6,9 +6,7 @@ ignored
 !tests/files/json/*
 !*.schema.json
 !args.json
-tests/files/results
-tests/files/poppunk_output/unit_test_visualisations/microreact*
-tests/files/poppunk_output/unit_test_visualisations/network*
+tests/results
 storage/poppunk_output
 node_modules
 storage/GPS_v4*

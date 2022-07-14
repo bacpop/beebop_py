@@ -23,9 +23,8 @@ import beebop.schemas
 
 
 schemas = beebop.schemas.Schema()
-storageLocation = './tests/files'
+storageLocation = './tests/results'
 fs = PoppunkFileStore(storageLocation)
-fs_results = PoppunkFileStore(storageLocation + '/results')
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 args = get_args()
 
@@ -56,13 +55,10 @@ def test_assign_clusters():
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
             '99965c83b1839b25c3c27bd2910da00a']
-    for hash in hashes_list:
-        shutil.copyfile(storageLocation + '/json/' + hash + '.json',
-                        storageLocation + '/results/json/' + hash + '.json')
     assert assignClusters.get_clusters(
         hashes_list,
         'unit_test_poppunk_assign',
-        fs_results,
+        fs,
         db_paths,
         args) == {
             0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
@@ -105,8 +101,8 @@ def test_run_poppunk_internal(qtbot):
                                        redis,
                                        queue)
     # stores sketches in storage
-    assert fs_results.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
-    assert fs_results.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
+    assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
+    assert fs.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
     # submits assign job to queue
     worker = SimpleWorker([queue], connection=queue.connection)
     worker.work(burst=True)  # Runs enqueued job
@@ -172,7 +168,6 @@ def test_get_status_internal(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=Redis())
-    jobs = ['assign', 'microreact', 'network']
     job_assign = q.enqueue(dummy_fct, 1)
     job_microreact = q.enqueue(dummy_fct, 1)
     job_network = q.enqueue(dummy_fct, 1)
@@ -221,8 +216,7 @@ def test_hex_to_decimal():
 
 
 def test_filestore():
-    fs_test = FileStore('./tests/files/json')
-    fs_results = FileStore('./tests/files/results')
+    fs_test = FileStore('./tests/results/json')
     # check for existing file
     assert fs_test.exists('e868c76fec83ee1f69a95bd27b8d5e76') is True
     # get existing sketch
@@ -236,9 +230,9 @@ def test_filestore():
     new_sketch = {
         'random': 'input'
     }
-    assert fs_results.exists(new_hash) is False
-    fs_results.put(new_hash, new_sketch)
-    assert fs_results.exists(new_hash) is True
+    assert fs_test.exists(new_hash) is False
+    fs_test.put(new_hash, new_sketch)
+    assert fs_test.exists(new_hash) is True
 
 
 class RedisMock:
