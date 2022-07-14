@@ -1,11 +1,11 @@
 import json
 import os
 import re
-from types import SimpleNamespace
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+from beebop.utils import get_args
 from tests import setup
 
 
@@ -24,9 +24,7 @@ outdir = fs.output(p_hash)
 if not os.path.exists(outdir):
     os.mkdir(outdir)
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
-with open("./beebop/resources/args.json") as a:
-    args_json = a.read()
-args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
+args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign, qc_dict=qc_dict)
 

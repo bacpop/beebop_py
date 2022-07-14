@@ -6,11 +6,10 @@ import redis.exceptions as redis_exceptions
 from rq import Queue
 from rq.job import Job
 import os
-import json
-from types import SimpleNamespace
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+from beebop.utils import get_args
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -19,7 +18,7 @@ app = Flask(__name__)
 redis = Redis()
 
 if os.environ.get('TESTING') == 'True':
-    storageLocation = './tests/files'
+    storageLocation = './tests/files/results'
 else:
     storageLocation = './storage'
 
@@ -87,9 +86,7 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
     # create FS
     fs = PoppunkFileStore(storageLocation)
     # read arguments
-    with open("./beebop/resources/args.json") as a:
-        args_json = a.read()
-    args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
+    args = get_args()
     # set database paths
     db_paths = DatabaseFileStore('./storage/GPS_v4_references')
     # store json sketches in storage
