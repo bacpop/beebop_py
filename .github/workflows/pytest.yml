@@ -127,6 +127,6 @@ jobs:
       with:
         root_dir: ./main
         
-    - name: tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
+    # - name: tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3

@@ -32,7 +32,7 @@ def get_clusters(hashes_list, p_hash, fs):
     args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
     # set database paths
-    db_paths = DatabaseFileStore('./storage/GPS_v4_reference')
+    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 
     # create qc_dict
     qc_dict = {'run_qc': False}
