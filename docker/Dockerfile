@@ -1,11 +1,13 @@
-FROM python:3
+FROM mrcide/poppunk:bacpop-20
+WORKDIR /
 
 RUN pip install poetry
 COPY  *.toml *.lock /
 RUN poetry config virtualenvs.create false \
-    && poetry install \ 
-    && poetry config virtualenvs.create true 
+    && poetry install
 
-COPY beebop /beebop
-EXPOSE 8080
-CMD poetry run waitress-serve 'beebop.app:app'
+COPY . /beebop
+WORKDIR /beebop
+EXPOSE 5000
+
+CMD poetry run waitress-serve --port=5000 'beebop.app:app'

@@ -13,9 +13,11 @@ from beebop.filestore import PoppunkFileStore
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
-
+redis_host = os.environ.get("REDIS_HOST")
+if not redis_host:
+    redis_host = "127.0.0.1"
 app = Flask(__name__)
-redis = Redis()
+redis = Redis(host=redis_host)
 
 if os.environ.get('TESTING') == 'True':
     storageLocation = './tests/files'
