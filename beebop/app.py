@@ -78,16 +78,14 @@ def run_poppunk():
     """
     sketches = request.json['sketches'].items()
     project_hash = request.json['projectHash']
-    return run_poppunk_internal(sketches, project_hash, storageLocation, redis)
+    q = Queue(connection=redis)
+    return run_poppunk_internal(sketches, project_hash,
+                                storageLocation, redis, q)
 
 
-def run_poppunk_internal(sketches, project_hash, storageLocation, redis):
+def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
     # create FS
     fs = PoppunkFileStore(storageLocation)
-    # set output directory
-    outdir = fs.output(project_hash)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
     # read arguments
     with open("./beebop/resources/args.json") as a:
         args_json = a.read()
@@ -102,23 +100,22 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis):
     # check connection to redis
     check_connection(redis)
     # submit list of hashes to redis worker
-    q = Queue(connection=redis)
     job_assign = q.enqueue(assignClusters.get_clusters,
-                           hashes_list, fs, outdir, db_paths, args)
+                           hashes_list, project_hash, fs, db_paths, args)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job", project_hash+'_assign', job_assign.id)
+    redis.hset("beebop:hash:job:assign", project_hash, job_assign.id)
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
-                               args=(project_hash, outdir, db_paths, args),
+                               args=(project_hash, fs, db_paths, args),
                                depends_on=job_assign)
-    redis.hset("beebop:hash:job", project_hash+'_microreact',
+    redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
-                            args=(project_hash, outdir, db_paths, args),
+                            args=(project_hash, fs, db_paths, args),
                             depends_on=job_assign)
-    redis.hset("beebop:hash:job", project_hash+'_network', job_network.id)
+    redis.hset("beebop:hash:job:network", project_hash, job_network.id)
     return {"assign": job_assign.id,
             "microreact": job_microreact.id,
             "network": job_network.id}
@@ -132,20 +129,15 @@ def get_status(hash):
 
 def get_status_internal(hash, redis):
     check_connection(redis)
+
+    def get_status_job(job, hash, redis):
+        id = redis.hget(f"beebop:hash:job:{job}", hash).decode("utf-8")
+        return Job.fetch(id, connection=redis).get_status()
     try:
-        id_assign = redis.hget("beebop:hash:job",
-                               hash+'_assign').decode("utf-8")
-        job_assign = Job.fetch(id_assign, connection=redis)
-        status_assign = job_assign.get_status()
+        status_assign = get_status_job('assign', hash, redis)
         if status_assign == "finished":
-            id_microreact = redis.hget("beebop:hash:job",
-                                       hash+'_microreact').decode("utf-8")
-            job_microreact = Job.fetch(id_microreact, connection=redis)
-            status_microreact = job_microreact.get_status()
-            id_network = redis.hget("beebop:hash:job",
-                                    hash+'_network').decode("utf-8")
-            job_network = Job.fetch(id_network, connection=redis)
-            status_network = job_network.get_status()
+            status_microreact = get_status_job('microreact', hash, redis)
+            status_network = get_status_job('network', hash, redis)
         else:
             status_microreact = "waiting"
             status_network = "waiting"
@@ -165,7 +157,7 @@ def get_result(hash):
 def get_result_internal(hash, redis):
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job", hash+'_assign').decode("utf-8")
+        id = redis.hget("beebop:hash:job:assign", hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
             return jsonify(response_failure("Result not ready yet"))
