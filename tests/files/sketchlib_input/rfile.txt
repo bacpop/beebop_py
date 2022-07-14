@@ -1,0 +1,2 @@
+6930_8_9	sketchlib_input/6930_8_9.fa
+7622_5_91	sketchlib_input/7622_5_91.fa
