@@ -10,7 +10,11 @@ ignored
 !tests/files/f3d9b387e311d5ab59a8c08eb3545dbb.json
 !*.schema.json
 !args.json
-tests/files/poppunk_output
+tests/files/poppunk_output/*
+!tests/files/poppunk_output/unit_test_visualisations
+tests/files/poppunk_output/unit_test_visualisations/*
+!tests/files/poppunk_output/unit_test_visualisations/include*
+!tests/files/poppunk_output/unit_test_visualisations/unit_test_visualisations*
 storage/poppunk_output
 node_modules
 storage/GPS_v4*
