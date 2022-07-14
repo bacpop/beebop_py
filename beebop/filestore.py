@@ -41,6 +41,25 @@ class PoppunkFileStore:
     def output(self, p_hash):
         return str(PurePath(self.output_base, p_hash))
 
+    def output_network(self, p_hash):
+        return str(PurePath(self.output(p_hash), "network"))
+
+    def output_microreact(self, p_hash, cluster):
+        return str(PurePath(self.output(p_hash), "microreact_" + str(cluster)))
+
+    def include_files(self, p_hash, cluster):
+        return str(PurePath(self.output(p_hash),
+                            "include" + str(cluster) + ".txt"))
+
+    def network_file(self, p_hash):
+        return str(PurePath(self.output(p_hash), p_hash + "_graph.gt"))
+
+    def previous_query_clustering(self, p_hash):
+        return str(PurePath(self.output(p_hash), p_hash + "_clusters.csv"))
+
+    def distances(self, p_hash):
+        return str(PurePath(self.output(p_hash), p_hash).with_suffix(".dists"))
+
 
 class DatabaseFileStore:
     def __init__(self, full_path):
@@ -49,3 +68,5 @@ class DatabaseFileStore:
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
                                       self.name).with_suffix('.dists.pkl'))
+        self.previous_clustering = str(PurePath(self.db,
+                                                self.name + '_clusters.csv'))
