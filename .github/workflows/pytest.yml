@@ -112,8 +112,15 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
-        TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
-        poetry run coverage xml
+        TESTING=True poetry run coverage run -m pytest
+
+    - name: Process coverage
+      working-directory: ./main
+      run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+        export PATH="/usr/share/miniconda/bin:$PATH"
+        poetry run coverage report -m && poetry run coverage xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
