@@ -35,13 +35,15 @@ fi
 
 if [ $SMALL == 0 ]; then
     FILENAME=GPS_v4_full.tar.bz2
+    DEST_DIR=$DEST/GPS_v4
 else
     FILENAME=GPS_v4_references.tar.bz2
+    DEST_DIR=$DEST/GPS_v4_references
 fi
 
-if [ -d "$DEST/GPS_v4" ]; then
+if [ -d "$DEST_DIR" ]; then
     echo "Database already exists at $DEST"
-    echo "To redownload, please remove $DEST/GPS_v4 and run $0 again"
+    echo "To redownload, please remove $DEST_DIR and run $0 again"
     exit 0
 fi
 
@@ -52,9 +54,3 @@ wget  --progress=dot:giga $URL -O $DBBZ2
 echo "Unpacking to $DEST"
 mkdir -p $DEST
 (cd $DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
-
-# Rename the destination directory so that both the reference and full
-# databases end up at the same path.
-if [ $SMALL == 1 ]; then
-    mv $DEST/GPS_v4_references $DEST/GPS_v4
-fi
