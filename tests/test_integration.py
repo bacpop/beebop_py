@@ -21,12 +21,13 @@ def test_request_version(client):
 
 def test_run_poppunk(client, qtbot):
     # this requires Redis & rqworker to be running
+    storage = "./tests/files/results/poppunk_output/"
+    os.makedirs(storage, exist_ok=True)
     # generate sketches
     sketches = json.loads(setup.generate_json())
     assert jsonschema.validate(sketches, schemas.sketches) is None
     # submit new job
     p_hash = 'integration_test_run_poppunk'
-    storage = "./tests/files/poppunk_output/"
     response = client.post("/poppunk", json={
         'projectHash': p_hash,
         'sketches': sketches})

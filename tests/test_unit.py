@@ -10,7 +10,7 @@ from werkzeug.exceptions import InternalServerError
 import string
 import random
 import os
-from types import SimpleNamespace
+import shutil
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -18,16 +18,16 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
+from beebop.utils import get_args
 import beebop.schemas
 
 
 schemas = beebop.schemas.Schema()
 storageLocation = './tests/files'
 fs = PoppunkFileStore(storageLocation)
+fs_results = PoppunkFileStore(storageLocation + '/results')
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
-with open("./beebop/resources/args.json") as a:
-    args_json = a.read()
-args = json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
+args = get_args()
 
 
 def dummy_fct(duration):
@@ -52,14 +52,17 @@ def test_get_version():
 
 
 def test_assign_clusters():
-    assert assignClusters.get_clusters(
-        [
+    hashes_list = [
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
-            '99965c83b1839b25c3c27bd2910da00a'
-        ],
+            '99965c83b1839b25c3c27bd2910da00a']
+    for hash in hashes_list:
+        shutil.copyfile(storageLocation + '/json/' + hash + '.json',
+                        storageLocation + '/results/json/' + hash + '.json')
+    assert assignClusters.get_clusters(
+        hashes_list,
         'unit_test_poppunk_assign',
-        fs,
+        fs_results,
         db_paths,
         args) == {
             0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
@@ -70,32 +73,30 @@ def test_assign_clusters():
 def test_microreact_internal():
     assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
                      1: {'cluster': 59, 'hash': 'another_hash'}}
-    fs_test = PoppunkFileStore('./tests/files')
     p_hash = 'unit_test_visualisations'
     visualise.microreact_internal(assign_result, p_hash,
-                                  fs_test, db_paths, args)
-    assert os.path.exists(fs_test.output_microreact(p_hash, 5) +
+                                  fs, db_paths, args)
+    assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
 
 def test_network():
     p_hash = 'unit_test_visualisations'
-    fs_test = PoppunkFileStore('./tests/files')
-    visualise.network(p_hash, fs_test, db_paths, args)
-    assert os.path.exists(fs_test.output_network(p_hash) +
+    visualise.network(p_hash, fs, db_paths, args)
+    assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
 
 def test_run_poppunk_internal(qtbot):
-    fs_test = FileStore('./tests/files')
+    fs_json = FileStore('./tests/files/json')
     sketches = {
         'e868c76fec83ee1f69a95bd27b8d5e76':
-        fs_test.get('e868c76fec83ee1f69a95bd27b8d5e76'),
+        fs_json.get('e868c76fec83ee1f69a95bd27b8d5e76'),
         'f3d9b387e311d5ab59a8c08eb3545dbb':
-        fs_test.get('f3d9b387e311d5ab59a8c08eb3545dbb')
+        fs_json.get('f3d9b387e311d5ab59a8c08eb3545dbb')
     }.items()
     project_hash = 'unit_test_run_poppunk_internal'
-    storage_location = storageLocation
+    storage_location = storageLocation + '/results'
     redis = Redis()
     queue = Queue(connection=Redis())
     job_ids = app.run_poppunk_internal(sketches,
@@ -104,8 +105,8 @@ def test_run_poppunk_internal(qtbot):
                                        redis,
                                        queue)
     # stores sketches in storage
-    assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
-    assert fs.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
+    assert fs_results.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
+    assert fs_results.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
     # submits assign job to queue
     worker = SimpleWorker([queue], connection=queue.connection)
     worker.work(burst=True)  # Runs enqueued job
@@ -136,7 +137,7 @@ def test_run_poppunk_internal(qtbot):
 def test_get_result_internal(client):
     # queue example job
     redis = Redis()
-    q = Queue(connection=Redis())
+    q = Queue(connection=redis)
     job = q.enqueue(dummy_fct, 5)
     hash = "unit_test_get_result_internal"
     redis.hset("beebop:hash:job:assign", hash, job.id)
@@ -220,7 +221,8 @@ def test_hex_to_decimal():
 
 
 def test_filestore():
-    fs_test = FileStore('./tests/files')
+    fs_test = FileStore('./tests/files/json')
+    fs_results = FileStore('./tests/files/results')
     # check for existing file
     assert fs_test.exists('e868c76fec83ee1f69a95bd27b8d5e76') is True
     # get existing sketch
@@ -234,9 +236,9 @@ def test_filestore():
     new_sketch = {
         'random': 'input'
     }
-    assert fs_test.exists(new_hash) is False
-    fs_test.put(new_hash, new_sketch)
-    assert fs_test.exists(new_hash) is True
+    assert fs_results.exists(new_hash) is False
+    fs_results.put(new_hash, new_sketch)
+    assert fs_results.exists(new_hash) is True
 
 
 class RedisMock:
