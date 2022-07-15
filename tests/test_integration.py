@@ -55,7 +55,8 @@ def test_run_poppunk(client, qtbot):
         assert read_data(status)['microreact'] == 'finished'
 
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
-    assert read_data(client.get("/status/" + p_hash))['microreact'] == 'finished'
+    assert read_data(client.get("/status/" +
+                                p_hash))['microreact'] == 'finished'
 
 
 def test_404(client):
