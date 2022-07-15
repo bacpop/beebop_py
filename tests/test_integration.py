@@ -55,7 +55,7 @@ def test_run_poppunk(client, qtbot):
         status = client.get("/status/" + p_hash)
         assert read_data(status)['microreact'] == 'finished'
 
-    qtbot.waitUntil(microreact_status_finished, timeout=50000)
+    qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/microreact_5/microreact_5_core_NJ.nwk")
 
@@ -63,7 +63,7 @@ def test_run_poppunk(client, qtbot):
         status = client.get("/status/" + p_hash)
         assert read_data(status)['network'] == 'finished'
 
-    qtbot.waitUntil(network_status_finished, timeout=50000)
+    qtbot.waitUntil(network_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/network/network_cytoscape.graphml")
 
