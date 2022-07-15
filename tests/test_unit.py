@@ -76,13 +76,6 @@ def test_microreact_internal():
                           "/microreact_5_core_NJ.nwk")
 
 
-def test_network():
-    p_hash = 'unit_test_visualisations'
-    visualise.network(p_hash, fs, db_paths, args)
-    assert os.path.exists(fs.output_network(p_hash) +
-                          "/network_cytoscape.graphml")
-
-
 def test_run_poppunk_internal(qtbot):
     fs_json = FileStore('./tests/files/json')
     sketches = {
@@ -124,10 +117,6 @@ def test_run_poppunk_internal(qtbot):
     assert read_redis("beebop:hash:job:microreact",
                       project_hash,
                       redis) == job_ids["microreact"]
-    job_network = Job.fetch(job_ids["network"], connection=redis)
-    assert job_network.get_status() in status_options
-    assert read_redis("beebop:hash:job:network",
-                      project_hash, redis) == job_ids["network"]
 
 
 def test_get_result_internal(client):
@@ -176,13 +165,11 @@ def test_get_status_internal(client):
     hash = "unit_test_get_status_internal"
     redis.hset("beebop:hash:job:assign", hash, job_assign.id)
     redis.hset("beebop:hash:job:microreact", hash, job_microreact.id)
-    redis.hset("beebop:hash:job:network", hash, job_network.id)
     result = app.get_status_internal(hash, redis)
     assert read_data(result)['status'] == 'success'
     status_options = ['queued', 'started', 'finished', 'scheduled', 'waiting']
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
-    assert read_data(result)['data']['network'] in status_options
     assert read_data(app.get_status_internal("wrong-hash", redis)) == {
         "status": "failure",
         "errors": ["Unknown project hash"],

@@ -41,9 +41,6 @@ class PoppunkFileStore:
     def output(self, p_hash):
         return str(PurePath(self.output_base, p_hash))
 
-    def output_network(self, p_hash):
-        return str(PurePath(self.output(p_hash), "network"))
-
     def output_microreact(self, p_hash, cluster):
         return str(PurePath(self.output(p_hash), "microreact_" + str(cluster)))
 
