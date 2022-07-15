@@ -82,6 +82,10 @@ def run_poppunk():
                                 storageLocation, redis, q)
 
 
+def job_that_should_not_fail():
+    return "Done"
+
+
 def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
     # create FS
     fs = PoppunkFileStore(storageLocation)
@@ -103,9 +107,7 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
     redis.hset("beebop:hash:job:assign", project_hash, job_assign.id)
     # create visualisations
     # microreact
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(project_hash, fs, db_paths, args),
-                               depends_on=job_assign)
+    job_microreact = q.enqueue(job_that_should_not_fail)
     redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
     return {"assign": job_assign.id,
