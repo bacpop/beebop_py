@@ -70,10 +70,12 @@ def test_assign_clusters():
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                     1: {'cluster': 59, 'hash': 'another_hash'}}
+                         1: {'cluster': 59, 'hash': 'another_hash'}}
+
         class mock_dependency:
             def __init__(self, result):
                 self.result = result
+
         class mock_job:
             def __init__(self, result):
                 self.dependency = mock_dependency(result)
