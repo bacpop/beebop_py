@@ -1,3 +1,4 @@
+from unittest import result
 import jsonschema
 import json
 from PopPUNK import __version__ as poppunk_version
@@ -67,19 +68,23 @@ def test_assign_clusters():
 
 
 def test_microreact(mocker):
-    class mock_job():
-        def __init__(self, result):
-            self.dependency = {"result": result}
-    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
+    def mock_get_current_job(Redis):
+        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
                      1: {'cluster': 59, 'hash': 'another_hash'}}
-    this_job = mock_job(assign_result)
+        class mock_dependency:
+            def __init__(self, result):
+                self.result = result
+        class mock_job:
+            def __init__(self, result):
+                self.dependency = mock_dependency(result)
+        return mock_job(assign_result)
     mocker.patch(
-        'rq.get_current_job',
-        return_value=this_job
+        'beebop.visualise.get_current_job',
+        new=mock_get_current_job
     )
+    from beebop import visualise
     p_hash = 'unit_test_visualisations'
-    visualise.microreact_internal(assign_result, p_hash,
-                                  fs, db_paths, args)
+    visualise.microreact(p_hash, fs, db_paths, args)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
