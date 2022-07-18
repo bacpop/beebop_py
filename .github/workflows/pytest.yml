@@ -126,7 +126,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
-        rqworker &
+        rqworker > rq_output.txt 2>&1 &
         TESTING=True poetry run coverage run -m pytest
 
     - name: Process coverage
