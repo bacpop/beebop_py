@@ -110,8 +110,14 @@ def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
                                depends_on=job_assign)
     redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
+    # network
+    job_network = q.enqueue(visualise.network,
+                            args=(project_hash, fs, db_paths, args),
+                            depends_on=job_assign)
+    redis.hset("beebop:hash:job:network", project_hash, job_network.id)
     return {"assign": job_assign.id,
-            "microreact": job_microreact.id}
+            "microreact": job_microreact.id,
+            "network": job_network.id}
 
 
 # get job status
@@ -130,10 +136,13 @@ def get_status_internal(hash, redis):
         status_assign = get_status_job('assign', hash, redis)
         if status_assign == "finished":
             status_microreact = get_status_job('microreact', hash, redis)
+            status_network = get_status_job('network', hash, redis)
         else:
             status_microreact = "waiting"
+            status_network = "waiting"
         return jsonify(response_success({"assign": status_assign,
-                                         "microreact": status_microreact}))
+                                         "microreact": status_microreact,
+                                         "network": status_network}))
     except AttributeError:
         return jsonify(response_failure("Unknown project hash"))
 

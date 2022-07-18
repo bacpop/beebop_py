@@ -44,6 +44,9 @@ class PoppunkFileStore:
     def output_microreact(self, p_hash, cluster):
         return str(PurePath(self.output(p_hash), "microreact_" + str(cluster)))
 
+    def output_network(self, p_hash):
+        return str(PurePath(self.output(p_hash), "network"))
+
     def include_files(self, p_hash, cluster):
         return str(PurePath(self.output(p_hash),
                             "include" + str(cluster) + ".txt"))

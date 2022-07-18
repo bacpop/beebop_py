@@ -37,6 +37,7 @@ def test_run_poppunk(client, qtbot):
     status_options = ['queued', 'started', 'finished', 'waiting']
     assert read_data(status)['assign'] in status_options
     assert read_data(status)['microreact'] in status_options
+    assert read_data(status)['network'] in status_options
 
     # retrieve cluster result when finished
     def assign_status_finished():
@@ -57,6 +58,14 @@ def test_run_poppunk(client, qtbot):
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/microreact_5/microreact_5_core_NJ.nwk")
+    
+    def network_status_finished():
+        status = client.get("/status/" + p_hash)
+        assert read_data(status)['network'] == 'finished'
+
+    qtbot.waitUntil(network_status_finished, timeout=100000)
+    assert os.path.exists(storage + p_hash +
+                          "/network/network_cytoscape.graphml")
 
 
 def test_404(client):
