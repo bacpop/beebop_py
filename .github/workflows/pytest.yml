@@ -113,17 +113,13 @@ jobs:
         poetry install
         conda install pytest-xvfb
 
-    - name: Run Redis & rqworker
+    - name: Run Redis
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
-#        rqworker &
-
-    - name: tmate session
-      uses: mxschmitt/action-tmate@v3
 
     - name: Test with pytest
       working-directory: ./main
@@ -131,6 +127,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
+        rqworker &
         TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
         poetry run coverage xml
 
