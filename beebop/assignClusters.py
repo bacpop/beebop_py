@@ -1,8 +1,9 @@
-from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
 import re
 import os
+
+from beebop.poppunkWrapper import PoppunkWrapper
 
 
 def hex_to_decimal(sketches_dict):
@@ -41,34 +42,8 @@ def get_clusters(hashes_list, p_hash, fs, db_paths, args):
     qNames = sketch_to_hdf5(sketches_dict, outdir)
 
     # run query assignment
-    assign_query_hdf5(
-        dbFuncs=dbFuncs,
-        ref_db=db_paths.db,
-        qNames=qNames,
-        output=outdir,
-        qc_dict=qc_dict,
-        update_db=args.assign.update_db,
-        write_references=args.assign.write_references,
-        distances=db_paths.distances,
-        threads=args.assign.threads,
-        overwrite=args.assign.overwrite,
-        plot_fit=args.assign.plot_fit,
-        graph_weights=False,
-        max_a_dist=args.assign.max_a_dist,
-        max_pi_dist=args.assign.max_pi_dist,
-        type_isolate=args.assign.type_isolate,
-        model_dir=db_paths.db,
-        strand_preserved=args.assign.strand_preserved,
-        previous_clustering=db_paths.db,
-        external_clustering=args.assign.external_clustering,
-        core=args.assign.core_only,
-        accessory=args.assign.accessory_only,
-        gpu_sketch=args.assign.gpu_sketch,
-        gpu_dist=args.assign.gpu_dist,
-        gpu_graph=args.assign.gpu_graph,
-        deviceid=args.assign.deviceid,
-        save_partial_query_graph=args.assign.save_partial_query_graph
-    )
+    wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
+    wrapper.assign_clusters(dbFuncs, qc_dict, qNames)
 
     queries_names, queries_clusters, _, _, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
