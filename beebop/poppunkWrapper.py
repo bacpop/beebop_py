@@ -1,3 +1,4 @@
+from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 
 
@@ -7,6 +8,36 @@ class PoppunkWrapper:
         self.db_paths = db_paths
         self.args = args
         self.p_hash = p_hash
+
+    def assign_clusters(self, dbFuncs, qc_dict, qNames):
+        assign_query_hdf5(
+            dbFuncs=dbFuncs,
+            ref_db=self.db_paths.db,
+            qNames=qNames,
+            output=self.fs.output(self.p_hash),
+            qc_dict=qc_dict,
+            update_db=self.args.assign.update_db,
+            write_references=self.args.assign.write_references,
+            distances=self.db_paths.distances,
+            threads=self.args.assign.threads,
+            overwrite=self.args.assign.overwrite,
+            plot_fit=self.args.assign.plot_fit,
+            graph_weights=False,
+            max_a_dist=self.args.assign.max_a_dist,
+            max_pi_dist=self.args.assign.max_pi_dist,
+            type_isolate=self.args.assign.type_isolate,
+            model_dir=self.db_paths.db,
+            strand_preserved=self.args.assign.strand_preserved,
+            previous_clustering=self.db_paths.db,
+            external_clustering=self.args.assign.external_clustering,
+            core=self.args.assign.core_only,
+            accessory=self.args.assign.accessory_only,
+            gpu_sketch=self.args.assign.gpu_sketch,
+            gpu_dist=self.args.assign.gpu_dist,
+            gpu_graph=self.args.assign.gpu_graph,
+            deviceid=self.args.assign.deviceid,
+            save_partial_query_graph=self.args.assign.save_partial_query_graph
+        )
 
     def create_microreact(self, cluster_no):
         generate_visualisations(
