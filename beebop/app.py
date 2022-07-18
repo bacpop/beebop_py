@@ -19,10 +19,8 @@ if not redis_host:
 app = Flask(__name__)
 redis = Redis(host=redis_host)
 
-if os.environ.get('TESTING') == 'True':
-    storageLocation = './tests/results'
-else:
-    storageLocation = './storage'
+storage_location = os.environ.get('STORAGE_LOCATION')
+database_location = os.environ.get('DB_LOCATION')
 
 
 def response_success(data):
@@ -81,16 +79,16 @@ def run_poppunk():
     project_hash = request.json['projectHash']
     q = Queue(connection=redis)
     return run_poppunk_internal(sketches, project_hash,
-                                storageLocation, redis, q)
+                                storage_location, redis, q)
 
 
-def run_poppunk_internal(sketches, project_hash, storageLocation, redis, q):
+def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
     # create FS
-    fs = PoppunkFileStore(storageLocation)
+    fs = PoppunkFileStore(storage_location)
     # read arguments
     args = get_args()
     # set database paths
-    db_paths = DatabaseFileStore('./storage/GPS_v4_references')
+    db_paths = DatabaseFileStore(database_location)
     # store json sketches in storage
     hashes_list = []
     for key, value in sketches:
