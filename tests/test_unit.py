@@ -66,6 +66,24 @@ def test_assign_clusters():
             2: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'}}
 
 
+def test_microreact(mocker):
+    class mock_job():
+        def __init__(self, result):
+            self.dependency = {"result": result}
+    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
+                     1: {'cluster': 59, 'hash': 'another_hash'}}
+    this_job = mock_job(assign_result)
+    mocker.patch(
+        'rq.get_current_job',
+        return_value=this_job
+    )
+    p_hash = 'unit_test_visualisations'
+    visualise.microreact_internal(assign_result, p_hash,
+                                  fs, db_paths, args)
+    assert os.path.exists(fs.output_microreact(p_hash, 5) +
+                          "/microreact_5_core_NJ.nwk")
+
+
 def test_microreact_internal():
     assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
                      1: {'cluster': 59, 'hash': 'another_hash'}}
