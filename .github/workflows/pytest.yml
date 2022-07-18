@@ -23,10 +23,9 @@ jobs:
         path: main
 
     - name: Download and extract GPS database
-      working-directory: ./main/storage
+      working-directory: ./main
       run: |
-        wget --progress=dot:giga https://sketchdb.blob.core.windows.net/public-dbs/GPS_v4_references.tar.bz2
-        tar -xf GPS_v4_references.tar.bz2
+        ./scripts/download_db --small storage
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -128,17 +127,25 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         rqworker &
-        TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
-        poetry run coverage xml
-      
-    - name: tmate session
-      uses: mxschmitt/action-tmate@v3
+        TESTING=True poetry run coverage run -m pytest
+
+    - name: Process coverage
+      working-directory: ./main
+      run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+        export PATH="/usr/share/miniconda/bin:$PATH"
+        poetry run coverage report -m && poetry run coverage xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
         root_dir: ./main
-        
+
+    # Uncomment the next three lines to debug on failure with
+    # tmate. However, don't leave them uncommented on merge as that
+    # causes failing builds to hang forever.
+    #
     - name: tmate session
       if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
