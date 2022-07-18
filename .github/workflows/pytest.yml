@@ -120,7 +120,7 @@ jobs:
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
-        rqworker &
+#        rqworker &
 
     - name: tmate session
       uses: mxschmitt/action-tmate@v3
