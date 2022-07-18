@@ -1,4 +1,5 @@
 import pytest
+import shutil
 
 from beebop.app import app as flask_app
 
@@ -20,3 +21,9 @@ def client(app):
     ctx.push()
 
     return app.test_client()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def copy_files():
+    storageLocation = './tests/results'
+    shutil.copytree('./tests/files', storageLocation, dirs_exist_ok=True)

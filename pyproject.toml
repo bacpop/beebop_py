@@ -18,6 +18,8 @@ redis = "^4.3.1"
 pytest-qt = "^4.0.2"
 pytest = "^7.1.2"
 rq = "^1.10.1"
+six = "^1.16.0"
+pytest-mock = "^3.8.2"
 
 [tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^6.4.1"}

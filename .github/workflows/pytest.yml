@@ -84,6 +84,21 @@ jobs:
         python setup.py install
         python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
 
+    - name: Get rapidnj source code
+      uses: actions/checkout@v3
+      with:
+        repository:  somme89/rapidNJ 
+        path: rapidnj
+
+    - name: Install rapidnj
+      working-directory: ./rapidnj
+      run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+        make
+        cd bin
+        mv rapidnj /usr/share/miniconda/bin
+
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
@@ -97,14 +112,13 @@ jobs:
         poetry install
         conda install pytest-xvfb
 
-    - name: Run Redis & rqworker
+    - name: Run Redis
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
-        rqworker &
 
     - name: Test with pytest
       working-directory: ./main
@@ -112,6 +126,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
+        rqworker > rq_output.txt 2>&1 &
         TESTING=True poetry run coverage run -m pytest
 
     - name: Process coverage

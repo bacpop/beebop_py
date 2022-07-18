@@ -1,8 +1,12 @@
+import json
+import os
+import re
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-import re
-import os
+from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+from beebop.utils import get_args
+from tests import setup
 
 
 def hex_to_decimal(sketches_dict):
@@ -13,35 +17,23 @@ def hex_to_decimal(sketches_dict):
                                           sample[str(x)]))
 
 
-def get_clusters(hashes_list, p_hash, fs, db_paths, args):
-    """
-    assign clusterIDs to sketches
-    hashes_list: list of json objects stored json object of multiple sketches
-    """
-    # set output directory
-    outdir = fs.output(p_hash)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+storageLocation = './tests/files'
+p_hash = 'unit_test_visualisations'
+fs = PoppunkFileStore(storageLocation)
+outdir = fs.output(p_hash)
+if not os.path.exists(outdir):
+    os.mkdir(outdir)
+db_paths = DatabaseFileStore('./storage/GPS_v4_references')
+args = get_args()
+qc_dict = {'run_qc': False}
+dbFuncs = setupDBFuncs(args=args.assign, qc_dict=qc_dict)
 
-    # create qc_dict
-    qc_dict = {'run_qc': False}
+sketches_dict = json.loads(setup.generate_json())
+hex_to_decimal(sketches_dict)
 
-    # create dbFuncs
-    dbFuncs = setupDBFuncs(args=args.assign, qc_dict=qc_dict)
+qNames = sketch_to_hdf5(sketches_dict, outdir)
 
-    # transform json to dict
-    sketches_dict = {}
-    for hash in hashes_list:
-        sketches_dict[hash] = fs.input.get(hash)
-
-    # convert hex to decimal
-    hex_to_decimal(sketches_dict)
-
-    # create hdf5 db
-    qNames = sketch_to_hdf5(sketches_dict, outdir)
-
-    # run query assignment
-    assign_query_hdf5(
+assign_query_hdf5(
         dbFuncs=dbFuncs,
         ref_db=db_paths.db,
         qNames=qNames,
@@ -70,13 +62,4 @@ def get_clusters(hashes_list, p_hash, fs, db_paths, args):
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
 
-    queries_names, queries_clusters, _, _, _, _, _ = \
-        summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
-
-    result = {}
-    for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
-        result[i] = {
-            "hash": name,
-            "cluster": cluster
-        }
-    return result
+summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
