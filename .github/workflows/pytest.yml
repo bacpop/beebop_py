@@ -130,6 +130,9 @@ jobs:
         rqworker &
         TESTING=True poetry run coverage run -m pytest && poetry run coverage report -m
         poetry run coverage xml
+      
+    - name: tmate session
+      uses: mxschmitt/action-tmate@v3
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
