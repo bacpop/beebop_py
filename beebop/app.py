@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request, abort
+from importlib.resources import path
+from flask import Flask, jsonify, request, abort, send_file
 from flask_expects_json import expects_json
 from waitress import serve
 from redis import Redis
@@ -6,6 +7,11 @@ import redis.exceptions as redis_exceptions
 from rq import Queue
 from rq.job import Job
 import os
+from io import BytesIO
+import zipfile
+from datetime import datetime
+import json
+import requests
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -162,6 +168,94 @@ def get_result_internal(hash, redis):
             return jsonify(response_success(job.result))
     except AttributeError:
         return jsonify(response_failure("Unknown project hash"))
+
+
+@app.route('/downloadZip', methods=['POST'])
+def send_zip():
+    project_hash = request.json['projectHash']
+    type = request.json['type']
+    cluster = str(request.json['cluster'])
+    fs = PoppunkFileStore(storage_location)
+    return send_zip_internal(project_hash, type, cluster, fs)
+
+
+def send_zip_internal(project_hash, type, cluster, fs):
+    if (type == 'microreact'):
+        path_folder = fs.output_microreact(project_hash, cluster)
+    elif (type == 'network'):
+        path_folder = fs.output_network(project_hash)
+    # generate zipfile
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(path_folder):
+            for file in files:
+                zipf.write(os.path.join(root, file), arcname=file)
+    memory_file.seek(0)
+    return send_file(memory_file,
+                     download_name=type + '.zip',
+                     as_attachment=True)
+
+
+@app.route('/microreactURL', methods=['POST'])
+def generate_microreact_url():
+    microreact_api_new_url = "https://microreact.org/api/projects/create"
+    project_hash = request.json['projectHash']
+    cluster = str(request.json['cluster'])
+    api_token = str(request.json['apiToken'])
+    fs = PoppunkFileStore(storage_location)
+    return generate_microreact_url_internal(microreact_api_new_url,
+                                            project_hash,
+                                            cluster,
+                                            api_token,
+                                            fs)
+
+
+def generate_microreact_url_internal(microreact_api_new_url,
+                                     project_hash,
+                                     cluster,
+                                     api_token,
+                                     fs):
+    path_csv = fs.microreact_csv(project_hash, cluster)
+    with open(path_csv, 'r') as csv_file:
+        csv_string = csv_file.read()
+
+    path_dot = fs.microreact_dot(project_hash, cluster)
+    with open(path_dot, 'r') as dot_file:
+        dot_string = dot_file.read()
+
+    # nwk is only available where cluster has >=3 samples
+    path_nwk = fs.microreact_nwk(project_hash, cluster)
+    if (os.path.exists(path_nwk)):
+        with open(path_nwk, 'r') as tree_file:
+            tree_string = tree_file.read()
+
+        # loading microreact file with tree
+        with open('./beebop/resources/csv_dot_nwk.microreact',
+                  'rb') as example_microreact:
+            json_microreact = json.load(example_microreact)
+        # modify microreact json file - tree only
+        json_microreact["files"]["tree-file-1"]["blob"] = tree_string
+    else:
+        # loading microreact file without tree
+        with open('./beebop/resources/csv_dot.microreact',
+                  'rb') as example_microreact:
+            json_microreact = json.load(example_microreact)
+
+    # modify microreact json file - data, network and metadata
+    json_microreact["files"]["data-file-1"]["blob"] = csv_string
+    json_microreact["files"]["network-file-1"]["blob"] = dot_string
+    json_microreact["meta"]["name"] = project_hash
+    json_microreact["meta"]["description"] = 'Project created with beebop'
+    json_microreact["meta"]["timestamp"] = datetime.now().isoformat()
+
+    # generate URL from microreact API
+    headers = {"Content-type": "application/json; charset=UTF-8",
+               "Access-Token": api_token}
+    r = requests.post(microreact_api_new_url,
+                      data=json.dumps(json_microreact),
+                      headers=headers)
+    url = r.json()['url']
+    return url
 
 
 if __name__ == "__main__":
