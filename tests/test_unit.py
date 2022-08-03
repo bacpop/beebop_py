@@ -1,4 +1,3 @@
-from unittest import result
 import jsonschema
 import json
 from PopPUNK import __version__ as poppunk_version
@@ -11,7 +10,8 @@ from werkzeug.exceptions import InternalServerError
 import string
 import random
 import os
-import shutil
+import re
+from flask import Flask
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -213,6 +213,51 @@ def test_get_status_internal(client):
         "errors": ["Unknown project hash"],
         "data": []
     }
+
+
+def test_generate_microreact_url_internal():
+    microreact_api_new_url = "https://microreact.org/api/projects/create"
+    project_hash = 'test_microreact_api'
+    api_token = os.environ['MICROREACT_TOKEN']
+    # for a cluster without tree file
+    cluster = '24'
+    result = app.generate_microreact_url_internal(microreact_api_new_url,
+                                                  project_hash,
+                                                  cluster,
+                                                  api_token,
+                                                  fs)
+    assert re.match("https://microreact.org/project/.*-testmicroreactapi",
+                    result)
+    # for a cluster with tree file
+    cluster = '7'
+    result2 = app.generate_microreact_url_internal(microreact_api_new_url,
+                                                   project_hash,
+                                                   cluster,
+                                                   api_token,
+                                                   fs)
+    assert re.match("https://microreact.org/project/.*-testmicroreactapi",
+                    result2)
+
+
+def test_send_zip_internal(client):
+    app_app = Flask(__name__)
+    with app_app.test_request_context():
+        project_hash = 'test_microreact_api'
+        cluster = '24'
+        type = 'microreact'
+        response = app.send_zip_internal(project_hash, type, cluster, fs)
+        response.direct_passthrough = False
+        filename1 = 'microreact_24_microreact_clusters.csv'
+        filename2 = 'microreact_24_perplexity20.0_accessory_tsne.dot'
+        assert filename1.encode('utf-8') in response.data
+        assert filename2.encode('utf-8') in response.data
+        project_hash = 'test_network_zip'
+        cluster = None
+        type = 'network'
+        response = app.send_zip_internal(project_hash, type, cluster, fs)
+        response.direct_passthrough = False
+        assert 'network_cytoscape.csv'.encode('utf-8') in response.data
+        assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
 def test_hex_to_decimal():
