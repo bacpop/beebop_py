@@ -121,6 +121,8 @@ jobs:
         docker run --rm -d --name=redis -p 6379:6379 redis
 
     - name: Test with pytest
+      env:
+        MICROREACT_TOKEN: ${{ secrets.MICROREACT_TOKEN }}
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
