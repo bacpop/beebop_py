@@ -10,8 +10,8 @@ from werkzeug.exceptions import InternalServerError
 import string
 import random
 import os
-import re
 from flask import Flask
+from unittest.mock import Mock, patch
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -24,8 +24,8 @@ import beebop.schemas
 
 
 schemas = beebop.schemas.Schema()
-storageLocation = './tests/results'
-fs = PoppunkFileStore(storageLocation)
+storage_location = './tests/results'
+fs = PoppunkFileStore(storage_location)
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 args = get_args()
 
@@ -117,12 +117,12 @@ def test_run_poppunk_internal(qtbot):
         fs_json.get('f3d9b387e311d5ab59a8c08eb3545dbb')
     }.items()
     project_hash = 'unit_test_run_poppunk_internal'
-    storage_location = storageLocation + '/results'
+    results_storage_location = storage_location + '/results'
     redis = Redis()
     queue = Queue(connection=Redis())
     job_ids = app.run_poppunk_internal(sketches,
                                        project_hash,
-                                       storage_location,
+                                       results_storage_location,
                                        redis,
                                        queue)
     # stores sketches in storage
@@ -155,14 +155,14 @@ def test_run_poppunk_internal(qtbot):
                       project_hash, redis) == job_ids["network"]
 
 
-def test_get_result_internal(client):
+def test_get_clusters_internal(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=redis)
     job = q.enqueue(dummy_fct, 5)
-    hash = "unit_test_get_result_internal"
+    hash = "unit_test_get_clusters_internal"
     redis.hset("beebop:hash:job:assign", hash, job.id)
-    result1 = app.get_result_internal(hash, redis)
+    result1 = app.get_clusters_internal(hash, redis)
     assert read_data(result1) == {
         "status": "failure",
         "errors": ["Result not ready yet"],
@@ -174,7 +174,7 @@ def test_get_result_internal(client):
     # wait until results are available
     while finished is False:
         time.sleep(1)
-        result2 = app.get_result_internal(hash, redis)
+        result2 = app.get_clusters_internal(hash, redis)
         if read_data(result2)['status'] == 'success':
             finished = True
     assert read_data(result2) == {
@@ -182,7 +182,7 @@ def test_get_result_internal(client):
         "errors": [],
         "data": "Result"
     }
-    assert read_data(app.get_result_internal("wrong-hash", redis)) == {
+    assert read_data(app.get_clusters_internal("wrong-hash", redis)) == {
         "status": "failure",
         "errors": ["Unknown project hash"],
         "data": []
@@ -215,28 +215,32 @@ def test_get_status_internal(client):
     }
 
 
-def test_generate_microreact_url_internal():
-    microreact_api_new_url = "https://microreact.org/api/projects/create"
+@patch('requests.post')
+def test_generate_microreact_url_internal(mock_post):
+    mock_post.return_value = Mock(ok=True)
+    mock_post.return_value.json.return_value = {
+        'url': 'https://microreact.org/project/12345-testmicroreactapi'}
+
+    microreact_api_new_url = "https://dummy.url"
     project_hash = 'test_microreact_api'
     api_token = os.environ['MICROREACT_TOKEN']
     # for a cluster without tree file
     cluster = '24'
+
     result = app.generate_microreact_url_internal(microreact_api_new_url,
                                                   project_hash,
                                                   cluster,
                                                   api_token,
-                                                  fs)
-    assert re.match("https://microreact.org/project/.*-testmicroreactapi",
-                    result)
+                                                  storage_location)
+    assert result == 'https://microreact.org/project/12345-testmicroreactapi'
     # for a cluster with tree file
     cluster = '7'
     result2 = app.generate_microreact_url_internal(microreact_api_new_url,
                                                    project_hash,
                                                    cluster,
                                                    api_token,
-                                                   fs)
-    assert re.match("https://microreact.org/project/.*-testmicroreactapi",
-                    result2)
+                                                   storage_location)
+    assert result2 == 'https://microreact.org/project/12345-testmicroreactapi'
 
 
 def test_send_zip_internal(client):
@@ -245,7 +249,10 @@ def test_send_zip_internal(client):
         project_hash = 'test_microreact_api'
         cluster = '24'
         type = 'microreact'
-        response = app.send_zip_internal(project_hash, type, cluster, fs)
+        response = app.send_zip_internal(project_hash,
+                                         type,
+                                         cluster,
+                                         storage_location)
         response.direct_passthrough = False
         filename1 = 'microreact_24_microreact_clusters.csv'
         filename2 = 'microreact_24_perplexity20.0_accessory_tsne.dot'
@@ -254,7 +261,10 @@ def test_send_zip_internal(client):
         project_hash = 'test_network_zip'
         cluster = None
         type = 'network'
-        response = app.send_zip_internal(project_hash, type, cluster, fs)
+        response = app.send_zip_internal(project_hash,
+                                         type,
+                                         cluster,
+                                         storage_location)
         response.direct_passthrough = False
         assert 'network_cytoscape.csv'.encode('utf-8') in response.data
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
