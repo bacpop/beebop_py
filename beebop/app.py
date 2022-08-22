@@ -54,7 +54,7 @@ def check_connection(redis):
         abort(500, description="Redis not found")
 
 
-def generateZip(path_folder):
+def generate_zip(path_folder):
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(path_folder):
@@ -70,6 +70,11 @@ def add_data(path, type, data):
 
 
 def modify_microreact(json_microreact, project_hash, data):
+    """
+    using previously created .microreact file as a template
+    and adding own data to generate .microreact file
+    that can be used with the microreact API
+    """
     if 'tree' in data:
         json_microreact["files"]["tree-file-1"]["blob"] = data['tree']
     json_microreact["files"]["data-file-1"]["blob"] = data['csv']
@@ -219,7 +224,7 @@ def send_zip_internal(project_hash, type, cluster, storage_location):
     elif type == 'network':
         path_folder = fs.output_network(project_hash)
     # generate zipfile
-    memory_file = generateZip(path_folder)
+    memory_file = generate_zip(path_folder)
     return send_file(memory_file,
                      download_name=type + '.zip',
                      as_attachment=True)
@@ -245,6 +250,8 @@ def generate_microreact_url_internal(microreact_api_new_url,
     else:
         path_json = './beebop/resources/csv_dot.microreact'
 
+    # loading existing .microrect file as template for the payload 
+    # that needs to be submitted to the microreact API.
     with open(path_json, 'rb') as example_microreact:
         json_microreact = json.load(example_microreact)
 
