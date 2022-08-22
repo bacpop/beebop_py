@@ -250,7 +250,7 @@ def generate_microreact_url_internal(microreact_api_new_url,
     else:
         path_json = './beebop/resources/csv_dot.microreact'
 
-    # loading existing .microrect file as template for the payload 
+    # loading existing .microrect file as template for the payload
     # that needs to be submitted to the microreact API.
     with open(path_json, 'rb') as example_microreact:
         json_microreact = json.load(example_microreact)
