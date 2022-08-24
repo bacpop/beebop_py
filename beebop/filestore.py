@@ -9,7 +9,7 @@ class FileStore:
         os.makedirs(path, exist_ok=True)
 
     def filename(self, hash):
-        return os.path.join(self._path, hash + '.json')
+        return os.path.join(self._path, f"{hash}.json")
 
     def get(self, hash):
         src = self.filename(hash)
@@ -34,7 +34,7 @@ class FileStore:
 class PoppunkFileStore:
     def __init__(self, storage_location):
         self.storage_location = storage_location
-        self.input = FileStore(storage_location + '/json')
+        self.input = FileStore(f"{storage_location}/json")
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
 
@@ -42,23 +42,40 @@ class PoppunkFileStore:
         return str(PurePath(self.output_base, p_hash))
 
     def output_microreact(self, p_hash, cluster):
-        return str(PurePath(self.output(p_hash), "microreact_" + str(cluster)))
+        return str(PurePath(self.output(p_hash), f"microreact_{cluster}"))
 
     def output_network(self, p_hash):
         return str(PurePath(self.output(p_hash), "network"))
 
     def include_files(self, p_hash, cluster):
         return str(PurePath(self.output(p_hash),
-                            "include" + str(cluster) + ".txt"))
+                            f"include{cluster}.txt"))
 
     def network_file(self, p_hash):
-        return str(PurePath(self.output(p_hash), p_hash + "_graph.gt"))
+        return str(PurePath(self.output(p_hash), f"{p_hash}_graph.gt"))
 
     def previous_query_clustering(self, p_hash):
-        return str(PurePath(self.output(p_hash), p_hash + "_clusters.csv"))
+        return str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
 
     def distances(self, p_hash):
         return str(PurePath(self.output(p_hash), p_hash).with_suffix(".dists"))
+
+    def microreact_csv(self, p_hash, cluster):
+        return str(PurePath(self.output(p_hash),
+                            f"microreact_{cluster}",
+                            f"microreact_{cluster}_microreact_clusters.csv"))
+
+    def microreact_dot(self, p_hash, cluster):
+        return str(PurePath(self.output(p_hash),
+                            f"microreact_{cluster}",
+                            (f"microreact_{cluster}"
+                             f"_perplexity20.0_accessory_tsne.dot")
+                            ))
+
+    def microreact_nwk(self, p_hash, cluster):
+        return str(PurePath(self.output(p_hash),
+                            f"microreact_{cluster}",
+                            f"microreact_{cluster}_core_NJ.nwk"))
 
 
 class DatabaseFileStore:
@@ -69,4 +86,4 @@ class DatabaseFileStore:
         self.distances = str(PurePath(self.db,
                                       self.name).with_suffix('.dists.pkl'))
         self.previous_clustering = str(PurePath(self.db,
-                                                self.name + '_clusters.csv'))
+                                                f"{self.name}_clusters.csv"))

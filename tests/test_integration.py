@@ -3,6 +3,7 @@ import jsonschema
 import os
 import beebop.schemas
 from tests import setup
+import re
 
 
 schemas = beebop.schemas.Schema()
@@ -45,7 +46,8 @@ def test_run_poppunk(client, qtbot):
         assert read_data(status)['assign'] == 'finished'
 
     qtbot.waitUntil(assign_status_finished, timeout=20000)
-    result = client.get("/result/" + p_hash)
+    result = client.post("/results/assign", json={
+        'projectHash': p_hash})
     result_object = json.loads(result.data.decode("utf-8"))
     assert result_object["status"] == "success"
     assert jsonschema.validate(result_object["data"], schemas.cluster) is None
@@ -66,6 +68,29 @@ def test_run_poppunk(client, qtbot):
     qtbot.waitUntil(network_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/network/network_cytoscape.graphml")
+
+
+def test_results_microreact(client):
+    p_hash = 'test_microreact_api'
+    cluster = 7
+    api_token = os.environ['MICROREACT_TOKEN']
+    response = client.post("/results/microreact", json={
+        'projectHash': p_hash,
+        'cluster': cluster,
+        'apiToken': api_token})
+    assert re.match("https://microreact.org/project/.*-testmicroreactapi",
+                    response.data.decode("utf-8"))
+
+
+def test_results_zip(client):
+    p_hash = 'test_network_zip'
+    type = 'network'
+    response = client.post("/results/zip", json={
+        'projectHash': p_hash,
+        'cluster': None,
+        'type': type})
+    assert 'network_cytoscape.csv'.encode('utf-8') in response.data
+    assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
 def test_404(client):

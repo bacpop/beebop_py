@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request, abort
+from importlib.resources import path
+from flask import Flask, jsonify, request, abort, send_file
 from flask_expects_json import expects_json
 from waitress import serve
 from redis import Redis
@@ -6,6 +7,11 @@ import redis.exceptions as redis_exceptions
 from rq import Queue
 from rq.job import Job
 import os
+from io import BytesIO
+import zipfile
+from datetime import datetime
+import json
+import requests
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -46,6 +52,36 @@ def check_connection(redis):
         redis.ping()
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
         abort(500, description="Redis not found")
+
+
+def generate_zip(path_folder):
+    memory_file = BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(path_folder):
+            for file in files:
+                zipf.write(os.path.join(root, file), arcname=file)
+    memory_file.seek(0)
+    return memory_file
+
+
+def add_data(path, type, data):
+    with open(path, 'r') as file:
+        data[type] = file.read()
+
+
+def modify_microreact(json_microreact, project_hash, data):
+    """
+    using previously created .microreact file as a template
+    and adding own data to generate .microreact file
+    that can be used with the microreact API
+    """
+    if 'tree' in data:
+        json_microreact["files"]["tree-file-1"]["blob"] = data['tree']
+    json_microreact["files"]["data-file-1"]["blob"] = data['csv']
+    json_microreact["files"]["network-file-1"]["blob"] = data['dot']
+    json_microreact["meta"]["name"] = project_hash
+    json_microreact["meta"]["description"] = 'Project created with beebop'
+    json_microreact["meta"]["timestamp"] = datetime.now().isoformat()
 
 
 @app.errorhandler(500)
@@ -146,12 +182,29 @@ def get_status_internal(hash, redis):
 
 
 # get job result
-@app.route("/result/<hash>")
-def get_result(hash):
-    return get_result_internal(hash, redis)
+@app.route("/results/<type>", methods=['POST'])
+def get_results(type):
+    if type == 'assign':
+        project_hash = request.json['projectHash']
+        return get_clusters_internal(project_hash, redis)
+    elif type == 'zip':
+        project_hash = request.json['projectHash']
+        type = request.json['type']
+        cluster = str(request.json['cluster'])
+        return send_zip_internal(project_hash, type, cluster, storage_location)
+    elif type == 'microreact':
+        microreact_api_new_url = "https://microreact.org/api/projects/create"
+        project_hash = request.json['projectHash']
+        cluster = str(request.json['cluster'])
+        api_token = str(request.json['apiToken'])
+        return generate_microreact_url_internal(microreact_api_new_url,
+                                                project_hash,
+                                                cluster,
+                                                api_token,
+                                                storage_location)
 
 
-def get_result_internal(hash, redis):
+def get_clusters_internal(hash, redis):
     check_connection(redis)
     try:
         id = redis.hget("beebop:hash:job:assign", hash).decode("utf-8")
@@ -162,6 +215,58 @@ def get_result_internal(hash, redis):
             return jsonify(response_success(job.result))
     except AttributeError:
         return jsonify(response_failure("Unknown project hash"))
+
+
+def send_zip_internal(project_hash, type, cluster, storage_location):
+    fs = PoppunkFileStore(storage_location)
+    if type == 'microreact':
+        path_folder = fs.output_microreact(project_hash, cluster)
+    elif type == 'network':
+        path_folder = fs.output_network(project_hash)
+    # generate zipfile
+    memory_file = generate_zip(path_folder)
+    return send_file(memory_file,
+                     download_name=type + '.zip',
+                     as_attachment=True)
+
+
+def generate_microreact_url_internal(microreact_api_new_url,
+                                     project_hash,
+                                     cluster,
+                                     api_token,
+                                     storage_location):
+    fs = PoppunkFileStore(storage_location)
+
+    data = {}
+    path_csv = fs.microreact_csv(project_hash, cluster)
+    add_data(path_csv, 'csv', data)
+    path_dot = fs.microreact_dot(project_hash, cluster)
+    add_data(path_dot, 'dot', data)
+    # nwk is only available where cluster has >=3 samples
+    path_nwk = fs.microreact_nwk(project_hash, cluster)
+    if os.path.exists(path_nwk):
+        add_data(path_nwk, 'tree', data)
+        path_json = './beebop/resources/csv_dot_nwk.microreact'
+    else:
+        path_json = './beebop/resources/csv_dot.microreact'
+
+    # loading existing .microrect file as template for the payload
+    # that needs to be submitted to the microreact API.
+    with open(path_json, 'rb') as example_microreact:
+        json_microreact = json.load(example_microreact)
+
+    modify_microreact(json_microreact,
+                      project_hash,
+                      data)
+
+    # generate URL from microreact API
+    headers = {"Content-type": "application/json; charset=UTF-8",
+               "Access-Token": api_token}
+    r = requests.post(microreact_api_new_url,
+                      data=json.dumps(json_microreact),
+                      headers=headers)
+    url = r.json()['url']
+    return url
 
 
 if __name__ == "__main__":
