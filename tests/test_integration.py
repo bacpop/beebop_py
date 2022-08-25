@@ -9,8 +9,8 @@ import re
 schemas = beebop.schemas.Schema()
 
 
-def read_data(status):
-    return json.loads(status.data.decode("utf-8"))['data']
+def read_data(response):
+    return json.loads(response.data.decode("utf-8"))['data']
 
 
 def test_request_version(client):
@@ -79,7 +79,7 @@ def test_results_microreact(client):
         'cluster': cluster,
         'apiToken': api_token})
     assert re.match("https://microreact.org/project/.*-testmicroreactapi",
-                    response.data.decode("utf-8"))
+                    read_data(response))
 
 
 def test_results_zip(client):

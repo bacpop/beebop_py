@@ -120,11 +120,12 @@ def test_run_poppunk_internal(qtbot):
     results_storage_location = storage_location + '/results'
     redis = Redis()
     queue = Queue(connection=Redis())
-    job_ids = app.run_poppunk_internal(sketches,
-                                       project_hash,
-                                       results_storage_location,
-                                       redis,
-                                       queue)
+    response = app.run_poppunk_internal(sketches,
+                                        project_hash,
+                                        results_storage_location,
+                                        redis,
+                                        queue)
+    job_ids = read_data(response)['data']
     # stores sketches in storage
     assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
     assert fs.input.exists('f3d9b387e311d5ab59a8c08eb3545dbb')
@@ -163,9 +164,9 @@ def test_get_clusters_internal(client):
     hash = "unit_test_get_clusters_internal"
     redis.hset("beebop:hash:job:assign", hash, job.id)
     result1 = app.get_clusters_internal(hash, redis)
-    assert read_data(result1) == {
+    assert read_data(result1[0])['error'] == {
         "status": "failure",
-        "errors": ["Result not ready yet"],
+        "errors": [{"error": "Result not ready yet"}],
         "data": []
     }
     worker = SimpleWorker([q], connection=q.connection)
@@ -182,9 +183,10 @@ def test_get_clusters_internal(client):
         "errors": [],
         "data": "Result"
     }
-    assert read_data(app.get_clusters_internal("wrong-hash", redis)) == {
+    assert read_data(app.get_clusters_internal("wrong-hash",
+                                               redis)[0])['error'] == {
         "status": "failure",
-        "errors": ["Unknown project hash"],
+        "errors": [{"error": "Unknown project hash"}],
         "data": []
     }
 
@@ -208,18 +210,20 @@ def test_get_status_internal(client):
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
-    assert read_data(app.get_status_internal("wrong-hash", redis)) == {
+    assert read_data(app.get_status_internal("wrong-hash",
+                                             redis)[0])['error'] == {
         "status": "failure",
-        "errors": ["Unknown project hash"],
+        "errors": [{"error": "Unknown project hash"}],
         "data": []
     }
 
 
 @patch('requests.post')
 def test_generate_microreact_url_internal(mock_post):
+    dummy_url = 'https://microreact.org/project/12345-testmicroreactapi'
     mock_post.return_value = Mock(ok=True)
     mock_post.return_value.json.return_value = {
-        'url': 'https://microreact.org/project/12345-testmicroreactapi'}
+        'url': dummy_url}
 
     microreact_api_new_url = "https://dummy.url"
     project_hash = 'test_microreact_api'
@@ -232,7 +236,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                   cluster,
                                                   api_token,
                                                   storage_location)
-    assert result == 'https://microreact.org/project/12345-testmicroreactapi'
+    assert read_data(result)['data'] == dummy_url
     # for a cluster with tree file
     cluster = '7'
     result2 = app.generate_microreact_url_internal(microreact_api_new_url,
@@ -240,7 +244,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                    cluster,
                                                    api_token,
                                                    storage_location)
-    assert result2 == 'https://microreact.org/project/12345-testmicroreactapi'
+    assert read_data(result2)['data'] == dummy_url
 
 
 def test_send_zip_internal(client):
