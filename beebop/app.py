@@ -86,12 +86,14 @@ def modify_microreact(json_microreact, project_hash, data):
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return jsonify(error=response_failure(str(e))), 500
+    return jsonify(error=response_failure({"error": "Internal Server Error",
+                                           "detail": str(e)})), 500
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return jsonify(error=response_failure(str(e))), 404
+    return jsonify(error=response_failure({"error": "Resource not found",
+                                           "detail": str(e)})), 404
 
 
 @app.route('/version')
@@ -149,9 +151,9 @@ def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
                             args=(project_hash, fs, db_paths, args),
                             depends_on=job_assign)
     redis.hset("beebop:hash:job:network", project_hash, job_network.id)
-    return {"assign": job_assign.id,
-            "microreact": job_microreact.id,
-            "network": job_network.id}
+    return jsonify(response_success({"assign": job_assign.id,
+                                     "microreact": job_microreact.id,
+                                     "network": job_network.id}))
 
 
 # get job status
@@ -178,7 +180,8 @@ def get_status_internal(hash, redis):
                                          "microreact": status_microreact,
                                          "network": status_network}))
     except AttributeError:
-        return jsonify(response_failure("Unknown project hash"))
+        return jsonify(error=response_failure({
+            "error": "Unknown project hash"})), 500
 
 
 # get job result
@@ -210,11 +213,13 @@ def get_clusters_internal(hash, redis):
         id = redis.hget("beebop:hash:job:assign", hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
-            return jsonify(response_failure("Result not ready yet"))
+            return jsonify(error=response_failure({
+                "error": "Result not ready yet"})), 500
         else:
             return jsonify(response_success(job.result))
     except AttributeError:
-        return jsonify(response_failure("Unknown project hash"))
+        return jsonify(error=response_failure({
+            "error": "Unknown project hash"})), 500
 
 
 def send_zip_internal(project_hash, type, cluster, storage_location):
@@ -266,7 +271,7 @@ def generate_microreact_url_internal(microreact_api_new_url,
                       data=json.dumps(json_microreact),
                       headers=headers)
     url = r.json()['url']
-    return url
+    return jsonify(response_success(url))
 
 
 if __name__ == "__main__":
