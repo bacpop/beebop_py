@@ -111,6 +111,6 @@ jobs:
     # tmate. However, don't leave them uncommented on merge as that
     # causes failing builds to hang forever.
     #
-    # - name: tmate session
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
+    - name: tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
