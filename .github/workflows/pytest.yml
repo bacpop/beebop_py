@@ -61,6 +61,17 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         conda install graph-tool
+        conda install pandas
+        conda install networkx
+        conda install -c conda-forge pp-sketchlib=2.0.0
+        conda install scikit-learn
+        conda install hdbscan
+        conda install -c conda-forge biopython
+        conda install tqdm
+        conda install -c bioconda treeswift 
+        sudo apt-get install libeigen3-dev
+        sudo apt-get install libopenblas-dev
+        sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
         pip3 install git+https://github.com/bacpop/PopPUNK@bacpop-43#egg=PopPUNK
 
     - name: Install Poetry
