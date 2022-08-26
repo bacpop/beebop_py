@@ -28,7 +28,7 @@ def get_clusters(hashes_list, p_hash, fs, db_paths, args):
     qc_dict = {'run_qc': False}
 
     # create dbFuncs
-    dbFuncs = setupDBFuncs(args=args.assign, qc_dict=qc_dict)
+    dbFuncs = setupDBFuncs(args=args.assign)
 
     # transform json to dict
     sketches_dict = {}
