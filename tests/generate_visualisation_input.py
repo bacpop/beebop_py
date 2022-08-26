@@ -47,19 +47,14 @@ assign_query_hdf5(
         overwrite=args.assign.overwrite,
         plot_fit=args.assign.plot_fit,
         graph_weights=False,
-        #max_a_dist=args.assign.max_a_dist,
-        #max_pi_dist=args.assign.max_pi_dist,
-        #type_isolate=args.assign.type_isolate,
         model_dir=db_paths.db,
         strand_preserved=args.assign.strand_preserved,
         previous_clustering=db_paths.db,
         external_clustering=args.assign.external_clustering,
         core=args.assign.core_only,
         accessory=args.assign.accessory_only,
-        #gpu_sketch=args.assign.gpu_sketch,
         gpu_dist=args.assign.gpu_dist,
         gpu_graph=args.assign.gpu_graph,
-        #deviceid=args.assign.deviceid,
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
 
