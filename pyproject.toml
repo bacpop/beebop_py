@@ -36,3 +36,7 @@ omit = [".*", "*/site-packages/*","*test_*"]
 
 [tool.coverage.report]
 fail_under = 90
+omit = [
+    "shibokensupport/*",
+    "signature_bootstrap.py",
+]
