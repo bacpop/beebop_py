@@ -27,24 +27,23 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 ##### PopPUNK
-Since PopPUNK is not available via pip yet, it must be installed separately.
+To install PopPUNK v2.5, follow these steps:
 
 
-First, create a new conda environment: `conda create --name beebop_py` and activate it with `conda activate beebop_py`
+First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_py`
 
 
-Then clone the following branch of poppunk to your computer: `git clone -b fix-json-serialisation git@github.com:bacpop/PopPUNK.git`
-Please make sure you have all required dependencies installed as specified [here](https://poppunk.readthedocs.io/en/latest/installation.html#clone-the-code):
+Then install PopPUNK v2.5 to your computer: 
 ```
-conda install pybind11 pp-sketchlib dendropy hdbscan matplotlib graph-tool pandas sharedmem cmake tqdm networkx flask_cors flask-apscheduler requests
+pip3 install git+https://github.com/bacpop/PopPUNK@bacpop-43#egg=PopPUNK
 ```
 
 
-Next, install the package with:
+Please install the dependencies for PopPUNK with:
 ```
-python setup.py install
-python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
+conda install requests pandas graph-tool networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift mandrake rapidnj 
 ```
+
 ##### Other dependencies
 To install all other required dependencies go into the beebop_py project folder and run (having the conda environment 'beebop_py' activated)
 ```
@@ -65,7 +64,7 @@ Before testing, Redis and rqworker must be running. From the root of beebop_py, 
 ```
 docker pull redis
 docker run --rm -d --name=redis -p 6379:6379 redis
-rqworker
+rq worker
 ```
 Testing can be done in a second terminal (make sure to activate 'beebop_py') by running 
 ```
