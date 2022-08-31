@@ -61,15 +61,6 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         conda install graph-tool
-        conda install pandas
-        conda install networkx
-        conda install -c conda-forge pp-sketchlib=2.0.0
-        conda install scikit-learn
-        conda install hdbscan
-        conda install -c conda-forge biopython
-        conda install tqdm
-        conda install -c bioconda treeswift
-        conda install requests
         conda install mandrake
         conda install rapidnj
         sudo apt-get install libeigen3-dev
