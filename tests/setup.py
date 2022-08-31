@@ -9,7 +9,7 @@ schemas = beebop.schemas.Schema()
 def generate_json():
     # generate hdf5 sketch from fasta file using pp-sketchlib
     subprocess.run(
-        "poppunk_sketch --sketch --rfile sketchlib_input/rfile.txt --ref-db pneumo_sample --sketch-size 9984 --cpus 4 --min-k 14 --k-step 3",  # noqa
+        "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
         shell=True,
         cwd='tests/results'
     )

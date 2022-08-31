@@ -60,45 +60,22 @@ jobs:
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
-        conda install pybind11
-        conda install pp-sketchlib
-        conda install dendropy
-        conda install scikit-learn=1.0.2
-        conda install hdbscan
-        conda install matplotlib
         conda install graph-tool
         conda install pandas
-        conda install sharedmem
-        conda install cmake
-        conda install tqdm
         conda install networkx
-        conda install flask_cors
-        conda install flask-apscheduler
+        conda install -c conda-forge pp-sketchlib=2.0.0
+        conda install scikit-learn
+        conda install hdbscan
+        conda install -c conda-forge biopython
+        conda install tqdm
+        conda install -c bioconda treeswift
+        conda install requests
+        conda install mandrake
+        conda install rapidnj
         sudo apt-get install libeigen3-dev
         sudo apt-get install libopenblas-dev
-        sudo apt-get install -y libxcb-icccm4
-        sudo apt-get install -y libxcb-image0
-        sudo apt-get install -y libxcb-keysyms1
-        sudo apt-get install -y libxcb-render-util0
-        conda install requests
-        conda install -c conda-forge pp-sketchlib=1.7
-        python setup.py install
-        python -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv
-
-    - name: Get rapidnj source code
-      uses: actions/checkout@v3
-      with:
-        repository:  somme89/rapidNJ 
-        path: rapidnj
-
-    - name: Install rapidnj
-      working-directory: ./rapidnj
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
-        make
-        cd bin
-        mv rapidnj /usr/share/miniconda/bin
+        sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+        pip3 install git+https://github.com/bacpop/PopPUNK@bacpop-43#egg=PopPUNK
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
@@ -111,7 +88,6 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         poetry install
-        conda install pytest-xvfb
 
     - name: Run Redis
       working-directory: ./main
@@ -129,7 +105,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
-        rqworker > rq_output.txt 2>&1 &
+        rq worker > rq_output.txt 2>&1 &
         STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v4_references poetry run coverage run -m pytest
 
     - name: Process coverage

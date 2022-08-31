@@ -19,23 +19,19 @@ class PoppunkWrapper:
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
+            serial=False,
             threads=self.args.assign.threads,
             overwrite=self.args.assign.overwrite,
             plot_fit=self.args.assign.plot_fit,
             graph_weights=False,
-            max_a_dist=self.args.assign.max_a_dist,
-            max_pi_dist=self.args.assign.max_pi_dist,
-            type_isolate=self.args.assign.type_isolate,
             model_dir=self.db_paths.db,
             strand_preserved=self.args.assign.strand_preserved,
             previous_clustering=self.db_paths.db,
             external_clustering=self.args.assign.external_clustering,
             core=self.args.assign.core_only,
             accessory=self.args.assign.accessory_only,
-            gpu_sketch=self.args.assign.gpu_sketch,
             gpu_dist=self.args.assign.gpu_dist,
             gpu_graph=self.args.assign.gpu_graph,
-            deviceid=self.args.assign.deviceid,
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
 
@@ -67,13 +63,11 @@ class PoppunkWrapper:
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
             rapidnj=self.args.visualise.rapidnj,
+            api_key=None,
             tree=self.args.visualise.tree,
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            core_only=self.args.visualise.core_only,
-            accessory_only=self.args.visualise.accessory_only,
-            display_cluster=self.args.visualise.display_cluster,
-            web=True
+            display_cluster=self.args.visualise.display_cluster
         )
 
     def create_network(self):
@@ -104,11 +98,9 @@ class PoppunkWrapper:
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
             rapidnj=self.args.visualise.rapidnj,
-            tree="nj",
+            api_key=None,
+            tree="none",
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            core_only=self.args.visualise.core_only,
-            accessory_only=self.args.visualise.accessory_only,
-            display_cluster=self.args.visualise.display_cluster,
-            web=True
+            display_cluster=self.args.visualise.display_cluster
         )

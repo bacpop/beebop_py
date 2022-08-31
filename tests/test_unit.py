@@ -6,6 +6,7 @@ from rq import SimpleWorker, Queue
 from rq.job import Job
 import time
 import pytest
+from pytest_unordered import unordered
 from werkzeug.exceptions import InternalServerError
 import string
 import random
@@ -56,15 +57,18 @@ def test_assign_clusters():
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
             '99965c83b1839b25c3c27bd2910da00a']
-    assert assignClusters.get_clusters(
+
+    result = assignClusters.get_clusters(
         hashes_list,
         'unit_test_poppunk_assign',
         fs,
         db_paths,
-        args) == {
+        args)
+    expected = {
             0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-            1: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'},
-            2: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'}}
+            1: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
+            2: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
+    assert list(result.values()) == unordered(list(expected.values()))
 
 
 def test_microreact(mocker):

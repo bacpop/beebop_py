@@ -10,4 +10,4 @@ function cleanup() {
 trap cleanup INT
 trap cleanup ERR
 
-rqworker & FLASK_APP=beebop/app.py poetry run flask run
+rq worker & STORAGE_LOCATION=./storage DB_LOCATION=./storage/GPS_v4_references FLASK_APP=beebop/app.py poetry run flask run
