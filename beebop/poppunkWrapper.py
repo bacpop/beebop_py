@@ -1,5 +1,6 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
+import shutil
 
 
 class PoppunkWrapper:
@@ -19,11 +20,11 @@ class PoppunkWrapper:
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
-            serial=False,
+            serial=self.args.assign.serial,
             threads=self.args.assign.threads,
             overwrite=self.args.assign.overwrite,
             plot_fit=self.args.assign.plot_fit,
-            graph_weights=False,
+            graph_weights=self.args.assign.graph_weights,
             model_dir=self.db_paths.db,
             strand_preserved=self.args.assign.strand_preserved,
             previous_clustering=self.db_paths.db,
@@ -36,6 +37,7 @@ class PoppunkWrapper:
         )
 
     def create_microreact(self, cluster_no):
+        print(shutil.which('rapidnj'))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_paths.db,
@@ -62,7 +64,7 @@ class PoppunkWrapper:
             network_file=self.fs.network_file(self.p_hash),
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
-            rapidnj=self.args.visualise.rapidnj,
+            rapidnj=shutil.which('rapidnj'),
             api_key=None,
             tree=self.args.visualise.tree,
             mst_distances=self.args.visualise.mst_distances,
@@ -97,7 +99,7 @@ class PoppunkWrapper:
             network_file=self.fs.network_file(self.p_hash),
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
-            rapidnj=self.args.visualise.rapidnj,
+            rapidnj=shutil.which('rapidnj'),
             api_key=None,
             tree="none",
             mst_distances=self.args.visualise.mst_distances,
