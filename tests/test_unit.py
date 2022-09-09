@@ -263,7 +263,7 @@ def test_send_zip_internal(client):
                                          storage_location)
         response.direct_passthrough = False
         filename1 = 'microreact_24_microreact_clusters.csv'
-        filename2 = 'microreact_24_perplexity20.0_accessory_tsne.dot'
+        filename2 = 'microreact_24_perplexity20.0_accessory_mandrake.dot'
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
