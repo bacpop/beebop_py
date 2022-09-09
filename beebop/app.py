@@ -9,7 +9,6 @@ from rq.job import Job
 import os
 from io import BytesIO
 import zipfile
-from datetime import datetime
 import json
 import requests
 
@@ -54,34 +53,23 @@ def check_connection(redis):
         abort(500, description="Redis not found")
 
 
-def generate_zip(path_folder):
+def generate_zip(path_folder, type, cluster):
     memory_file = BytesIO()
-    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(path_folder):
-            for file in files:
-                zipf.write(os.path.join(root, file), arcname=file)
+    if type == 'microreact':
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(path_folder):
+                for file in files:
+                    zipf.write(os.path.join(root, file), arcname=file)
+    elif type == 'network':
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(path_folder):
+                for file in files:
+                    if file in (f'network_component_{cluster}.graphml',
+                                'network_cytoscape.csv',
+                                'network_cytoscape.graphml'):
+                        zipf.write(os.path.join(root, file), arcname=file)
     memory_file.seek(0)
     return memory_file
-
-
-def add_data(path, type, data):
-    with open(path, 'r') as file:
-        data[type] = file.read()
-
-
-def modify_microreact(json_microreact, project_hash, data):
-    """
-    using previously created .microreact file as a template
-    and adding own data to generate .microreact file
-    that can be used with the microreact API
-    """
-    if 'tree' in data:
-        json_microreact["files"]["tree-file-1"]["blob"] = data['tree']
-    json_microreact["files"]["data-file-1"]["blob"] = data['csv']
-    json_microreact["files"]["network-file-1"]["blob"] = data['dot']
-    json_microreact["meta"]["name"] = project_hash
-    json_microreact["meta"]["description"] = 'Project created with beebop'
-    json_microreact["meta"]["timestamp"] = datetime.now().isoformat()
 
 
 @app.errorhandler(500)
@@ -229,7 +217,7 @@ def send_zip_internal(project_hash, type, cluster, storage_location):
     elif type == 'network':
         path_folder = fs.output_network(project_hash)
     # generate zipfile
-    memory_file = generate_zip(path_folder)
+    memory_file = generate_zip(path_folder, type, cluster)
     return send_file(memory_file,
                      download_name=type + '.zip',
                      as_attachment=True)
@@ -242,27 +230,10 @@ def generate_microreact_url_internal(microreact_api_new_url,
                                      storage_location):
     fs = PoppunkFileStore(storage_location)
 
-    data = {}
-    path_csv = fs.microreact_csv(project_hash, cluster)
-    add_data(path_csv, 'csv', data)
-    path_dot = fs.microreact_dot(project_hash, cluster)
-    add_data(path_dot, 'dot', data)
-    # nwk is only available where cluster has >=3 samples
-    path_nwk = fs.microreact_nwk(project_hash, cluster)
-    if os.path.exists(path_nwk):
-        add_data(path_nwk, 'tree', data)
-        path_json = './beebop/resources/csv_dot_nwk.microreact'
-    else:
-        path_json = './beebop/resources/csv_dot.microreact'
+    path_json = fs.microreact_json(project_hash, cluster)
 
-    # loading existing .microrect file as template for the payload
-    # that needs to be submitted to the microreact API.
-    with open(path_json, 'rb') as example_microreact:
-        json_microreact = json.load(example_microreact)
-
-    modify_microreact(json_microreact,
-                      project_hash,
-                      data)
+    with open(path_json, 'rb') as microreact_file:
+        json_microreact = json.load(microreact_file)
 
     # generate URL from microreact API
     headers = {"Content-type": "application/json; charset=UTF-8",
