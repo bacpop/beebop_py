@@ -13,6 +13,7 @@ import random
 import os
 from flask import Flask
 from unittest.mock import Mock, patch
+from io import BytesIO
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -240,7 +241,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                   cluster,
                                                   api_token,
                                                   storage_location)
-    assert read_data(result)['data'] == dummy_url
+    assert read_data(result)['data'] == {'cluster': cluster, 'url': dummy_url}
     # for a cluster with tree file
     cluster = '7'
     result2 = app.generate_microreact_url_internal(microreact_api_new_url,
@@ -248,7 +249,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                    cluster,
                                                    api_token,
                                                    storage_location)
-    assert read_data(result2)['data'] == dummy_url
+    assert read_data(result2)['data'] == {'cluster': cluster, 'url': dummy_url}
 
 
 def test_send_zip_internal(client):
@@ -263,7 +264,7 @@ def test_send_zip_internal(client):
                                          storage_location)
         response.direct_passthrough = False
         filename1 = 'microreact_24_microreact_clusters.csv'
-        filename2 = 'microreact_24_perplexity20.0_accessory_tsne.dot'
+        filename2 = 'microreact_24_perplexity20.0_accessory_mandrake.dot'
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
@@ -334,3 +335,20 @@ def test_check_connection():
         app.check_connection(redis_mock)
     redis = Redis()
     app.check_connection(redis)
+
+
+def test_add_files():
+    memory_file1 = BytesIO()
+    app.add_files(memory_file1, './tests/files/sketchlib_input')
+    memory_file1.seek(0)
+    contents1 = memory_file1.read()
+    assert 'rfile.txt'.encode('utf-8') in contents1
+    assert '6930_8_9.fa'.encode('utf-8') in contents1
+    assert '7622_5_91.fa'.encode('utf-8') in contents1
+    memory_file2 = BytesIO()
+    app.add_files(memory_file2, './tests/files/sketchlib_input', ('rfile.txt'))
+    memory_file2.seek(0)
+    contents2 = memory_file2.read()
+    assert 'rfile.txt'.encode('utf-8') in contents2
+    assert '6930_8_9.fa'.encode('utf-8') not in contents2
+    assert '7622_5_91.fa'.encode('utf-8') not in contents2
