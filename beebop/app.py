@@ -56,19 +56,25 @@ def check_connection(redis):
 def generate_zip(path_folder, type, cluster):
     memory_file = BytesIO()
     if type == 'microreact':
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(path_folder):
-                for file in files:
-                    zipf.write(os.path.join(root, file), arcname=file)
+        add_files(memory_file, path_folder)
     elif type == 'network':
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk(path_folder):
-                for file in files:
-                    if file in (f'network_component_{cluster}.graphml',
-                                'network_cytoscape.csv',
-                                'network_cytoscape.graphml'):
-                        zipf.write(os.path.join(root, file), arcname=file)
+        file_list = (f'network_component_{cluster}.graphml',
+                     'network_cytoscape.csv',
+                     'network_cytoscape.graphml')
+        add_files(memory_file, path_folder, file_list)
     memory_file.seek(0)
+    return memory_file
+
+
+def add_files(memory_file, path_folder, file_list=None):
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(path_folder):
+            for file in files:
+                if file_list:
+                    if file in file_list:
+                        zipf.write(os.path.join(root, file), arcname=file)
+                else:
+                    zipf.write(os.path.join(root, file), arcname=file)
     return memory_file
 
 

@@ -13,6 +13,7 @@ import random
 import os
 from flask import Flask
 from unittest.mock import Mock, patch
+from io import BytesIO
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -334,3 +335,20 @@ def test_check_connection():
         app.check_connection(redis_mock)
     redis = Redis()
     app.check_connection(redis)
+
+
+def test_add_files():
+    memory_file1 = BytesIO()
+    app.add_files(memory_file1, './tests/files/sketchlib_input')
+    memory_file1.seek(0)
+    contents1 = memory_file1.read()
+    assert 'rfile.txt'.encode('utf-8') in contents1
+    assert '6930_8_9.fa'.encode('utf-8') in contents1
+    assert '7622_5_91.fa'.encode('utf-8') in contents1
+    memory_file2 = BytesIO()
+    app.add_files(memory_file2, './tests/files/sketchlib_input', ('rfile.txt'))
+    memory_file2.seek(0)
+    contents2 = memory_file2.read()
+    assert 'rfile.txt'.encode('utf-8') in contents2
+    assert '6930_8_9.fa'.encode('utf-8') not in contents2
+    assert '7622_5_91.fa'.encode('utf-8') not in contents2
