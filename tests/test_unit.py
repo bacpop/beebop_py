@@ -240,7 +240,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                   cluster,
                                                   api_token,
                                                   storage_location)
-    assert read_data(result)['data'] == dummy_url
+    assert read_data(result)['data'] == {'cluster': cluster, 'url': dummy_url}
     # for a cluster with tree file
     cluster = '7'
     result2 = app.generate_microreact_url_internal(microreact_api_new_url,
@@ -248,7 +248,7 @@ def test_generate_microreact_url_internal(mock_post):
                                                    cluster,
                                                    api_token,
                                                    storage_location)
-    assert read_data(result2)['data'] == dummy_url
+    assert read_data(result2)['data'] == {'cluster': cluster, 'url': dummy_url}
 
 
 def test_send_zip_internal(client):

@@ -242,7 +242,7 @@ def generate_microreact_url_internal(microreact_api_new_url,
                       data=json.dumps(json_microreact),
                       headers=headers)
     url = r.json()['url']
-    return jsonify(response_success(url))
+    return jsonify(response_success({"cluster": cluster, "url": url}))
 
 
 if __name__ == "__main__":

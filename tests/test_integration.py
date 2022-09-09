@@ -79,7 +79,7 @@ def test_results_microreact(client):
         'cluster': cluster,
         'apiToken': api_token})
     assert re.match("https://microreact.org/project/.*-poppunk.*",
-                    read_data(response))
+                    read_data(response)['url'])
 
 
 def test_results_zip(client):
