@@ -60,22 +60,11 @@ class PoppunkFileStore:
     def distances(self, p_hash):
         return str(PurePath(self.output(p_hash), p_hash).with_suffix(".dists"))
 
-    def microreact_csv(self, p_hash, cluster):
+    def microreact_json(self, p_hash, cluster):
         return str(PurePath(self.output(p_hash),
                             f"microreact_{cluster}",
-                            f"microreact_{cluster}_microreact_clusters.csv"))
-
-    def microreact_dot(self, p_hash, cluster):
-        return str(PurePath(self.output(p_hash),
-                            f"microreact_{cluster}",
-                            (f"microreact_{cluster}"
-                             f"_perplexity20.0_accessory_tsne.dot")
+                            (f"microreact_{cluster}.microreact")
                             ))
-
-    def microreact_nwk(self, p_hash, cluster):
-        return str(PurePath(self.output(p_hash),
-                            f"microreact_{cluster}",
-                            f"microreact_{cluster}_core_NJ.nwk"))
 
 
 class DatabaseFileStore:
