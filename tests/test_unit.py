@@ -227,6 +227,7 @@ def test_get_status_internal(client):
 def test_generate_microreact_url_internal(mock_post):
     dummy_url = 'https://microreact.org/project/12345-testmicroreactapi'
     mock_post.return_value = Mock(ok=True)
+    mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
         'url': dummy_url}
 
@@ -250,6 +251,28 @@ def test_generate_microreact_url_internal(mock_post):
                                                    api_token,
                                                    storage_location)
     assert read_data(result2)['data'] == {'cluster': cluster, 'url': dummy_url}
+
+
+@patch('requests.post')
+def test_generate_microreact_url_internal_API_error_404(mock_post):
+    dummy_url = 'https://microreact.org/project/12345-testmicroreactapi'
+    mock_post.return_value = Mock()
+    mock_post.return_value.status_code = 404
+    mock_post.return_value.json.return_value = {
+        'error': 'Resource not found'}
+
+    microreact_api_new_url = "https://dummy.url"
+    project_hash = 'test_microreact_api'
+    api_token = os.environ['MICROREACT_TOKEN']
+    cluster = '24'
+
+    result = app.generate_microreact_url_internal(microreact_api_new_url,
+                                                  project_hash,
+                                                  cluster,
+                                                  api_token,
+                                                  storage_location)
+    print(result)
+    assert read_data(result[0])['error']['errors'][0]['error'] == 'Resource not found'
 
 
 def test_send_zip_internal(client):

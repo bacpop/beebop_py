@@ -23,6 +23,7 @@ if not redis_host:
     redis_host = "127.0.0.1"
 app = Flask(__name__)
 redis = Redis(host=redis_host)
+job_timeout = 600
 
 storage_location = os.environ.get('STORAGE_LOCATION')
 database_location = os.environ.get('DB_LOCATION')
@@ -135,20 +136,20 @@ def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
                            fs,
                            db_paths,
                            args,
-                           job_timeout=600)
+                           job_timeout=job_timeout)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", project_hash, job_assign.id)
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
                                args=(project_hash, fs, db_paths, args),
-                               depends_on=job_assign, job_timeout=600)
+                               depends_on=job_assign, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
                             args=(project_hash, fs, db_paths, args),
-                            depends_on=job_assign, job_timeout=600)
+                            depends_on=job_assign, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:network", project_hash, job_network.id)
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
@@ -252,14 +253,19 @@ def generate_microreact_url_internal(microreact_api_new_url,
     r = requests.post(microreact_api_new_url,
                       data=json.dumps(json_microreact),
                       headers=headers)
-    try:
-        url = r.json()['url']
-        return jsonify(response_success({"cluster": cluster, "url": url}))
-    except (requests.exceptions.JSONDecodeError):
+    if r.status_code == 500:
         return jsonify(error=response_failure({
             "error": "Wrong Token",
-            "detail": "Could not generate URL. Token might be wrong!"
+            "detail": "Microreact reported Internal Server Error. Most likely Token is invalid!"
             })), 500
+    elif r.status_code == 404:
+        return jsonify(error=response_failure({
+            "error": "Resource not found",
+            "detail": "Cannot reach Microreact API"
+            })), 404
+    elif r.status_code == 200:
+        url = r.json()['url']
+        return jsonify(response_success({"cluster": cluster, "url": url}))
 
 
 if __name__ == "__main__":
