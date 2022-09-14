@@ -271,8 +271,8 @@ def test_generate_microreact_url_internal_API_error_404(mock_post):
                                                   cluster,
                                                   api_token,
                                                   storage_location)
-    print(result)
-    assert read_data(result[0])['error']['errors'][0]['error'] == 'Resource not found'
+    error = read_data(result[0])['error']
+    assert error['errors'][0]['error'] == 'Resource not found'
 
 
 def test_send_zip_internal(client):

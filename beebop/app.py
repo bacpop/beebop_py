@@ -256,7 +256,9 @@ def generate_microreact_url_internal(microreact_api_new_url,
     if r.status_code == 500:
         return jsonify(error=response_failure({
             "error": "Wrong Token",
-            "detail": "Microreact reported Internal Server Error. Most likely Token is invalid!"
+            "detail": """
+            Microreact reported Internal Server Error.
+            Most likely Token is invalid!"""
             })), 500
     elif r.status_code == 404:
         return jsonify(error=response_failure({
