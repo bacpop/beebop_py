@@ -85,8 +85,9 @@ def test_results_microreact(client):
         'projectHash': p_hash,
         'cluster': cluster,
         'apiToken': invalid_token})
-    assert json.loads(error_response.data)["error"]["status"] == "failure"
-    assert json.loads(error_response.data)["error"]["errors"][0]["error"] == "Wrong Token"
+    error = json.loads(error_response.data)["error"]
+    assert error["status"] == "failure"
+    assert error["errors"][0]["error"] == "Wrong Token"
 
 
 def test_results_zip(client):
