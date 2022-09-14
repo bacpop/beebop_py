@@ -130,20 +130,25 @@ def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
     check_connection(redis)
     # submit list of hashes to redis worker
     job_assign = q.enqueue(assignClusters.get_clusters,
-                           hashes_list, project_hash, fs, db_paths, args)
+                           hashes_list,
+                           project_hash,
+                           fs,
+                           db_paths,
+                           args,
+                           job_timeout=600)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", project_hash, job_assign.id)
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
                                args=(project_hash, fs, db_paths, args),
-                               depends_on=job_assign)
+                               depends_on=job_assign, job_timeout=600)
     redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
                             args=(project_hash, fs, db_paths, args),
-                            depends_on=job_assign)
+                            depends_on=job_assign, job_timeout=600)
     redis.hset("beebop:hash:job:network", project_hash, job_network.id)
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
@@ -247,8 +252,14 @@ def generate_microreact_url_internal(microreact_api_new_url,
     r = requests.post(microreact_api_new_url,
                       data=json.dumps(json_microreact),
                       headers=headers)
-    url = r.json()['url']
-    return jsonify(response_success({"cluster": cluster, "url": url}))
+    try:
+        url = r.json()['url']
+        return jsonify(response_success({"cluster": cluster, "url": url}))
+    except (requests.exceptions.JSONDecodeError):
+        return jsonify(error=response_failure({
+            "error": "Wrong Token",
+            "detail": "Could not generate URL. Token might be wrong!"
+            })), 500
 
 
 if __name__ == "__main__":
