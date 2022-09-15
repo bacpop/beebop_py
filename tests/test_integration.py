@@ -74,12 +74,20 @@ def test_results_microreact(client):
     p_hash = 'test_microreact_api'
     cluster = 7
     api_token = os.environ['MICROREACT_TOKEN']
+    invalid_token = 'invalid_token'
     response = client.post("/results/microreact", json={
         'projectHash': p_hash,
         'cluster': cluster,
         'apiToken': api_token})
     assert re.match("https://microreact.org/project/.*-poppunk.*",
                     read_data(response)['url'])
+    error_response = client.post("/results/microreact", json={
+        'projectHash': p_hash,
+        'cluster': cluster,
+        'apiToken': invalid_token})
+    error = json.loads(error_response.data)["error"]
+    assert error["status"] == "failure"
+    assert error["errors"][0]["error"] == "Wrong Token"
 
 
 def test_results_zip(client):
