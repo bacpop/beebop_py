@@ -253,7 +253,10 @@ def generate_microreact_url_internal(microreact_api_new_url,
     r = requests.post(microreact_api_new_url,
                       data=json.dumps(json_microreact),
                       headers=headers)
-    if r.status_code == 500:
+    if r.status_code == 200:
+        url = r.json()['url']
+        return jsonify(response_success({"cluster": cluster, "url": url}))
+    elif r.status_code == 500:
         return jsonify(error=response_failure({
             "error": "Wrong Token",
             "detail": """
@@ -265,9 +268,12 @@ def generate_microreact_url_internal(microreact_api_new_url,
             "error": "Resource not found",
             "detail": "Cannot reach Microreact API"
             })), 404
-    elif r.status_code == 200:
-        url = r.json()['url']
-        return jsonify(response_success({"cluster": cluster, "url": url}))
+    else:
+        return jsonify(error=response_failure({
+            "error": "Unknown error",
+            "detail": f"""Microreact API returned status code {r.status_code}.
+                Response text: {r.text}."""
+            })), 500
 
 
 if __name__ == "__main__":

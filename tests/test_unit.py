@@ -255,7 +255,6 @@ def test_generate_microreact_url_internal(mock_post):
 
 @patch('requests.post')
 def test_generate_microreact_url_internal_API_error_404(mock_post):
-    dummy_url = 'https://microreact.org/project/12345-testmicroreactapi'
     mock_post.return_value = Mock()
     mock_post.return_value.status_code = 404
     mock_post.return_value.json.return_value = {
@@ -273,6 +272,49 @@ def test_generate_microreact_url_internal_API_error_404(mock_post):
                                                   storage_location)
     error = read_data(result[0])['error']
     assert error['errors'][0]['error'] == 'Resource not found'
+
+
+@patch('requests.post')
+def test_generate_microreact_url_internal_API_error_500(mock_post):
+    mock_post.return_value = Mock()
+    mock_post.return_value.status_code = 500
+    mock_post.return_value.json.return_value = {
+        'error': 'Internal Server Error'}
+
+    microreact_api_new_url = "https://dummy.url"
+    project_hash = 'test_microreact_api'
+    api_token = os.environ['MICROREACT_TOKEN']
+    cluster = '24'
+
+    result = app.generate_microreact_url_internal(microreact_api_new_url,
+                                                  project_hash,
+                                                  cluster,
+                                                  api_token,
+                                                  storage_location)
+    error = read_data(result[0])['error']
+    assert error['errors'][0]['error'] == 'Wrong Token'
+
+
+@patch('requests.post')
+def test_generate_microreact_url_internal_API_other_error(mock_post):
+    mock_post.return_value = Mock()
+    mock_post.return_value.status_code = 456
+    mock_post.return_value.json.return_value = {
+        'error': 'Unexpected error'}
+
+    microreact_api_new_url = "https://dummy.url"
+    project_hash = 'test_microreact_api'
+    api_token = os.environ['MICROREACT_TOKEN']
+    cluster = '24'
+
+    result = app.generate_microreact_url_internal(microreact_api_new_url,
+                                                  project_hash,
+                                                  cluster,
+                                                  api_token,
+                                                  storage_location)
+    error = read_data(result[0])['error']['errors'][0]
+    assert error['error'] == 'Unknown error'
+    assert 'Microreact API returned status code 456.' in error['detail']
 
 
 def test_send_zip_internal(client):
