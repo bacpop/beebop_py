@@ -14,7 +14,7 @@ import requests
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args
+from beebop.utils import get_args, find_component_file, get_sample_name
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -274,6 +274,29 @@ def generate_microreact_url_internal(microreact_api_new_url,
             "detail": f"""Microreact API returned status code {r.status_code}.
                 Response text: {r.text}."""
             })), 500
+
+
+@app.route('/downloadGraphml', methods=['POST'])
+def download_graphml():
+    project_hash = request.json['projectHash']
+    cluster = str(request.json['cluster'])
+    return download_graphml_internal(project_hash, cluster, storage_location)
+
+
+def download_graphml_internal(project_hash, cluster, storage_location):
+    try:
+        sample_name = get_sample_name(project_hash, cluster, storage_location)
+        path = find_component_file(project_hash, sample_name, storage_location)
+        f = jsonify(response_success({
+            "cluster": cluster,
+            "graph": open(path, "r").read()}))
+    except (FileNotFoundError):
+        print('error')
+        f = jsonify(error=response_failure({
+                "error": "File not found",
+                "detail": "GraphML file or include file not found"
+                })), 500
+    return f
 
 
 if __name__ == "__main__":
