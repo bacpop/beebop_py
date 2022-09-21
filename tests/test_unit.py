@@ -21,7 +21,7 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-from beebop.utils import get_args
+from beebop.utils import get_args, find_component_file, get_sample_name
 import beebop.schemas
 
 
@@ -344,6 +344,31 @@ def test_send_zip_internal(client):
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
+def test_download_graphml_internal():
+    project_hash = 'unit_test_graphml'
+    cluster = 5
+    response = app.download_graphml_internal(project_hash,
+                                             cluster,
+                                             storage_location)
+    graph_string = read_data(response)['data']['graph']
+    assert all(x in graph_string for x in ['</graph>',
+                                           '</graphml>',
+                                           '</node>',
+                                           '</edge>'])
+    cluster_no_include_file = 42
+    response_error = app.download_graphml_internal(project_hash,
+                                                   cluster_no_include_file,
+                                                   storage_location)
+    error = read_data(response_error[0])['error']['errors'][0]
+    assert error['error'] == 'File not found'
+    cluster_no_network_file = 59
+    response_error2 = app.download_graphml_internal(project_hash,
+                                                    cluster_no_network_file,
+                                                    storage_location)
+    error2 = read_data(response_error2[0])['error']['errors'][0]
+    assert error2['error'] == 'File not found'
+
+
 def test_hex_to_decimal():
     dummy_sketch = {
         "sample1": {
@@ -417,3 +442,18 @@ def test_add_files():
     assert 'rfile.txt'.encode('utf-8') in contents2
     assert '6930_8_9.fa'.encode('utf-8') not in contents2
     assert '7622_5_91.fa'.encode('utf-8') not in contents2
+
+
+def test_get_sample_name():
+    project_hash = 'unit_test_graphml'
+    cluster = 5
+    sample_name = get_sample_name(project_hash, cluster, storage_location)
+    assert sample_name == '10754X161_140620_D00294_0106_AC4FB4ANXX_6'
+
+
+def test_find_component_file():
+    project_hash = 'unit_test_graphml'
+    sample_name = '10754X161_140620_D00294_0106_AC4FB4ANXX_6'
+    filepath = find_component_file(project_hash, sample_name, storage_location)
+    assert filepath == ('./tests/results/poppunk_output/unit_test_graphml'
+                        '/network/network_component_5.graphml')

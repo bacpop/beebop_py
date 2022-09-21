@@ -101,6 +101,20 @@ def test_results_zip(client):
     assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
+def test_download_graphml(client):
+    p_hash = 'unit_test_graphml'
+    cluster = 5
+    response = client.post("/downloadGraphml", json={
+        'projectHash': p_hash,
+        'cluster': cluster})
+    graph_string = json.loads(response.data.decode("utf-8"))['data']['graph']
+    assert response.status_code == 200
+    assert all(x in graph_string for x in ['</graph>',
+                                           '</graphml>',
+                                           '</node>',
+                                           '</edge>'])
+
+
 def test_404(client):
     response = client.get("/random_path")
     assert response.status_code == 404
