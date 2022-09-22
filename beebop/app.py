@@ -208,8 +208,9 @@ def get_results(type):
     elif type == 'graphml':
         project_hash = request.json['projectHash']
         cluster = str(request.json['cluster'])
-        return download_graphml_internal(project_hash, cluster, storage_location)
-
+        return download_graphml_internal(project_hash,
+                                         cluster,
+                                         storage_location)
 
 
 def get_clusters_internal(hash, redis):
@@ -279,13 +280,6 @@ def generate_microreact_url_internal(microreact_api_new_url,
             "detail": f"""Microreact API returned status code {r.status_code}.
                 Response text: {r.text}."""
             })), 500
-
-
-# @app.route('/downloadGraphml', methods=['POST'])
-# def download_graphml():
-#     project_hash = request.json['projectHash']
-#     cluster = str(request.json['cluster'])
-#     return download_graphml_internal(project_hash, cluster, storage_location)
 
 
 def download_graphml_internal(project_hash, cluster, storage_location):
