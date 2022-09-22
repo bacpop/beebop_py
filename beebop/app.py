@@ -286,9 +286,11 @@ def download_graphml_internal(project_hash, cluster, storage_location):
     try:
         sample_name = get_sample_name(project_hash, cluster, storage_location)
         path = find_component_file(project_hash, sample_name, storage_location)
+        with open(path, 'r') as graphml_file:
+            graph = graphml_file.read()
         f = jsonify(response_success({
             "cluster": cluster,
-            "graph": open(path, "r").read()}))
+            "graph": graph}))
     except (FileNotFoundError):
         f = jsonify(error=response_failure({
                 "error": "File not found",
