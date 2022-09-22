@@ -104,7 +104,7 @@ def test_results_zip(client):
 def test_download_graphml(client):
     p_hash = 'unit_test_graphml'
     cluster = 5
-    response = client.post("/downloadGraphml", json={
+    response = client.post("/results/graphml", json={
         'projectHash': p_hash,
         'cluster': cluster})
     graph_string = json.loads(response.data.decode("utf-8"))['data']['graph']

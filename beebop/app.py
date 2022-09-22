@@ -205,6 +205,11 @@ def get_results(type):
                                                 cluster,
                                                 api_token,
                                                 storage_location)
+    elif type == 'graphml':
+        project_hash = request.json['projectHash']
+        cluster = str(request.json['cluster'])
+        return download_graphml_internal(project_hash, cluster, storage_location)
+
 
 
 def get_clusters_internal(hash, redis):
@@ -276,11 +281,11 @@ def generate_microreact_url_internal(microreact_api_new_url,
             })), 500
 
 
-@app.route('/downloadGraphml', methods=['POST'])
-def download_graphml():
-    project_hash = request.json['projectHash']
-    cluster = str(request.json['cluster'])
-    return download_graphml_internal(project_hash, cluster, storage_location)
+# @app.route('/downloadGraphml', methods=['POST'])
+# def download_graphml():
+#     project_hash = request.json['projectHash']
+#     cluster = str(request.json['cluster'])
+#     return download_graphml_internal(project_hash, cluster, storage_location)
 
 
 def download_graphml_internal(project_hash, cluster, storage_location):
@@ -291,7 +296,6 @@ def download_graphml_internal(project_hash, cluster, storage_location):
             "cluster": cluster,
             "graph": open(path, "r").read()}))
     except (FileNotFoundError):
-        print('error')
         f = jsonify(error=response_failure({
                 "error": "File not found",
                 "detail": "GraphML file or include file not found"
