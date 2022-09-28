@@ -68,6 +68,8 @@ def test_run_poppunk(client, qtbot):
     qtbot.waitUntil(network_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/network/network_cytoscape.graphml")
+    assert os.path.exists(storage + p_hash +
+                          "/network/cluster_component_dict.pickle")
 
 
 def test_results_microreact(client):
