@@ -1,7 +1,11 @@
 from types import SimpleNamespace
 import json
-import subprocess
-from pathlib import PurePath
+import csv
+import xml.etree.ElementTree as ET
+import fnmatch
+import os
+import re
+import pickle
 
 
 def get_args():
@@ -10,34 +14,40 @@ def get_args():
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
 
-def get_sample_name(project_hash, cluster, storage_location):
+def generate_mapping(p_hash, fs):
     """
-    extract one sample name for a specified cluster, to be used to find
-    the right network component file
+    PopPUNK generates one overall .graphml file covering all clusters/
+    components. Furthermore, it generates one .graphml file per component,
+    where the component numbers are arbitrary and do not match poppunk cluster
+    numbers. To find the right component file by cluster number, we need to
+    generate a mapping to be able to return the right component number based
+    on cluster number. This function will generate that mapping by looking up
+    the first filename from each component file in the csv file that holds all
+    filenames and their corresponding clusters.
     """
-    path = (f"{storage_location}/poppunk_output/"
-            f"{project_hash}/include{cluster}.txt")
-    try:
-        with open(path, "r") as file:
-            sample_name = file.readline()
-        return sample_name.rstrip()
-    except (FileNotFoundError):
-        raise FileNotFoundError
+    # dict to get cluster number from samplename
+    with open(fs.network_output_csv(p_hash)) as f:
+        next(f)  # Skip the header
+        reader = csv.reader(f, skipinitialspace=True)
+        samplename_cluster_dict = dict(reader)
 
+    # list of all component graph filenames
+    file_list = []
+    for file in os.listdir(fs.output_network(p_hash)):
+        if fnmatch.fnmatch(file, 'network_component_*.graphml'):
+            file_list.append(file)
 
-def find_component_file(project_hash, sample_name, storage_location):
-    """
-    since network components and poppunk clusters are not matching
-    we need to find the right component file by searching for a sample name
-    that is included in the required cluster
-    """
-    file = subprocess.Popen(
-        f"grep --exclude=\*.csv --exclude=\*e.graphml -lr './poppunk_output/{project_hash}/network' -e '{sample_name}'",   # noqa
-        shell=True,
-        stdout=subprocess.PIPE,
-        cwd=storage_location
-    ).stdout.read().decode("utf-8")
-
-    if (file.strip() == ''):
-        raise FileNotFoundError
-    return f"./{PurePath(storage_location, file)}".rstrip()
+    # generate dict that maps cluster number to component number
+    cluster_component_dict = {}
+    for component_filename in file_list:
+        component_number = re.findall(R'\d+', component_filename)[0]
+        component_xml = ET.parse(fs.network_output_component(
+            p_hash,
+            component_number)).getroot()
+        samplename = component_xml.find(
+            ".//{http://graphml.graphdrawing.org/xmlns}node[@id='n0']/").text
+        cluster_number = samplename_cluster_dict[samplename]
+        cluster_component_dict[cluster_number] = component_number
+    # save as pickle
+    with open(fs.network_mapping(p_hash), 'wb') as mapping:
+        pickle.dump(cluster_component_dict, mapping)

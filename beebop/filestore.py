@@ -66,6 +66,21 @@ class PoppunkFileStore:
                             (f"microreact_{cluster}.microreact")
                             ))
 
+    def network_output_csv(self, p_hash):
+        return str(PurePath(self.output(p_hash),
+                            "network",
+                            "network_cytoscape.csv"))
+
+    def network_output_component(self, p_hash, component_number):
+        return str(PurePath(self.output(p_hash),
+                            "network",
+                            f"network_component_{component_number}.graphml"))
+
+    def network_mapping(self, p_hash):
+        return str(PurePath(self.output(p_hash),
+                            "network",
+                            'cluster_component_dict.pickle'))
+
 
 class DatabaseFileStore:
     def __init__(self, full_path):

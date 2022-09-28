@@ -11,10 +11,11 @@ from io import BytesIO
 import zipfile
 import json
 import requests
+import pickle
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args, find_component_file, get_sample_name
+from beebop.utils import get_args
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -283,9 +284,12 @@ def generate_microreact_url_internal(microreact_api_new_url,
 
 
 def download_graphml_internal(project_hash, cluster, storage_location):
+    fs = PoppunkFileStore(storage_location)
     try:
-        sample_name = get_sample_name(project_hash, cluster, storage_location)
-        path = find_component_file(project_hash, sample_name, storage_location)
+        with open(fs.network_mapping(project_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        component = cluster_component_mapping[str(cluster)]
+        path = fs.network_output_component(project_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
         f = jsonify(response_success({
