@@ -6,6 +6,7 @@ import fnmatch
 import os
 import re
 import pickle
+import fileinput
 
 
 def get_args():
@@ -51,3 +52,49 @@ def generate_mapping(p_hash, fs):
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
         pickle.dump(cluster_component_dict, mapping)
+    return cluster_component_dict
+
+
+def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
+    """
+    poppunk generates >1100 component graph files. We only need to store those
+    files from the clusters our queries belong to.
+    """
+    queries_clusters = []
+    queries_components = []
+    for item in assign_result.values():
+        queries_clusters.append(item['cluster'])
+        queries_components.append(cluster_component_dict[str(item['cluster'])])
+    components = set(queries_components)
+    # delete redundant component files
+    keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
+                              components))
+    keep_filenames.append('network_cytoscape.csv')
+    keep_filenames.append('network_cytoscape.graphml')
+    keep_filenames.append('cluster_component_dict.pickle')
+    prev_wd = os.getcwd()
+    os.chdir(fs.output_network(p_hash))  # Change directory to network folder
+    # Loop through files in folder and remove files not in list
+    for item in os.listdir(os.getcwd()):
+        if item not in keep_filenames:
+            os.remove(item)
+    os.chdir(prev_wd)  # Change directory back to previous wd
+
+
+def replace_filehashes(folder, filename_dict):
+    file_list = []
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file != 'cluster_component_dict.pickle':
+                file_list.append(os.path.join(root, file))
+    with fileinput.input(files=(file_list),
+                         inplace=True,
+                         backup='.orig') as input:
+        for line in input:
+            line = line.rstrip()
+            if not line:
+                continue
+            for f_key, f_value in filename_dict.items():
+                if f_key in line:
+                    line = line.replace(f_key, f_value)
+            print(line)
