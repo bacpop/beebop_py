@@ -2,6 +2,7 @@ from PopPUNK.visualise import generate_visualisations
 from rq import get_current_job
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
+from beebop.utils import generate_mapping
 
 
 def microreact(p_hash, fs, db_paths, args):
@@ -39,8 +40,10 @@ def network(p_hash, fs, db_paths, args):
     fs: PoppunkFilestore with paths to input data
     db_paths: location of database
     args: arguments for poppunk functions
-    Currently poppunk does not allow to subset isolates in this mode.
-    Ideally we'd want to only display clusters that have a new isolate added.
+
+    Since network component number and poppunk cluster number do not
+    match, we need to generate a mapping to find the right component files.
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
+    generate_mapping(p_hash, fs)

@@ -11,6 +11,7 @@ from io import BytesIO
 import zipfile
 import json
 import requests
+import pickle
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -205,6 +206,12 @@ def get_results(type):
                                                 cluster,
                                                 api_token,
                                                 storage_location)
+    elif type == 'graphml':
+        project_hash = request.json['projectHash']
+        cluster = str(request.json['cluster'])
+        return download_graphml_internal(project_hash,
+                                         cluster,
+                                         storage_location)
 
 
 def get_clusters_internal(hash, redis):
@@ -274,6 +281,26 @@ def generate_microreact_url_internal(microreact_api_new_url,
             "detail": f"""Microreact API returned status code {r.status_code}.
                 Response text: {r.text}."""
             })), 500
+
+
+def download_graphml_internal(project_hash, cluster, storage_location):
+    fs = PoppunkFileStore(storage_location)
+    try:
+        with open(fs.network_mapping(project_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        component = cluster_component_mapping[str(cluster)]
+        path = fs.network_output_component(project_hash, component)
+        with open(path, 'r') as graphml_file:
+            graph = graphml_file.read()
+        f = jsonify(response_success({
+            "cluster": cluster,
+            "graph": graph}))
+    except (FileNotFoundError):
+        f = jsonify(error=response_failure({
+                "error": "File not found",
+                "detail": "GraphML file or include file not found"
+                })), 500
+    return f
 
 
 if __name__ == "__main__":

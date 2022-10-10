@@ -344,6 +344,25 @@ def test_send_zip_internal(client):
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
+def test_download_graphml_internal():
+    project_hash = 'unit_test_graphml'
+    cluster = 5
+    response = app.download_graphml_internal(project_hash,
+                                             cluster,
+                                             storage_location)
+    graph_string = read_data(response)['data']['graph']
+    assert all(x in graph_string for x in ['</graph>',
+                                           '</graphml>',
+                                           '</node>',
+                                           '</edge>'])
+    cluster_no_network_file = 59
+    response_error2 = app.download_graphml_internal(project_hash,
+                                                    cluster_no_network_file,
+                                                    storage_location)
+    error2 = read_data(response_error2[0])['error']['errors'][0]
+    assert error2['error'] == 'File not found'
+
+
 def test_hex_to_decimal():
     dummy_sketch = {
         "sample1": {

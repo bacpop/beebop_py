@@ -68,6 +68,8 @@ def test_run_poppunk(client, qtbot):
     qtbot.waitUntil(network_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/network/network_cytoscape.graphml")
+    assert os.path.exists(storage + p_hash +
+                          "/network/cluster_component_dict.pickle")
 
 
 def test_results_microreact(client):
@@ -99,6 +101,20 @@ def test_results_zip(client):
         'type': type})
     assert 'network_cytoscape.csv'.encode('utf-8') in response.data
     assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
+
+
+def test_download_graphml(client):
+    p_hash = 'unit_test_graphml'
+    cluster = 5
+    response = client.post("/results/graphml", json={
+        'projectHash': p_hash,
+        'cluster': cluster})
+    graph_string = json.loads(response.data.decode("utf-8"))['data']['graph']
+    assert response.status_code == 200
+    assert all(x in graph_string for x in ['</graph>',
+                                           '</graphml>',
+                                           '</node>',
+                                           '</edge>'])
 
 
 def test_404(client):
