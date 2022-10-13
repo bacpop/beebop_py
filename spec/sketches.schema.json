@@ -90,6 +90,11 @@
           "additionalProperties": true
         }
       }
+    },
+    "names": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
     }
-  }
+  },
+  "additionalProperties": false
 }

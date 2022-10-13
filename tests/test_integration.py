@@ -30,7 +30,6 @@ def test_run_poppunk(client, qtbot):
         "hash1": "name1.fa",
         "hash2": "name2.fa"
         }
-    assert jsonschema.validate(sketches, schemas.sketches) is None
     # submit new job
     p_hash = 'integration_test_run_poppunk'
     response = client.post("/poppunk", json={
