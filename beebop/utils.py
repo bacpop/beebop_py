@@ -72,13 +72,11 @@ def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
     keep_filenames.append('network_cytoscape.csv')
     keep_filenames.append('network_cytoscape.graphml')
     keep_filenames.append('cluster_component_dict.pickle')
-    prev_wd = os.getcwd()
-    os.chdir(fs.output_network(p_hash))  # Change directory to network folder
-    # Loop through files in folder and remove files not in list
-    for item in os.listdir(os.getcwd()):
-        if item not in keep_filenames:
-            os.remove(item)
-    os.chdir(prev_wd)  # Change directory back to previous wd
+    dir = fs.output_network(p_hash)
+    # remove files not in keep_filenames
+    for item in list(set(os.listdir(dir)) - set(keep_filenames)):
+        print(os.path.join(dir, item))
+        os.remove(os.path.join(dir, item))
 
 
 def replace_filehashes(folder, filename_dict):
@@ -88,8 +86,7 @@ def replace_filehashes(folder, filename_dict):
             if file != 'cluster_component_dict.pickle':
                 file_list.append(os.path.join(root, file))
     with fileinput.input(files=(file_list),
-                         inplace=True,
-                         backup='.orig') as input:
+                         inplace=True) as input:
         for line in input:
             line = line.rstrip()
             if not line:
