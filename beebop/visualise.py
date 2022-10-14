@@ -5,7 +5,7 @@ import fileinput
 from fileinput import FileInput
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping
-from beebop.utils import delete_component_files, replace_filehashes
+from beebop.utils import delete_component_files, replace_filehashes, add_query_ref_status
 
 
 def microreact(p_hash, fs, db_paths, args, name_mapping):
@@ -71,3 +71,4 @@ def network_internal(assign_result, p_hash, fs, db_paths, args, name_mapping):
     cluster_component_dict = generate_mapping(p_hash, fs)
     delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
+    add_query_ref_status(fs, p_hash, name_mapping)

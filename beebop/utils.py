@@ -75,7 +75,6 @@ def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
     dir = fs.output_network(p_hash)
     # remove files not in keep_filenames
     for item in list(set(os.listdir(dir)) - set(keep_filenames)):
-        print(os.path.join(dir, item))
         os.remove(os.path.join(dir, item))
 
 
@@ -95,3 +94,25 @@ def replace_filehashes(folder, filename_dict):
                 if f_key in line:
                     line = line.replace(f_key, f_value)
             print(line)
+
+
+def add_query_ref_status(fs, p_hash, filename_dict):
+    query_names = list(filename_dict.values())
+    print(query_names)
+
+    # list of all component graph filenames
+    file_list = []
+    for file in os.listdir(fs.output_network(p_hash)):
+        if fnmatch.fnmatch(file, 'network_component_*.graphml'):
+            file_list.append(file)
+    print(file_list)
+    component_filename = file_list[0]
+    print(component_filename)
+    component_number = re.findall(R'\d+', component_filename)[0]
+    print(component_number)
+    component_xml = ET.parse(fs.network_output_component(
+        p_hash,
+        component_number)).getroot()
+    print(component_xml)
+    samplename = component_xml.find(
+        ".//{http://graphml.graphdrawing.org/xmlns}node[@id='n0']/").text
