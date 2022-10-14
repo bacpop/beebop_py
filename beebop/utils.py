@@ -75,7 +75,6 @@ def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
     dir = fs.output_network(p_hash)
     # remove files not in keep_filenames
     for item in list(set(os.listdir(dir)) - set(keep_filenames)):
-        print(os.path.join(dir, item))
         os.remove(os.path.join(dir, item))
 
 
