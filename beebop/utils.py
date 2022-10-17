@@ -97,22 +97,26 @@ def replace_filehashes(folder, filename_dict):
 
 
 def add_query_ref_status(fs, p_hash, filename_dict):
+    ET.register_namespace('', "http://graphml.graphdrawing.org/xmlns")
+    ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
+    # list of query filenames
     query_names = list(filename_dict.values())
-    print(query_names)
-
     # list of all component graph filenames
     file_list = []
     for file in os.listdir(fs.output_network(p_hash)):
         if fnmatch.fnmatch(file, 'network_component_*.graphml'):
             file_list.append(file)
-    print(file_list)
-    component_filename = file_list[0]
-    print(component_filename)
-    component_number = re.findall(R'\d+', component_filename)[0]
-    print(component_number)
-    component_xml = ET.parse(fs.network_output_component(
-        p_hash,
-        component_number)).getroot()
-    print(component_xml)
-    samplename = component_xml.find(
-        ".//{http://graphml.graphdrawing.org/xmlns}node[@id='n0']/").text
+    for filename in file_list:
+        path = os.path.join(fs.output_network(p_hash), filename)
+        xml = ET.parse(path)
+        graph = xml.getroot()
+        nodes = graph.findall(".//{http://graphml.graphdrawing.org/xmlns}node")
+        for node in nodes:
+            name = node.find("./").text
+            child = ET.Element("data")
+            child.set("key", "ref_query")
+            child.text = 'query' if name in query_names else 'ref'
+            node.append(child)
+        ET.indent(xml, space='  ', level=0)
+        with open(path, 'wb') as f:
+            xml.write(f, encoding='utf-8')
