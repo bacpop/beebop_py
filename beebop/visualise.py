@@ -1,11 +1,9 @@
 from PopPUNK.visualise import generate_visualisations
 from rq import get_current_job
 from redis import Redis
-import fileinput
-from fileinput import FileInput
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import generate_mapping
-from beebop.utils import delete_component_files, replace_filehashes, add_query_ref_status
+from beebop.utils import generate_mapping, delete_component_files
+from beebop.utils import replace_filehashes, add_query_ref_status
 
 
 def microreact(p_hash, fs, db_paths, args, name_mapping):
