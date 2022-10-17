@@ -14,6 +14,7 @@ import os
 from flask import Flask
 from unittest.mock import Mock, patch
 from io import BytesIO
+import xml.etree.ElementTree as ET
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -558,3 +559,29 @@ def test_replace_filehashes():
         comp7_text = comp7.read()
         assert 'filename2' in comp7_text
         assert 'filehash2' not in comp7_text
+
+
+def test_add_query_ref_status():
+    p_hash = 'results_modifications'
+    filename_dict = {
+        'filehash1': 'filename1',
+        'filehash2': 'filename2',
+        'filehash3': 'filename3',
+    }
+    utils.add_query_ref_status(fs, p_hash, filename_dict)
+    path = fs.network_output_component(p_hash, 5)
+    print(path)
+    xml = ET.parse(path)
+    graph = xml.getroot()
+
+    def get_node_status(node_no):
+        node = graph.find(
+            f".//{{http://graphml.graphdrawing.org/xmlns}}"
+            f"node[@id='n{node_no}']"
+        )
+        return node.find(
+            "./{http://graphml.graphdrawing.org/xmlns}data[@key='ref_query']"
+        ).text
+    assert get_node_status(21) == 'query'
+    assert get_node_status(22) == 'query'
+    assert get_node_status(20) == 'ref'
