@@ -26,12 +26,17 @@ def test_run_poppunk(client, qtbot):
     os.makedirs(storage, exist_ok=True)
     # generate sketches
     sketches = json.loads(setup.generate_json())
-    assert jsonschema.validate(sketches, schemas.sketches) is None
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
     # submit new job
     p_hash = 'integration_test_run_poppunk'
     response = client.post("/poppunk", json={
         'projectHash': p_hash,
-        'sketches': sketches})
+        'sketches': sketches,
+        'names': name_mapping
+        })
     assert response.status_code == 200
     # retrieve job status
     status = client.get("/status/" + p_hash)

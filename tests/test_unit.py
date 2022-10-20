@@ -20,6 +20,7 @@ from beebop import app
 from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
+from beebop import utils
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 from beebop.utils import get_args
 import beebop.schemas
@@ -89,9 +90,12 @@ def test_microreact(mocker):
         'beebop.visualise.get_current_job',
         new=mock_get_current_job
     )
-    from beebop import visualise
     p_hash = 'unit_test_visualisations'
-    visualise.microreact(p_hash, fs, db_paths, args)
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
+    visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
@@ -100,15 +104,58 @@ def test_microreact_internal():
     assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
                      1: {'cluster': 59, 'hash': 'another_hash'}}
     p_hash = 'unit_test_visualisations'
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
     visualise.microreact_internal(assign_result, p_hash,
-                                  fs, db_paths, args)
+                                  fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
 
-def test_network():
+def test_network(mocker):
+    def mock_get_current_job(Redis):
+        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
+                         1: {'cluster': 59, 'hash': 'another_hash'}}
+
+        class mock_dependency:
+            def __init__(self, result):
+                self.result = result
+
+        class mock_job:
+            def __init__(self, result):
+                self.dependency = mock_dependency(result)
+        return mock_job(assign_result)
+    mocker.patch(
+        'beebop.visualise.get_current_job',
+        new=mock_get_current_job
+    )
+    from beebop import visualise
     p_hash = 'unit_test_visualisations'
-    visualise.network(p_hash, fs, db_paths, args)
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
+    visualise.network(p_hash, fs, db_paths, args, name_mapping)
+    assert os.path.exists(fs.output_network(p_hash) +
+                          "/network_cytoscape.graphml")
+
+
+def test_network_internal():
+    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
+                     1: {'cluster': 59, 'hash': 'another_hash'}}
+    p_hash = 'unit_test_visualisations'
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
+    visualise.network_internal(assign_result,
+                               p_hash,
+                               fs,
+                               db_paths,
+                               args,
+                               name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -121,12 +168,17 @@ def test_run_poppunk_internal(qtbot):
         'f3d9b387e311d5ab59a8c08eb3545dbb':
         fs_json.get('f3d9b387e311d5ab59a8c08eb3545dbb')
     }.items()
+    name_mapping = {
+        "hash1": "name1.fa",
+        "hash2": "name2.fa"
+        }
     project_hash = 'unit_test_run_poppunk_internal'
     results_storage_location = storage_location + '/results'
     redis = Redis()
     queue = Queue(connection=Redis())
     response = app.run_poppunk_internal(sketches,
                                         project_hash,
+                                        name_mapping,
                                         results_storage_location,
                                         redis,
                                         queue)
@@ -436,3 +488,73 @@ def test_add_files():
     assert 'rfile.txt'.encode('utf-8') in contents2
     assert '6930_8_9.fa'.encode('utf-8') not in contents2
     assert '7622_5_91.fa'.encode('utf-8') not in contents2
+
+
+def test_generate_mapping():
+    result = utils.generate_mapping('results_modifications', fs)
+    print(result)
+    exp_cluster_component_dict = {
+        '13': '2',
+        '31': '1',
+        '32': '3',
+        '7': '4',
+        '9': '6',
+        '14': '7',
+        '5': '5'
+    }
+    assert result == exp_cluster_component_dict
+
+
+def test_delete_component_files():
+    # should remove all component files apart from components 7 and 5
+    cluster_component_dict = {
+        '4': '7',
+        '5': '5',
+        '23': '12',
+        '1': '2',
+        '12': '3'
+    }
+    assign_result = {
+        0: {'cluster': '4'},
+        1: {'cluster': '5'}
+    }
+    p_hash = 'results_modifications'
+    utils.delete_component_files(cluster_component_dict,
+                                 fs,
+                                 assign_result,
+                                 p_hash)
+    assert not os.path.exists(fs.output_network(p_hash) +
+                              "/network_component_1.graphml")
+    assert not os.path.exists(fs.output_network(p_hash) +
+                              "/network_component_2.graphml")
+    assert not os.path.exists(fs.output_network(p_hash) +
+                              "/network_component_3.graphml")
+    assert not os.path.exists(fs.output_network(p_hash) +
+                              "/network_component_4.graphml")
+    assert os.path.exists(fs.output_network(p_hash) +
+                          "/network_component_5.graphml")
+    assert not os.path.exists(fs.output_network(p_hash) +
+                              "/network_component_6.graphml")
+    assert os.path.exists(fs.output_network(p_hash) +
+                          "/network_component_7.graphml")
+
+
+def test_replace_filehashes():
+    p_hash = 'results_modifications'
+    folder = fs.output_network(p_hash)
+    filename_dict = {
+        'filehash1': 'filename1',
+        'filehash2': 'filename2',
+        'filehash3': 'filename3',
+    }
+    utils.replace_filehashes(folder, filename_dict)
+    with open(fs.network_output_component(p_hash, 5), 'r') as comp5:
+        comp5_text = comp5.read()
+        assert 'filename1' in comp5_text
+        assert 'filename3' in comp5_text
+        assert 'filehash1' not in comp5_text
+        assert 'filehash3' not in comp5_text
+    with open(fs.network_output_component(p_hash, 7), 'r') as comp7:
+        comp7_text = comp7.read()
+        assert 'filename2' in comp7_text
+        assert 'filehash2' not in comp7_text

@@ -111,12 +111,18 @@ def run_poppunk():
     """
     sketches = request.json['sketches'].items()
     project_hash = request.json['projectHash']
+    name_mapping = request.json['names']
     q = Queue(connection=redis)
-    return run_poppunk_internal(sketches, project_hash,
+    return run_poppunk_internal(sketches, project_hash, name_mapping,
                                 storage_location, redis, q)
 
 
-def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
+def run_poppunk_internal(sketches,
+                         project_hash,
+                         name_mapping,
+                         storage_location,
+                         redis,
+                         q):
     # create FS
     fs = PoppunkFileStore(storage_location)
     # read arguments
@@ -143,13 +149,21 @@ def run_poppunk_internal(sketches, project_hash, storage_location, redis, q):
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
-                               args=(project_hash, fs, db_paths, args),
+                               args=(project_hash,
+                                     fs,
+                                     db_paths,
+                                     args,
+                                     name_mapping),
                                depends_on=job_assign, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:microreact", project_hash,
                job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
-                            args=(project_hash, fs, db_paths, args),
+                            args=(project_hash,
+                                  fs,
+                                  db_paths,
+                                  args,
+                                  name_mapping),
                             depends_on=job_assign, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:network", project_hash, job_network.id)
     return jsonify(response_success({"assign": job_assign.id,
@@ -298,7 +312,7 @@ def download_graphml_internal(project_hash, cluster, storage_location):
     except (FileNotFoundError):
         f = jsonify(error=response_failure({
                 "error": "File not found",
-                "detail": "GraphML file or include file not found"
+                "detail": "GraphML file not found"
                 })), 500
     return f
 
