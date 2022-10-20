@@ -7,6 +7,10 @@ import os
 import re
 import pickle
 import fileinput
+import glob
+
+ET.register_namespace('', "http://graphml.graphdrawing.org/xmlns")
+ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
 
 
 def get_args():
@@ -94,3 +98,38 @@ def replace_filehashes(folder, filename_dict):
                 if f_key in line:
                     line = line.replace(f_key, f_value)
             print(line)
+
+
+def add_query_ref_status(fs, p_hash, filename_dict):
+    """
+    The standard poppunk visualisation output for the cytoscape network graph
+    (.graphml file) does not include information on whether a sample has been
+    added by the user (we call these query samples) or is from the database
+    (called reference samples). To highlight the query samples in the network,
+    this information must be added to the .graphml file.
+    This is done by adding a new <data> element to the nodes, with the key
+    "ref_query" and the value being coded as either 'query' or 'ref'.
+
+    fs - filestore to locate output files
+    p_hash - project hash to find right project folder
+    filename_dict - dict that maps filehashes(keys) to corresponding filenames
+    (values) of all query samples. We only need the filenames here.
+    """
+    # list of query filenames
+    query_names = list(filename_dict.values())
+    # list of all component graph filenames
+    file_list = glob.glob(
+        fs.output_network(p_hash)+"/network_component_*.graphml")
+    for path in file_list:
+        xml_tree = ET.parse(path)
+        graph = xml_tree.getroot()
+        nodes = graph.findall(".//{http://graphml.graphdrawing.org/xmlns}node")
+        for node in nodes:
+            name = node.find("./").text
+            child = ET.Element("data")
+            child.set("key", "ref_query")
+            child.text = 'query' if name in query_names else 'ref'
+            node.append(child)
+        ET.indent(xml_tree, space='  ', level=0)
+        with open(path, 'wb') as f:
+            xml_tree.write(f, encoding='utf-8')
