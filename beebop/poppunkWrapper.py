@@ -11,7 +11,8 @@ class PoppunkWrapper:
     Arguments:
     fs - PoppunkFilestore
     db_paths - DatabaseFilestore
-    args - arguments for Poppunk's assign function, stored in resources/args.json
+    args - arguments for Poppunk's assign function, stored in
+    resources/args.json
     p_hash - project hash
     """
     def __init__(self, fs, db_paths, args, p_hash):
@@ -97,8 +98,8 @@ class PoppunkWrapper:
 
     def create_network(self):
         """
-        Generates network visualisation output in .graphml format based on previous
-        assign-clusters() output.
+        Generates network visualisation output in .graphml format based on
+        previous assign-clusters() output.
         """
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),

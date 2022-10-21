@@ -24,14 +24,15 @@ def get_args():
 
 def generate_mapping(p_hash, fs):
     """
-    PopPUNKs network visualisation generates one overall .graphml file covering all
-    clusters/ components. Furthermore, it generates one .graphml file per component,
-    where the component numbers are arbitrary and do not match poppunk cluster
-    numbers. To find the right component file by cluster number, we need to
-    generate a mapping to be able to return the right component number based
-    on cluster number. This function will generate that mapping by looking up
-    the first filename from each component file in the csv file that holds all
-    filenames and their corresponding clusters.
+    PopPUNKs network visualisation generates one overall .graphml file
+    covering all clusters/ components. Furthermore, it generates one .graphml
+    file per component, where the component numbers are arbitrary and do not
+    match poppunk cluster numbers.
+    To find the right component file by cluster number, we need to generate
+    a mapping to be able to return the right component number based on cluster
+    number. This function will generate that mapping by looking up the first
+    filename from each component file in the csv file that holds all filenames
+    and their corresponding clusters.
 
     Arguments:
     p_hash - project hash
@@ -72,9 +73,11 @@ def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
     files from the clusters our queries belong to.
 
     Arguments:
-    cluster_component_dict - dictionary that maps cluster number to component number
+    cluster_component_dict - dictionary that maps cluster number to component
+    number
     fs - PoppunkFilestore
-    assign_result - result from clustering, needed here to define which clusters we want to keep
+    assign_result - result from clustering, needed here to define which
+    clusters we want to keep
     p_hash - project hash
     """
     queries_clusters = []
@@ -97,15 +100,15 @@ def delete_component_files(cluster_component_dict, fs, assign_result, p_hash):
 
 def replace_filehashes(folder, filename_dict):
     """
-    Since the analyses run with filehashes rather than filenames (because we store the
-    json sketches by filehash rather than filename to avoid saving the same sketch
-    multiple times with different filenames) the results are also reported with file
-    hashes rather than filenames. To report results back to the user using their original
-    filenames, the hashes get replaced.
+    Since the analyses run with filehashes rather than filenames (because we
+    store the json sketches by filehash rather than filename to avoid saving
+    the same sketch multiple times with different filenames) the results are
+    also reported with file hashes rather than filenames. To report results
+    back to the user using their original filenames, the hashes get replaced.
 
     Arguments:
-    folder - path to folder in which the replacement should be performed. Will be a
-    microreact or network folder.
+    folder - path to folder in which the replacement should be performed. Will
+    be a microreact or network folder.
     filename_dict - dict that maps filehashes (keys) to corresponding filenames
     (values) of all query samples.
     """

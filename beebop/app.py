@@ -157,7 +157,6 @@ def run_poppunk_internal(sketches,
     storage_location
     redis - Redis instance
     q - redis queue
-    
     """
     # create FS
     fs = PoppunkFileStore(storage_location)
@@ -343,14 +342,14 @@ def generate_microreact_url_internal(microreact_api_new_url,
                                      storage_location):
     """
     Generates Microreact URL to a microreact project with the users data
-    already being uploaded. 
+    already being uploaded.
 
     Arguments:
     microreact_api_new_url - URL where the microreact API can be accessed
     project_hash
     cluster
     api_token - this ust be provided by the user. The new API does not allow
-    generating a URL without a token. 
+    generating a URL without a token.
     storage_location
     """
     fs = PoppunkFileStore(storage_location)
@@ -391,10 +390,10 @@ def generate_microreact_url_internal(microreact_api_new_url,
 
 def download_graphml_internal(project_hash, cluster, storage_location):
     """
-    Sends the content of the .graphml file for a specified cluster to the backend
-    to be used to draw a network graph. Since ,component numbers are not matching
-    with cluster numbers, we must first infer the component number from cluster number
-    to locate and send the right .graphml file.
+    Sends the content of the .graphml file for a specified cluster to the
+    backend to be used to draw a network graph. Since ,component numbers
+    are not matching with cluster numbers, we must first infer the component
+    number from cluster number to locate and send the right .graphml file.
 
     Arguments:
     project_hash

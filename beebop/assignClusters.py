@@ -18,12 +18,13 @@ def get_clusters(hashes_list, p_hash, fs, db_paths, args):
     """
     Assign cluster numbers to samples using PopPUNK.
 
-    Arguments: 
+    Arguments:
     hashes_list - list of file hashes from all query samples
     p_hash - project_hash
     fs - PoppunkFilestore
     db_paths - DatabaseFilestore which provides paths to database files
-    args - arguments for Poppunk's assign function, stored in resources/args.json
+    args - arguments for Poppunk's assign function, stored in
+    resources/args.json
     """
     # set output directory
     outdir = fs.output(p_hash)

@@ -50,11 +50,12 @@ def microreact_internal(assign_result,
 def network(p_hash, fs, db_paths, args, name_mapping):
     """
     Generate files to draw a network.
-    Output files are .csv and .graphml (one overall and several component files,
-    those that are not relevant for us get deleted).
+    Output files are .csv and .graphml (one overall and several component
+    files, those that are not relevant for us get deleted).
     Since network component number and poppunk cluster number do not
     match, we need to generate a mapping to find the right component files.
-    To highlight query samples in the network graph, a ref or query status is added to .graphml files.
+    To highlight query samples in the network graph, a ref or query status is
+    added to .graphml files.
 
     Arguments:
     p_hash: project hash to find input data (output from assignClusters)
