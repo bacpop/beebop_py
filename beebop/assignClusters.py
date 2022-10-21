@@ -16,8 +16,14 @@ def hex_to_decimal(sketches_dict):
 
 def get_clusters(hashes_list, p_hash, fs, db_paths, args):
     """
-    assign clusterIDs to sketches
-    hashes_list: list of json objects stored json object of multiple sketches
+    Assign cluster numbers to samples using PopPUNK.
+
+    Arguments: 
+    hashes_list - list of file hashes from all query samples
+    p_hash - project_hash
+    fs - PoppunkFilestore
+    db_paths - DatabaseFilestore which provides paths to database files
+    args - arguments for Poppunk's assign function, stored in resources/args.json
     """
     # set output directory
     outdir = fs.output(p_hash)

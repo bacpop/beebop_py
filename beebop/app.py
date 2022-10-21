@@ -56,6 +56,16 @@ def check_connection(redis):
 
 
 def generate_zip(path_folder, type, cluster):
+    """
+    This generates a .zip folder with results data.
+
+    Arguments:
+    path_folder - folder to be zipped
+    type - can be either 'microreact' or 'network'
+    cluster - only relevant for 'network', since there are multiple
+    component files stored in the folder, but only the right one should
+    be included in the zip folder
+    """
     memory_file = BytesIO()
     if type == 'microreact':
         add_files(memory_file, path_folder)
@@ -69,6 +79,16 @@ def generate_zip(path_folder, type, cluster):
 
 
 def add_files(memory_file, path_folder, file_list=None):
+    """
+    Add files in specified folder to a memory_file.
+    If filelist is provided, only files in this list are added,
+    otherwise all files in the folder will be included
+
+    Arguments:
+    memory_file - BytesIO object to add files to
+    path_folder - path to folder with files to include
+    file_list - optional, if only specific files in folder should be included
+    """
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(path_folder):
             for file in files:
@@ -107,7 +127,8 @@ def report_version():
 def run_poppunk():
     """
     run poppunks assing_query() and generate_visualisations().
-    input: multiple sketches in json format
+    input: multiple sketches in json format together with project hash
+    and filename mapping, schema can be found in spec/sketches.schema.json
     """
     sketches = request.json['sketches'].items()
     project_hash = request.json['projectHash']
@@ -123,6 +144,21 @@ def run_poppunk_internal(sketches,
                          storage_location,
                          redis,
                          q):
+    """
+    Runs all poppunk functions we are interested in on the provided sketches.
+    These are clustering with poppunk_assign, and creating visualisations
+    (microreact and network) with poppunk_visualise. In future, also lineage
+    assignment and QC should be triggered from this endpoint.
+
+    Arguments:
+    sketches - all sketches in json format
+    project_hash
+    name_mapping - maps filehashes to filenames for all query samples
+    storage_location
+    redis - Redis instance
+    q - redis queue
+    
+    """
     # create FS
     fs = PoppunkFileStore(storage_location)
     # read arguments
@@ -174,10 +210,23 @@ def run_poppunk_internal(sketches,
 # get job status
 @app.route("/status/<hash>")
 def get_status(hash):
+    """
+    Returns job statuses for jobs with given project hash.
+    Possible values are: queued, started, deferred, finished, stopped,
+    scheduled, canceled and failed
+    """
     return get_status_internal(hash, redis)
 
 
 def get_status_internal(hash, redis):
+    """
+    Returns statuses of all jobs from given project (cluster assignment,
+    microreact and network visualisations).
+
+    Arguments:
+    hash - project hash
+    redis - Redis instance
+    """
     check_connection(redis)
 
     def get_status_job(job, hash, redis):
@@ -202,6 +251,21 @@ def get_status_internal(hash, redis):
 # get job result
 @app.route("/results/<type>", methods=['POST'])
 def get_results(type):
+    """
+    Route to get results for the specified type of analysis. These can be
+    - 'assign' for clusters
+    - 'zip' for visualisation results as zip folders (with the json property
+      'type' specifying whether 'microreact' or 'network' results are required)
+    - 'microreact' for the microreact URL for a given cluster
+    - 'graphml' for the content of the .graphml file for the specified cluster
+
+    Input: json with the following properties:
+    project_hash
+    type - only for 'zip' results, can be either 'microreact' or 'network'
+    cluster - for 'zip', 'microreact' and 'graphml' results
+    api_token - only required for  'microreact' URL generation. This must be
+    provided by the user in the frontend
+    """
     if type == 'assign':
         project_hash = request.json['projectHash']
         return get_clusters_internal(project_hash, redis)
@@ -229,6 +293,13 @@ def get_results(type):
 
 
 def get_clusters_internal(hash, redis):
+    """
+    returns cluster assignment results
+
+    Arguments:
+    hash - project hash
+    redis - Redis instance
+    """
     check_connection(redis)
     try:
         id = redis.hget("beebop:hash:job:assign", hash).decode("utf-8")
@@ -244,6 +315,15 @@ def get_clusters_internal(hash, redis):
 
 
 def send_zip_internal(project_hash, type, cluster, storage_location):
+    """
+    Generates a zipfile with visualisation results and returns zipfile
+
+    Arguments:
+    project_hash
+    type - either 'microreact' or 'network'
+    cluster
+    storage_location
+    """
     fs = PoppunkFileStore(storage_location)
     if type == 'microreact':
         path_folder = fs.output_microreact(project_hash, cluster)
@@ -261,6 +341,18 @@ def generate_microreact_url_internal(microreact_api_new_url,
                                      cluster,
                                      api_token,
                                      storage_location):
+    """
+    Generates Microreact URL to a microreact project with the users data
+    already being uploaded. 
+
+    Arguments:
+    microreact_api_new_url - URL where the microreact API can be accessed
+    project_hash
+    cluster
+    api_token - this ust be provided by the user. The new API does not allow
+    generating a URL without a token. 
+    storage_location
+    """
     fs = PoppunkFileStore(storage_location)
 
     path_json = fs.microreact_json(project_hash, cluster)
@@ -298,6 +390,17 @@ def generate_microreact_url_internal(microreact_api_new_url,
 
 
 def download_graphml_internal(project_hash, cluster, storage_location):
+    """
+    Sends the content of the .graphml file for a specified cluster to the backend
+    to be used to draw a network graph. Since ,component numbers are not matching
+    with cluster numbers, we must first infer the component number from cluster number
+    to locate and send the right .graphml file.
+
+    Arguments:
+    project_hash
+    cluster
+    storage_location
+    """
     fs = PoppunkFileStore(storage_location)
     try:
         with open(fs.network_mapping(project_hash), 'rb') as dict:

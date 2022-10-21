@@ -4,6 +4,16 @@ import shutil
 
 
 class PoppunkWrapper:
+    """
+    Wrapper to separate the poppunk function calls that require an enormous
+    amount of arguments from the main scripts.
+
+    Arguments:
+    fs - PoppunkFilestore
+    db_paths - DatabaseFilestore
+    args - arguments for Poppunk's assign function, stored in resources/args.json
+    p_hash - project hash
+    """
     def __init__(self, fs, db_paths, args, p_hash):
         self.fs = fs
         self.db_paths = db_paths
@@ -11,6 +21,12 @@ class PoppunkWrapper:
         self.p_hash = p_hash
 
     def assign_clusters(self, dbFuncs, qc_dict, qNames):
+        """
+        Arguments:
+        dbFuncs - database functions, generated with poppunks setupDBFuncs()
+        qc_dict - dict whether qc should run or not
+        qNames - hd5 database with all sketches
+        """
         assign_query_hdf5(
             dbFuncs=dbFuncs,
             ref_db=self.db_paths.db,
@@ -37,6 +53,13 @@ class PoppunkWrapper:
         )
 
     def create_microreact(self, cluster_no):
+        """
+        Generates microreact visualisation output based on previous
+        assign-clusters() output.
+
+        Arguments:
+        cluster_no
+        """
         print(shutil.which('rapidnj'))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
@@ -73,6 +96,10 @@ class PoppunkWrapper:
         )
 
     def create_network(self):
+        """
+        Generates network visualisation output in .graphml format based on previous
+        assign-clusters() output.
+        """
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_paths.db,

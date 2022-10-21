@@ -4,6 +4,9 @@ from pathlib import PurePath
 
 
 class FileStore:
+    """
+    General filestore to be used by PoppunkFileStore
+    """
     def __init__(self, path):
         self._path = path
         os.makedirs(path, exist_ok=True)
@@ -32,6 +35,12 @@ class FileStore:
 
 
 class PoppunkFileStore:
+    """
+    Filestore that provides paths to poppunk in- and outputs
+
+    Argument:
+    storage_location
+    """
     def __init__(self, storage_location):
         self.storage_location = storage_location
         self.input = FileStore(f"{storage_location}/json")
@@ -83,6 +92,12 @@ class PoppunkFileStore:
 
 
 class DatabaseFileStore:
+    """
+    Filestore that provides paths to the database
+
+    Argument:
+    full_path - path to database
+    """
     def __init__(self, full_path):
         self.db = full_path
         self.path = str(PurePath(full_path).parent)
