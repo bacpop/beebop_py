@@ -55,22 +55,29 @@ def check_connection(redis):
         abort(500, description="Redis not found")
 
 
-def generate_zip(path_folder, type, cluster):
+def generate_zip(fs, project_hash, type, cluster):
     """
     This generates a .zip folder with results data.
 
     Arguments:
-    path_folder - folder to be zipped
+    fs - PoppunkFilestore
+    project_hash
     type - can be either 'microreact' or 'network'
     cluster - only relevant for 'network', since there are multiple
     component files stored in the folder, but only the right one should
-    be included in the zip folder
+    be included in the zip folder. Component number is inferred from
+    cluster number using the cluster_component_mapping.
     """
     memory_file = BytesIO()
     if type == 'microreact':
+        path_folder = fs.output_microreact(project_hash, cluster)
         add_files(memory_file, path_folder)
     elif type == 'network':
-        file_list = (f'network_component_{cluster}.graphml',
+        path_folder = fs.output_network(project_hash)
+        with open(fs.network_mapping(project_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        component = cluster_component_mapping[str(cluster)]
+        file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
         add_files(memory_file, path_folder, file_list)
@@ -324,12 +331,8 @@ def send_zip_internal(project_hash, type, cluster, storage_location):
     storage_location
     """
     fs = PoppunkFileStore(storage_location)
-    if type == 'microreact':
-        path_folder = fs.output_microreact(project_hash, cluster)
-    elif type == 'network':
-        path_folder = fs.output_network(project_hash)
     # generate zipfile
-    memory_file = generate_zip(path_folder, type, cluster)
+    memory_file = generate_zip(fs, project_hash, type, cluster)
     return send_file(memory_file,
                      download_name=type + '.zip',
                      as_attachment=True)
