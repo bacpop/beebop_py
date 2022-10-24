@@ -102,8 +102,9 @@ def test_results_zip(client):
     type = 'network'
     response = client.post("/results/zip", json={
         'projectHash': p_hash,
-        'cluster': None,
+        'cluster': 1,
         'type': type})
+    assert 'network_component_38.graphml'.encode('utf-8') in response.data
     assert 'network_cytoscape.csv'.encode('utf-8') in response.data
     assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
