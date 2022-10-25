@@ -1,4 +1,3 @@
-from importlib.resources import path
 from flask import Flask, jsonify, request, abort, send_file
 from flask_expects_json import expects_json
 from waitress import serve
@@ -30,7 +29,11 @@ storage_location = os.environ.get('STORAGE_LOCATION')
 database_location = os.environ.get('DB_LOCATION')
 
 
-def response_success(data):
+def response_success(data) -> dict:
+    """
+    :param data: [data to be stored in response object]
+    :return dict: [response object for successfull response holding data]
+    """
     response = {
         "status": "success",
         "errors": [],
@@ -39,7 +42,11 @@ def response_success(data):
     return response
 
 
-def response_failure(error):
+def response_failure(error) -> dict:
+    """
+    :param error: [error message]
+    :return dict: [response object for error response holding error message]
+    """
     response = {
         "status": "failure",
         "errors": [error],
@@ -48,23 +55,27 @@ def response_failure(error):
     return response
 
 
-def check_connection(redis):
+def check_connection(redis) -> None:
+    """
+    :param redis: [Redis instance]
+    """
     try:
         redis.ping()
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
         abort(500, description="Redis not found")
 
 
-def generate_zip(path_folder, type, cluster):
+def generate_zip(path_folder: str, type: str, cluster: str) -> BytesIO:
     """
-    This generates a .zip folder with results data.
+    [This generates a .zip folder with results data.]
 
-    Arguments:
-    path_folder - folder to be zipped
-    type - can be either 'microreact' or 'network'
-    cluster - only relevant for 'network', since there are multiple
-    component files stored in the folder, but only the right one should
-    be included in the zip folder
+    :param path_folder: [path to folder to be zipped]
+    :param type: [can be either 'microreact' or 'network']
+    :param cluster: [only relevant for 'network', since there are multiple
+        component files stored in the folder, but only the right one should
+        be included in the zip folder. For 'microreact' this can be None, as
+        the cluster information is already included in the path]
+    :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
     if type == 'microreact':
@@ -78,16 +89,19 @@ def generate_zip(path_folder, type, cluster):
     return memory_file
 
 
-def add_files(memory_file, path_folder, file_list=None):
+def add_files(memory_file: BytesIO,
+              path_folder: str,
+              file_list: list = None) -> BytesIO:
     """
-    Add files in specified folder to a memory_file.
+    [Add files in specified folder to a memory_file.
     If filelist is provided, only files in this list are added,
-    otherwise all files in the folder will be included
+    otherwise all files in the folder will be included]
 
-    Arguments:
-    memory_file - BytesIO object to add files to
-    path_folder - path to folder with files to include
-    file_list - optional, if only specific files in folder should be included
+    :param memory_file: [empty memory file to add files to]
+    :param path_folder: [path to folder with files to include]
+    :param file_list: [optional, if only specific files in folder should
+        be included]
+    :return BytesIO: [memory file with added files]
     """
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(path_folder):
@@ -101,22 +115,32 @@ def add_files(memory_file, path_folder, file_list=None):
 
 
 @app.errorhandler(500)
-def internal_server_error(e):
+def internal_server_error(e) -> json:
+    """
+    :param e: [error]
+    :return json: [error response object]
+    """
     return jsonify(error=response_failure({"error": "Internal Server Error",
                                            "detail": str(e)})), 500
 
 
 @app.errorhandler(404)
-def resource_not_found(e):
+def resource_not_found(e) -> json:
+    """
+    :param e: [error]
+    :return json: [error response object]
+    """
     return jsonify(error=response_failure({"error": "Resource not found",
                                            "detail": str(e)})), 404
 
 
 @app.route('/version')
-def report_version():
+def report_version() -> json:
     """
-    report version of beebop and poppunk (and ska in the future)
-    wrapped in response object
+    [report version of beebop and poppunk (and ska in the future)
+    wrapped in response object]
+
+    :return json: [response that stores version infos in 'data']
     """
     vers = versions.get_version()
     return jsonify(response_success(vers))
@@ -124,39 +148,42 @@ def report_version():
 
 @app.route('/poppunk', methods=['POST'])
 @expects_json(schemas.sketches)
-def run_poppunk():
+def run_poppunk() -> json:
     """
-    run poppunks assing_query() and generate_visualisations().
+    [run poppunks assing_query() and generate_visualisations().
     input: multiple sketches in json format together with project hash
-    and filename mapping, schema can be found in spec/sketches.schema.json
+    and filename mapping, schema can be found in spec/sketches.schema.json]
+
+    :return json: [response object with all job IDs stored in 'data']
     """
     sketches = request.json['sketches'].items()
-    project_hash = request.json['projectHash']
+    p_hash = request.json['projectHash']
     name_mapping = request.json['names']
     q = Queue(connection=redis)
-    return run_poppunk_internal(sketches, project_hash, name_mapping,
+    return run_poppunk_internal(sketches, p_hash, name_mapping,
                                 storage_location, redis, q)
 
 
-def run_poppunk_internal(sketches,
-                         project_hash,
-                         name_mapping,
-                         storage_location,
-                         redis,
-                         q):
+def run_poppunk_internal(sketches: dict,
+                         p_hash: str,
+                         name_mapping: dict,
+                         storage_location: str,
+                         redis: Redis,
+                         q: Queue) -> json:
     """
-    Runs all poppunk functions we are interested in on the provided sketches.
+    [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
     (microreact and network) with poppunk_visualise. In future, also lineage
-    assignment and QC should be triggered from this endpoint.
+    assignment and QC should be triggered from this endpoint.]
 
-    Arguments:
-    sketches - all sketches in json format
-    project_hash
-    name_mapping - maps filehashes to filenames for all query samples
-    storage_location
-    redis - Redis instance
-    q - redis queue
+    :param sketches: [all sketches in json format]
+    :param p_hash: [project hash]
+    :param name_mapping: [maps filehashes to filenames for all query
+        samples]
+    :param storage_location: [path to storage location]
+    :param redis: [Redis instance]
+    :param q: [redis queue]
+    :return json: [response object with all job IDs stored in 'data']
     """
     # create FS
     fs = PoppunkFileStore(storage_location)
@@ -174,68 +201,71 @@ def run_poppunk_internal(sketches,
     # submit list of hashes to redis worker
     job_assign = q.enqueue(assignClusters.get_clusters,
                            hashes_list,
-                           project_hash,
+                           p_hash,
                            fs,
                            db_paths,
                            args,
                            job_timeout=job_timeout)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job:assign", project_hash, job_assign.id)
+    redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
-                               args=(project_hash,
+                               args=(p_hash,
                                      fs,
                                      db_paths,
                                      args,
                                      name_mapping),
                                depends_on=job_assign, job_timeout=job_timeout)
-    redis.hset("beebop:hash:job:microreact", project_hash,
+    redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
-                            args=(project_hash,
+                            args=(p_hash,
                                   fs,
                                   db_paths,
                                   args,
                                   name_mapping),
                             depends_on=job_assign, job_timeout=job_timeout)
-    redis.hset("beebop:hash:job:network", project_hash, job_network.id)
+    redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
                                      "network": job_network.id}))
 
 
 # get job status
-@app.route("/status/<hash>")
-def get_status(hash):
+@app.route("/status/<p_hash>")
+def get_status(p_hash) -> json:
     """
-    Returns job statuses for jobs with given project hash.
-    Possible values are: queued, started, deferred, finished, stopped,
-    scheduled, canceled and failed
+    [returns job statuses for all jobs with given project hash. Possible
+    values are: queued, started, deferred, finished, stopped, canceled,
+    scheduled and failed]
+
+    :param p_hash: [project hash]
+    :return json: [response object with job statuses]
     """
-    return get_status_internal(hash, redis)
+    return get_status_internal(p_hash, redis)
 
 
-def get_status_internal(hash, redis):
+def get_status_internal(p_hash: str, redis: Redis) -> json:
     """
-    Returns statuses of all jobs from given project (cluster assignment,
-    microreact and network visualisations).
+    [returns statuses of all jobs from a given project (cluster assignment,
+    microreact and network visualisations)]
 
-    Arguments:
-    hash - project hash
-    redis - Redis instance
+    :param p_hash: [project hash]
+    :param redis: [Redis instance]
+    :return json: [response object with job statuses]
     """
     check_connection(redis)
 
-    def get_status_job(job, hash, redis):
-        id = redis.hget(f"beebop:hash:job:{job}", hash).decode("utf-8")
+    def get_status_job(job, p_hash, redis):
+        id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
         return Job.fetch(id, connection=redis).get_status()
     try:
-        status_assign = get_status_job('assign', hash, redis)
+        status_assign = get_status_job('assign', p_hash, redis)
         if status_assign == "finished":
-            status_microreact = get_status_job('microreact', hash, redis)
-            status_network = get_status_job('network', hash, redis)
+            status_microreact = get_status_job('microreact', p_hash, redis)
+            status_network = get_status_job('network', p_hash, redis)
         else:
             status_microreact = "waiting"
             status_network = "waiting"
@@ -248,60 +278,67 @@ def get_status_internal(hash, redis):
 
 
 # get job result
-@app.route("/results/<type>", methods=['POST'])
-def get_results(type):
+@app.route("/results/<result_type>", methods=['POST'])
+def get_results(result_type) -> json:
     """
-    Route to get results for the specified type of analysis. These can be
-    - 'assign' for clusters
-    - 'zip' for visualisation results as zip folders (with the json property
-      'type' specifying whether 'microreact' or 'network' results are required)
-    - 'microreact' for the microreact URL for a given cluster
-    - 'graphml' for the content of the .graphml file for the specified cluster
+    [Route to get results for the specified type of analysis.
+    Request object includes:
+        project_hash
+        type - only for 'zip' results, can be 'microreact' or 'network'
+        cluster - for 'zip', 'microreact' and 'graphml' results
+        api_token - only required for  'microreact' URL generation. This
+        must be provided by the user in the frontend]
 
-    Input: json with the following properties:
-    project_hash
-    type - only for 'zip' results, can be either 'microreact' or 'network'
-    cluster - for 'zip', 'microreact' and 'graphml' results
-    api_token - only required for  'microreact' URL generation. This must be
-    provided by the user in the frontend
+    :param result_type: [can be
+        - 'assign' for clusters
+        - 'zip' for visualisation results as zip folders (with the json
+            property 'type' specifying whether 'microreact' or 'network'
+            results are required)
+        - 'microreact' for the microreact URL for a given cluster
+        - 'graphml' for the content of the .graphml file for the specified
+            cluster]
+    :return json: [response object with result stored in 'data']
     """
-    if type == 'assign':
-        project_hash = request.json['projectHash']
-        return get_clusters_internal(project_hash, redis)
-    elif type == 'zip':
-        project_hash = request.json['projectHash']
-        type = request.json['type']
+    if result_type == 'assign':
+        p_hash = request.json['projectHash']
+        return get_clusters_internal(p_hash, redis)
+    elif result_type == 'zip':
+        p_hash = request.json['projectHash']
+        visualisation_type = request.json['type']
         cluster = str(request.json['cluster'])
-        return send_zip_internal(project_hash, type, cluster, storage_location)
-    elif type == 'microreact':
+        return send_zip_internal(p_hash,
+                                 visualisation_type,
+                                 cluster,
+                                 storage_location)
+    elif result_type == 'microreact':
         microreact_api_new_url = "https://microreact.org/api/projects/create"
-        project_hash = request.json['projectHash']
+        p_hash = request.json['projectHash']
         cluster = str(request.json['cluster'])
         api_token = str(request.json['apiToken'])
         return generate_microreact_url_internal(microreact_api_new_url,
-                                                project_hash,
+                                                p_hash,
                                                 cluster,
                                                 api_token,
                                                 storage_location)
-    elif type == 'graphml':
-        project_hash = request.json['projectHash']
+    elif result_type == 'graphml':
+        p_hash = request.json['projectHash']
         cluster = str(request.json['cluster'])
-        return download_graphml_internal(project_hash,
+        return download_graphml_internal(p_hash,
                                          cluster,
                                          storage_location)
 
 
-def get_clusters_internal(hash, redis):
+def get_clusters_internal(p_hash: str, redis: Redis) -> json:
     """
-    returns cluster assignment results
+    [returns cluster assignment results]
 
-    Arguments:
-    hash - project hash
-    redis - Redis instance
+    :param p_hash: [project hash]
+    :param redis: [Redis instance]
+    :return json: [response object with cluster results stored in 'data']
     """
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job:assign", hash).decode("utf-8")
+        id = redis.hget("beebop:hash:job:assign", p_hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
             return jsonify(error=response_failure({
@@ -313,21 +350,24 @@ def get_clusters_internal(hash, redis):
             "error": "Unknown project hash"})), 500
 
 
-def send_zip_internal(project_hash, type, cluster, storage_location):
+def send_zip_internal(p_hash: str,
+                      type: str,
+                      cluster: str,
+                      storage_location: str) -> any:
     """
-    Generates a zipfile with visualisation results and returns zipfile
+    [Generates a zipfile with visualisation results and returns zipfile]
 
-    Arguments:
-    project_hash
-    type - either 'microreact' or 'network'
-    cluster
-    storage_location
+    :param p_hash: [project hash]
+    :param type: [either 'microreact' or 'network']
+    :param cluster: [cluster number]
+    :param storage_location: [storage location]
+    :return any: [zipfile]
     """
     fs = PoppunkFileStore(storage_location)
     if type == 'microreact':
-        path_folder = fs.output_microreact(project_hash, cluster)
+        path_folder = fs.output_microreact(p_hash, cluster)
     elif type == 'network':
-        path_folder = fs.output_network(project_hash)
+        path_folder = fs.output_network(p_hash)
     # generate zipfile
     memory_file = generate_zip(path_folder, type, cluster)
     return send_file(memory_file,
@@ -335,26 +375,27 @@ def send_zip_internal(project_hash, type, cluster, storage_location):
                      as_attachment=True)
 
 
-def generate_microreact_url_internal(microreact_api_new_url,
-                                     project_hash,
-                                     cluster,
-                                     api_token,
-                                     storage_location):
+def generate_microreact_url_internal(microreact_api_new_url: str,
+                                     p_hash: str,
+                                     cluster: str,
+                                     api_token: str,
+                                     storage_location: str) -> json:
     """
-    Generates Microreact URL to a microreact project with the users data
-    already being uploaded.
+    [Generates Microreact URL to a microreact project with the users data
+    already being uploaded.]
 
-    Arguments:
-    microreact_api_new_url - URL where the microreact API can be accessed
-    project_hash
-    cluster
-    api_token - this ust be provided by the user. The new API does not allow
-    generating a URL without a token.
-    storage_location
+    :param microreact_api_new_url: [URL where the microreact API can be
+        accessed]
+    :param p_hash: [project hash]
+    :param cluster: [cluster number]
+    :param api_token: [this ust be provided by the user. The new API does
+        not allow generating a URL without a token.]
+    :param storage_location: [storage location]
+    :return json: [response object with URL stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
 
-    path_json = fs.microreact_json(project_hash, cluster)
+    path_json = fs.microreact_json(p_hash, cluster)
 
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
@@ -388,24 +429,27 @@ def generate_microreact_url_internal(microreact_api_new_url,
             })), 500
 
 
-def download_graphml_internal(project_hash, cluster, storage_location):
+def download_graphml_internal(p_hash: str,
+                              cluster: str,
+                              storage_location: str) -> json:
     """
-    Sends the content of the .graphml file for a specified cluster to the
-    backend to be used to draw a network graph. Since ,component numbers
+    [Sends the content of the .graphml file for a specified cluster to the
+    backend to be used to draw a network graph. Since component numbers
     are not matching with cluster numbers, we must first infer the component
-    number from cluster number to locate and send the right .graphml file.
+    number from cluster number to locate and send the right .graphml file.]
 
-    Arguments:
-    project_hash
-    cluster
-    storage_location
+    :param p_hash: [project hash]
+    :param cluster: [cluster number]
+    :param storage_location: [storage location]
+    :return json: [response object with graphml content stored as string in
+        'data']
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        with open(fs.network_mapping(project_hash), 'rb') as dict:
+        with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         component = cluster_component_mapping[str(cluster)]
-        path = fs.network_output_component(project_hash, component)
+        path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
         f = jsonify(response_success({

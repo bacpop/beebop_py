@@ -1,32 +1,36 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
+from beebop.filestore import DatabaseFileStore
 import shutil
 
 
 class PoppunkWrapper:
     """
-    Wrapper to separate the poppunk function calls that require an enormous
-    amount of arguments from the main scripts.
-
-    Arguments:
-    fs - PoppunkFilestore
-    db_paths - DatabaseFilestore
-    args - arguments for Poppunk's assign function, stored in
-    resources/args.json
-    p_hash - project hash
+    [Wrapper to separate the poppunk function calls that require an enormous
+    amount of arguments from the main scripts.]
     """
     def __init__(self, fs, db_paths, args, p_hash):
+        """
+        :param fs: [PoppunkFileStore with paths to in-/outputs]
+        :param db_paths: [DatabaseFileStore with paths to db files]
+        :param args: [arguments for Poppunk's assign function, stored in
+            resources/args.json]
+        :param p_hash: [project hash]
+        """
         self.fs = fs
         self.db_paths = db_paths
         self.args = args
         self.p_hash = p_hash
 
-    def assign_clusters(self, dbFuncs, qc_dict, qNames):
+    def assign_clusters(self,
+                        dbFuncs: DatabaseFileStore,
+                        qc_dict: dict,
+                        qNames: list) -> None:
         """
-        Arguments:
-        dbFuncs - database functions, generated with poppunks setupDBFuncs()
-        qc_dict - dict whether qc should run or not
-        qNames - hd5 database with all sketches
+        :param dbFuncs: [database functions, generated with poppunks
+            setupDBFuncs()]
+        :param qc_dict: [dict whether qc should run or not]
+        :param qNames: [hd5 database with all sketches]
         """
         assign_query_hdf5(
             dbFuncs=dbFuncs,
@@ -53,13 +57,13 @@ class PoppunkWrapper:
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
 
-    def create_microreact(self, cluster_no):
+    def create_microreact(self, cluster: str) -> None:
         """
-        Generates microreact visualisation output based on previous
-        assign-clusters() output.
+        [Generates microreact visualisation output based on previous
+        assign_clusters() output.]
 
-        Arguments:
-        cluster_no
+        Args:
+        :param cluster: [cluster number]
         """
         print(shutil.which('rapidnj'))
         generate_visualisations(
@@ -68,7 +72,7 @@ class PoppunkWrapper:
             distances=self.fs.distances(self.p_hash),
             rank_fit=None,
             threads=self.args.visualise.threads,
-            output=self.fs.output_microreact(self.p_hash, cluster_no),
+            output=self.fs.output_microreact(self.p_hash, cluster),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
             external_clustering=self.args.visualise.external_clustering,
@@ -78,7 +82,7 @@ class PoppunkWrapper:
             cytoscape=self.args.visualise.cytoscape,
             perplexity=self.args.visualise.perplexity,
             strand_preserved=self.args.visualise.strand_preserved,
-            include_files=self.fs.include_files(self.p_hash, cluster_no),
+            include_files=self.fs.include_files(self.p_hash, cluster),
             model_dir=self.db_paths.db,
             previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
@@ -96,10 +100,10 @@ class PoppunkWrapper:
             display_cluster=self.args.visualise.display_cluster
         )
 
-    def create_network(self):
+    def create_network(self) -> None:
         """
-        Generates network visualisation output in .graphml format based on
-        previous assign-clusters() output.
+        [Generates network visualisation output in .graphml format based on
+        previous assign_clusters.get_clusters() output.]
         """
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
