@@ -81,7 +81,6 @@ def delete_component_files(cluster_component_dict: dict,
     [poppunk generates >1100 component graph files. We only need to store those
     files from the clusters our queries belong to.]
 
-    Args:
     :param cluster_component_dict: [dictionary that maps cluster number
         to component number]
     :param fs: [PoppunkFilestore with paths to component files]
@@ -115,7 +114,6 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
     also reported with file hashes rather than filenames. To report results
     back to the user using their original filenames, the hashes get replaced.]
 
-    Args:
     :param folder: [path to folder in which the replacement should be
         performed. Will be a microreact or network folder.]
     :param filename_dict: [dict that maps filehashes (keys) to
@@ -150,8 +148,6 @@ def add_query_ref_status(fs: PoppunkFileStore,
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
 
-    Args:
-    :param fs: [filestore to locate output files]
     :param p_hash: [project hash to find right project folder]
     :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
