@@ -24,3 +24,5 @@ jobs:
       run: poetry install
     - name: Analysing the code with pycodestyle
       run: poetry run pycodestyle .
+    - name: checking docstrings with docsig
+      run: poetry run docsig ./beebop/
