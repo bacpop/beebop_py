@@ -148,6 +148,7 @@ def add_query_ref_status(fs: PoppunkFileStore,
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
 
+    :param fs: [filestore to locate output files]
     :param p_hash: [project hash to find right project folder]
     :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
