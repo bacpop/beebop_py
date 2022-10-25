@@ -67,6 +67,7 @@ jobs:
         sudo apt-get install libopenblas-dev
         sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
         pip install joblib==1.1.0
+        pip install pp-sketchlib==2.0.0
         pip3 install git+https://github.com/bacpop/PopPUNK
 
     - name: Install Poetry
