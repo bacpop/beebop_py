@@ -65,7 +65,10 @@ def check_connection(redis) -> None:
         abort(500, description="Redis not found")
 
 
-def generate_zip(fs: PoppunkFileStore, p_hash: str, type: str, cluster: str) -> BytesIO:
+def generate_zip(fs: PoppunkFileStore,
+                 p_hash: str,
+                 type: str,
+                 cluster: str) -> BytesIO:
     """
     [This generates a .zip folder with results data.]
 
