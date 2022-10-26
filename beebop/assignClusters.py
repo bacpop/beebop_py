@@ -4,9 +4,17 @@ import re
 import os
 
 from beebop.poppunkWrapper import PoppunkWrapper
+from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 
 
-def hex_to_decimal(sketches_dict):
+def hex_to_decimal(sketches_dict) -> None:
+    """
+    [Converts all hexadecimal numbers in the sketches into decimal numbers.
+    These have been stored in hexadecimal format to not loose precision when
+    sending the sketches from the backend to the frontend]
+
+    :param sketches_dict: [dictionary holding all sketches]
+    """
     for sample in list(sketches_dict.values()):
         if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
             for x in range(14, 30, 3):
@@ -14,10 +22,22 @@ def hex_to_decimal(sketches_dict):
                                           sample[str(x)]))
 
 
-def get_clusters(hashes_list, p_hash, fs, db_paths, args):
+def get_clusters(hashes_list: list,
+                 p_hash: str,
+                 fs: PoppunkFileStore,
+                 db_paths: DatabaseFileStore,
+                 args: dict) -> dict:
     """
-    assign clusterIDs to sketches
-    hashes_list: list of json objects stored json object of multiple sketches
+    Assign cluster numbers to samples using PopPUNK.
+
+    :param hashes_list: [list of file hashes from all query samples]
+    :param p_hash: [project_hash]
+    :param fs: [PoppunkFileStore with paths to input files]
+    :param db_paths: [DatabaseFileStore which provides paths
+        to database files]
+    :param args: [arguments for Poppunk's assign function, stored in
+        resources/args.json]
+    :return dict: [dict with filehash (key) and cluster number (value)]
     """
     # set output directory
     outdir = fs.output(p_hash)
