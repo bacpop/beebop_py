@@ -158,6 +158,13 @@ class PoppunkFileStore:
                             "network",
                             'cluster_component_dict.pickle'))
 
+    def lineages_output(self, p_hash) -> str:
+        """
+        :param p_hash: [project_hash]
+        :return str: [path to lineage results]
+        """
+        return str(PurePath(self.output(p_hash), "lineage_output"))
+
 
 class DatabaseFileStore:
     """
@@ -174,3 +181,5 @@ class DatabaseFileStore:
                                       self.name).with_suffix('.dists.pkl'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
+
+        self.lineage_scheme = PurePath(self.path, 'example_lineage_scheme.pkl')

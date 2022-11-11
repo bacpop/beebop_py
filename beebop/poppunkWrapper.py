@@ -1,4 +1,5 @@
 from PopPUNK.assign import assign_query_hdf5
+from PopPUNK.lineages import query_db
 from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore
 import shutil
@@ -31,8 +32,9 @@ class PoppunkWrapper:
             setupDBFuncs()]
         :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
+        :return dict: dict of dict with cluster assignments (keys are sequence names)
         """
-        assign_query_hdf5(
+        isolateClustering = assign_query_hdf5(
             dbFuncs=dbFuncs,
             ref_db=self.db_paths.db,
             qNames=qNames,
@@ -56,6 +58,7 @@ class PoppunkWrapper:
             gpu_graph=self.args.assign.gpu_graph,
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
+        return isolateClustering
 
     def create_microreact(self, cluster: str) -> None:
         """
@@ -125,7 +128,7 @@ class PoppunkWrapper:
             model_dir=self.db_paths.db,
             previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
-                self.fs.previous_query_clustering(self.p_hash)),
+                self.fs.lineages_output(self.p_hash) + '.csv'),
             previous_mst=None,
             previous_distances=None,
             network_file=self.fs.network_file(self.p_hash),

@@ -50,7 +50,7 @@ def test_run_poppunk(client, qtbot):
         status = client.get("/status/" + p_hash)
         assert read_data(status)['assign'] == 'finished'
 
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
+    qtbot.waitUntil(assign_status_finished, timeout=200000)
     result = client.post("/results/assign", json={
         'projectHash': p_hash})
     result_object = json.loads(result.data.decode("utf-8"))

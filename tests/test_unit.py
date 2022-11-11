@@ -201,7 +201,7 @@ def test_run_poppunk_internal(qtbot):
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
         assert job.get_status() == 'finished'
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
+    qtbot.waitUntil(assign_status_finished, timeout=200000)
     # submits visualisation jobs to queue
     job_microreact = Job.fetch(job_ids["microreact"], connection=redis)
     assert job_microreact.get_status() in status_options
