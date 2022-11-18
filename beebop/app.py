@@ -11,8 +11,9 @@ import zipfile
 import json
 import requests
 import pickle
+import csv
 
-from beebop import versions, assignClusters, visualise
+from beebop import versions, assignClusters, assignLineages, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_args
 import beebop.schemas
@@ -208,7 +209,7 @@ def run_poppunk_internal(sketches: dict,
     # check connection to redis
     check_connection(redis)
     # submit list of hashes to redis worker
-    job_assign = q.enqueue(assignClusters.get_clusters,
+    job_assign_clusters = q.enqueue(assignClusters.get_clusters,
                            hashes_list,
                            p_hash,
                            fs,
@@ -216,7 +217,20 @@ def run_poppunk_internal(sketches: dict,
                            args,
                            job_timeout=job_timeout)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    redis.hset("beebop:hash:job:assignClusters", p_hash, job_assign_clusters.id)
+
+    # submit list of hashes to redis worker
+    job_assign_lineages = q.enqueue(assignLineages.get_lineages,
+                           hashes_list,
+                           p_hash,
+                           fs,
+                           db_paths,
+                           args,
+                           depends_on=job_assign_clusters,
+                           job_timeout=job_timeout)
+    # save p-hash with job.id in redis server
+    redis.hset("beebop:hash:job:assignLineages", p_hash, job_assign_lineages.id)
+
     # create visualisations
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
@@ -225,7 +239,7 @@ def run_poppunk_internal(sketches: dict,
                                      db_paths,
                                      args,
                                      name_mapping),
-                               depends_on=job_assign, job_timeout=job_timeout)
+                               depends_on=job_assign_clusters, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
     # network
@@ -235,9 +249,10 @@ def run_poppunk_internal(sketches: dict,
                                   db_paths,
                                   args,
                                   name_mapping),
-                            depends_on=job_assign, job_timeout=job_timeout)
+                            depends_on=job_assign_clusters, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
-    return jsonify(response_success({"assign": job_assign.id,
+    return jsonify(response_success({"assign_clusters": job_assign_clusters.id,
+                                     "assign_lineages": job_assign_lineages.id,
                                      "microreact": job_microreact.id,
                                      "network": job_network.id}))
 
@@ -271,14 +286,17 @@ def get_status_internal(p_hash: str, redis: Redis) -> json:
         id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
         return Job.fetch(id, connection=redis).get_status()
     try:
-        status_assign = get_status_job('assign', p_hash, redis)
-        if status_assign == "finished":
+        status_assign_clusters = get_status_job('assignClusters', p_hash, redis)
+        if status_assign_clusters == "finished":
+            status_assign_lineages = get_status_job('assignLineages', p_hash, redis)
             status_microreact = get_status_job('microreact', p_hash, redis)
             status_network = get_status_job('network', p_hash, redis)
         else:
+            status_assign_lineages = "waiting"
             status_microreact = "waiting"
             status_network = "waiting"
-        return jsonify(response_success({"assign": status_assign,
+        return jsonify(response_success({"assignClusters": status_assign_clusters,
+                                         "assignLineages": status_assign_lineages,
                                          "microreact": status_microreact,
                                          "network": status_network}))
     except AttributeError:
@@ -299,7 +317,8 @@ def get_results(result_type) -> json:
         must be provided by the user in the frontend]
 
     :param result_type: [can be
-        - 'assign' for clusters
+        - 'assignClusters' for clusters
+        - 'assignLineages' for lineages
         - 'zip' for visualisation results as zip folders (with the json
             property 'type' specifying whether 'microreact' or 'network'
             results are required)
@@ -308,9 +327,12 @@ def get_results(result_type) -> json:
             cluster]
     :return json: [response object with result stored in 'data']
     """
-    if result_type == 'assign':
+    if result_type == 'assignClusters':
         p_hash = request.json['projectHash']
         return get_clusters_internal(p_hash, redis)
+    elif result_type == 'assignLineages':
+        p_hash = request.json['projectHash']
+        return get_lineages_internal(p_hash, storage_location)
     elif result_type == 'zip':
         p_hash = request.json['projectHash']
         visualisation_type = request.json['type']
@@ -347,7 +369,7 @@ def get_clusters_internal(p_hash: str, redis: Redis) -> json:
     """
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job:assign", p_hash).decode("utf-8")
+        id = redis.hget("beebop:hash:job:assignClusters", p_hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
             return jsonify(error=response_failure({
@@ -357,6 +379,33 @@ def get_clusters_internal(p_hash: str, redis: Redis) -> json:
     except AttributeError:
         return jsonify(error=response_failure({
             "error": "Unknown project hash"})), 500
+
+
+def get_lineages_internal(p_hash: str, storage_location: str) -> json:
+    """
+    [returns lineage assignment results]
+
+    :param p_hash: [project hash]m
+    :param storage_location: [storage location]
+    :return json: [response object with lineage results stored in 'data']
+    """
+    fs = PoppunkFileStore(storage_location)
+    path_lineages = fs.lineages_csv(p_hash)
+    lineages = {}
+
+    try:
+        with open(path_lineages) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:
+                lineages[row[0]] = {"rank1": row[2], "rank2": row[3], "rank3": row[4]}
+        result = jsonify(response_success(lineages))
+
+    except (FileNotFoundError):
+        result = jsonify(error=response_failure({
+                "error": "File not found",
+                "detail": "Lineage results not found"
+                })), 500
+    return result
 
 
 def send_zip_internal(p_hash: str,
