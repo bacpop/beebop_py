@@ -29,7 +29,7 @@ def hex_to_decimal(sketches_dict) -> None:
                 sample[str(x)] = list(map(lambda x: int(x, 16),
                                           sample[str(x)]))
 
-                                          
+
 def get_args() -> dict:
     """
     [Read in fixed arguments to poppunk that are always set, or used as

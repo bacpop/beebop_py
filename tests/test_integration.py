@@ -77,6 +77,7 @@ def test_run_poppunk(client, qtbot):
     assert os.path.exists(storage + p_hash +
                           "/network/cluster_component_dict.pickle")
 
+
 def test_results_lineage(client):
     p_hash = 'test_lineage_csv'
     response = client.post("/results/assignLineages", json={
@@ -84,6 +85,7 @@ def test_results_lineage(client):
         'cluster': 1})
     data = json.loads(response.data.decode('utf-8'))['data']
     assert {"rank1": '20', "rank2": '3', "rank3": '2'} == data['7622_5_91']
+
 
 def test_results_microreact(client):
     p_hash = 'test_microreact_api'

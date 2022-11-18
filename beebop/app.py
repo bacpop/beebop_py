@@ -210,26 +210,30 @@ def run_poppunk_internal(sketches: dict,
     check_connection(redis)
     # submit list of hashes to redis worker
     job_assign_clusters = q.enqueue(assignClusters.get_clusters,
-                           hashes_list,
-                           p_hash,
-                           fs,
-                           db_paths,
-                           args,
-                           job_timeout=job_timeout)
+                                    hashes_list,
+                                    p_hash,
+                                    fs,
+                                    db_paths,
+                                    args,
+                                    job_timeout=job_timeout)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job:assignClusters", p_hash, job_assign_clusters.id)
+    redis.hset("beebop:hash:job:assignClusters",
+               p_hash,
+               job_assign_clusters.id)
 
     # submit list of hashes to redis worker
     job_assign_lineages = q.enqueue(assignLineages.get_lineages,
-                           hashes_list,
-                           p_hash,
-                           fs,
-                           db_paths,
-                           args,
-                           depends_on=job_assign_clusters,
-                           job_timeout=job_timeout)
+                                    hashes_list,
+                                    p_hash,
+                                    fs,
+                                    db_paths,
+                                    args,
+                                    depends_on=job_assign_clusters,
+                                    job_timeout=job_timeout)
     # save p-hash with job.id in redis server
-    redis.hset("beebop:hash:job:assignLineages", p_hash, job_assign_lineages.id)
+    redis.hset("beebop:hash:job:assignLineages",
+               p_hash,
+               job_assign_lineages.id)
 
     # create visualisations
     # microreact
@@ -239,7 +243,8 @@ def run_poppunk_internal(sketches: dict,
                                      db_paths,
                                      args,
                                      name_mapping),
-                               depends_on=job_assign_clusters, job_timeout=job_timeout)
+                               depends_on=job_assign_clusters,
+                               job_timeout=job_timeout)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
     # network
@@ -249,7 +254,8 @@ def run_poppunk_internal(sketches: dict,
                                   db_paths,
                                   args,
                                   name_mapping),
-                            depends_on=job_assign_clusters, job_timeout=job_timeout)
+                            depends_on=job_assign_clusters,
+                            job_timeout=job_timeout)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     return jsonify(response_success({"assign_clusters": job_assign_clusters.id,
                                      "assign_lineages": job_assign_lineages.id,
@@ -286,19 +292,25 @@ def get_status_internal(p_hash: str, redis: Redis) -> json:
         id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
         return Job.fetch(id, connection=redis).get_status()
     try:
-        status_assign_clusters = get_status_job('assignClusters', p_hash, redis)
+        status_assign_clusters = get_status_job('assignClusters',
+                                                p_hash,
+                                                redis)
         if status_assign_clusters == "finished":
-            status_assign_lineages = get_status_job('assignLineages', p_hash, redis)
+            status_assign_lineages = get_status_job('assignLineages',
+                                                    p_hash,
+                                                    redis)
             status_microreact = get_status_job('microreact', p_hash, redis)
             status_network = get_status_job('network', p_hash, redis)
         else:
             status_assign_lineages = "waiting"
             status_microreact = "waiting"
             status_network = "waiting"
-        return jsonify(response_success({"assignClusters": status_assign_clusters,
-                                         "assignLineages": status_assign_lineages,
-                                         "microreact": status_microreact,
-                                         "network": status_network}))
+        return jsonify(response_success({
+            "assignClusters": status_assign_clusters,
+            "assignLineages": status_assign_lineages,
+            "microreact": status_microreact,
+            "network": status_network
+        }))
     except AttributeError:
         return jsonify(error=response_failure({
             "error": "Unknown project hash"})), 500
@@ -369,7 +381,8 @@ def get_clusters_internal(p_hash: str, redis: Redis) -> json:
     """
     check_connection(redis)
     try:
-        id = redis.hget("beebop:hash:job:assignClusters", p_hash).decode("utf-8")
+        id = redis.hget("beebop:hash:job:assignClusters",
+                        p_hash).decode("utf-8")
         job = Job.fetch(id, connection=redis)
         if job.result is None:
             return jsonify(error=response_failure({
@@ -397,7 +410,10 @@ def get_lineages_internal(p_hash: str, storage_location: str) -> json:
         with open(path_lineages) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             for row in csv_reader:
-                lineages[row[0]] = {"rank1": row[2], "rank2": row[3], "rank3": row[4]}
+                lineages[row[0]] = {
+                    "rank1": row[2],
+                    "rank2": row[3],
+                    "rank3": row[4]}
         result = jsonify(response_success(lineages))
 
     except (FileNotFoundError):

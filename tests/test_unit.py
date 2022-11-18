@@ -75,6 +75,7 @@ def test_assign_clusters():
             '10': ['99965c83b1839b25c3c27bd2910da00a']}
     assert result == expected
 
+
 def test_assign_lineages(mocker):
     def mock_get_current_job(Redis):
         assign_result = {'9': ['02ff334f17f17d775b9ecd69046ed296'],
@@ -147,8 +148,8 @@ def test_microreact(mocker):
 
 
 def test_microreact_internal():
-    assign_result =  {5: ['some_hash'],
-                      59: ['another_hash']}
+    assign_result = {5: ['some_hash'],
+                     59: ['another_hash']}
     p_hash = 'unit_test_visualisations'
     name_mapping = {
         "hash1": "name1.fa",
@@ -162,8 +163,8 @@ def test_microreact_internal():
 
 def test_network(mocker):
     def mock_get_current_job(Redis):
-        assign_result =  {5: ['some_hash'],
-                          59: ['another_hash']}
+        assign_result = {5: ['some_hash'],
+                         59: ['another_hash']}
 
         class mock_dependency:
             def __init__(self, result):
@@ -189,8 +190,8 @@ def test_network(mocker):
 
 
 def test_network_internal():
-    assign_result =  {5: ['some_hash'],
-                      59: ['another_hash']}
+    assign_result = {5: ['some_hash'],
+                     59: ['another_hash']}
     p_hash = 'unit_test_visualisations'
     name_mapping = {
         "hash1": "name1.fa",
@@ -235,7 +236,8 @@ def test_run_poppunk_internal(qtbot):
     # submits assign job to queue
     worker = SimpleWorker([queue], connection=queue.connection)
     worker.work(burst=True)  # Runs enqueued job
-    job_assign_clusters = Job.fetch(job_ids["assign_clusters"], connection=redis)
+    job_assign_clusters = Job.fetch(job_ids["assign_clusters"],
+                                    connection=redis)
     status_options = ['queued', 'started', 'finished', 'scheduled']
     assert job_assign_clusters.get_status() in status_options
     # saves p-hash with job id in redis
@@ -475,7 +477,7 @@ def test_download_graphml_internal():
 def test_get_lineages_internal():
     project_hash = 'test_lineage_csv'
     response = app.get_lineages_internal(project_hash,
-                                             storage_location)
+                                         storage_location)
     data = read_data(response)['data']
     assert {"rank1": '20', "rank2": '3', "rank3": '2'} == data['7622_5_91']
     hash_no_lineage_file = 'test microreact_api'
@@ -483,6 +485,7 @@ def test_get_lineages_internal():
                                                 storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
     assert error2['error'] == 'File not found'
+
 
 def test_hex_to_decimal():
     dummy_sketch = {

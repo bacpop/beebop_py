@@ -55,11 +55,11 @@ def get_clusters(hashes_list: list,
     clustering_type = 'combined'
     for isolate in isolateClustering[clustering_type]:
         if isolate in qNames:
-          strain = isolateClustering[clustering_type][isolate]
-          if strain in query_strains:
-              query_strains[strain].append(isolate)
-          else:
-              query_strains[strain] = [isolate]
+            strain = isolateClustering[clustering_type][isolate]
+            if strain in query_strains:
+                query_strains[strain].append(isolate)
+            else:
+                query_strains[strain] = [isolate]
 
     summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 

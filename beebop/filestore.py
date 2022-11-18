@@ -204,4 +204,6 @@ class DatabaseFileStore:
         :param lineage_path: [path to lineage database folder]
         :return str: [path to distances file]
         """
-        return str(PurePath(self.path, lineage_path, f"{Path(lineage_path).name}.dists"))
+        return str(PurePath(self.path,
+                            lineage_path,
+                            f"{Path(lineage_path).name}.dists"))

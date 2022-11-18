@@ -33,7 +33,8 @@ class PoppunkWrapper:
             setupDBFuncs()]
         :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
-        :return dict: dict of dict with cluster assignments (keys are sequence names)
+        :return dict: dict of dict with cluster assignments (keys are sequence
+            names)
         """
         isolateClustering = assign_query_hdf5(
             dbFuncs=dbFuncs,
@@ -74,17 +75,23 @@ class PoppunkWrapper:
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
         :param qc_dict: [dict whether qc should run or not]
-        :param lineage_dbs: [dict with names of lineage db folders for all clusters]
+        :param lineage_dbs: [dict with names of lineage db folders for all
+            clusters]
         :param strain: [string specifying the current cluster number]
-        :param query_strains: [dicht listing all query sample names in current cluster]
-        :paran strand_preserved: [bool, giving information about sequencing of the isolate]
+        :param query_strains: [dicht listing all query sample names in current
+            cluster]
+        :paran strand_preserved: [bool, giving information about sequencing of
+            the isolate]
         :paran core: [bool whether only core distances should be used]
-        :paran accessory: [bool whether only accessory distances should be used]
-        :return dict: dict of dict with cluster assignments (keys are sequence names)
+        :paran accessory: [bool whether only accessory distances should be
+            used]
+        :return dict: dict of dict with cluster assignments (keys are sequence
+            names)
         """
+        model_path = self.db_paths.lineage_model(lineage_dbs[strain])
         lineage_clustering = assign_query_hdf5(
             dbFuncs=dbFuncs,
-            ref_db=self.db_paths.lineage_model(lineage_dbs[strain]),
+            ref_db=model_path,
             qNames=query_strains[strain],
             output=self.fs.lineages_output(self.p_hash),
             qc_dict=qc_dict,
@@ -96,9 +103,9 @@ class PoppunkWrapper:
             overwrite=self.args.assign.overwrite,
             plot_fit=self.args.assign.plot_fit,
             graph_weights=self.args.assign.graph_weights,
-            model_dir=self.db_paths.lineage_model(lineage_dbs[strain]),
+            model_dir=model_path,
             strand_preserved=strand_preserved,
-            previous_clustering=self.db_paths.lineage_model(lineage_dbs[strain]),
+            previous_clustering=model_path,
             external_clustering=self.args.assign.external_clustering,
             core=core,
             accessory=accessory,
