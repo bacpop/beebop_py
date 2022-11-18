@@ -80,10 +80,10 @@ class PoppunkWrapper:
         :param strain: [string specifying the current cluster number]
         :param query_strains: [dicht listing all query sample names in current
             cluster]
-        :paran strand_preserved: [bool, giving information about sequencing of
+        :param strand_preserved: [bool, giving information about sequencing of
             the isolate]
-        :paran core: [bool whether only core distances should be used]
-        :paran accessory: [bool whether only accessory distances should be
+        :param core: [bool whether only core distances should be used]
+        :param accessory: [bool whether only accessory distances should be
             used]
         :return dict: dict of dict with cluster assignments (keys are sequence
             names)
