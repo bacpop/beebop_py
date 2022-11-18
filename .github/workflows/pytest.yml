@@ -26,6 +26,12 @@ jobs:
       working-directory: ./main
       run: |
         ./scripts/download_db --small storage
+
+    - name: add lineage databases
+      uses: actions/checkout@v3
+      with:
+        repository:  bacpop/beebop_data
+        path: ./main/storage
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -44,31 +50,30 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
 
-#    - name: Install poppunk
-#      run: conda install poppunk
+   - name: Install poppunk
+     run: conda install poppunk
 # currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
 
-    - name: Get poppunk source code
-      uses: actions/checkout@v3
-      with:
-        repository:  bacpop/PopPUNK 
-        ref: fix-json-serialisation
-        path: poppunk
+    # - name: Get poppunk source code
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository:  bacpop/PopPUNK
+    #     path: poppunk
 
-    - name: install poppunk & dependencies
-      working-directory: ./poppunk
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
-        conda install graph-tool
-        conda install mandrake
-        conda install rapidnj
-        sudo apt-get install libeigen3-dev
-        sudo apt-get install libopenblas-dev
-        sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
-        pip install joblib==1.1.0
-        conda install -c bioconda pp-sketchlib=2.0.0
-        pip3 install git+https://github.com/bacpop/PopPUNK
+    # - name: install poppunk & dependencies
+    #   working-directory: ./poppunk
+    #   run: |
+    #     source $CONDA/etc/profile.d/conda.sh
+    #     conda activate beebop_py
+    #     conda install graph-tool
+    #     conda install mandrake
+    #     conda install rapidnj
+    #     sudo apt-get install libeigen3-dev
+    #     sudo apt-get install libopenblas-dev
+    #     sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+    #     pip install joblib==1.1.0
+    #     conda install -c bioconda pp-sketchlib=2.0.0
+    #     pip3 install git+https://github.com/bacpop/PopPUNK
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
