@@ -55,13 +55,11 @@ def microreact_internal(assign_result,
         corresponding filenames (values) of all query samples.]
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
-    queries_clusters = []
-    for item in assign_result.values():
-        queries_clusters.append(item['cluster'])
-    for cluster_no in set(queries_clusters):
+    queries_clusters = list(assign_result.keys())
+    for cluster_no in queries_clusters:
         wrapper.create_microreact(cluster_no)
-        # replace_filehashes(fs.output_microreact(p_hash, cluster_no),
-        #                    name_mapping)
+        replace_filehashes(fs.output_microreact(p_hash, cluster_no),
+                           name_mapping)
 
 
 def network(p_hash: str,
@@ -113,5 +111,5 @@ def network_internal(assign_result,
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
     delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
-    # replace_filehashes(fs.output_network(p_hash), name_mapping)
-    # add_query_ref_status(fs, p_hash, name_mapping)
+    replace_filehashes(fs.output_network(p_hash), name_mapping)
+    add_query_ref_status(fs, p_hash, name_mapping)

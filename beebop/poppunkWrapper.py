@@ -3,6 +3,7 @@ from PopPUNK.lineages import query_db
 from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore
 import shutil
+import os
 
 
 class PoppunkWrapper:
@@ -26,7 +27,7 @@ class PoppunkWrapper:
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
                         qc_dict: dict,
-                        qNames: list) -> None:
+                        qNames: list) -> dict:
         """
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
@@ -59,6 +60,53 @@ class PoppunkWrapper:
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
         return isolateClustering
+
+    def assign_lineages(self,
+                        dbFuncs: DatabaseFileStore,
+                        qc_dict: dict,
+                        lineage_dbs: dict,
+                        strain: str,
+                        query_strains: dict,
+                        strand_preserved: bool,
+                        core: bool,
+                        accessory: bool) -> dict:
+        """
+        :param dbFuncs: [database functions, generated with poppunks
+            setupDBFuncs()]
+        :param qc_dict: [dict whether qc should run or not]
+        :param lineage_dbs: [dict with names of lineage db folders for all clusters]
+        :param strain: [string specifying the current cluster number]
+        :param query_strains: [dicht listing all query sample names in current cluster]
+        :paran strand_preserved: [bool, giving information about sequencing of the isolate]
+        :paran core: [bool whether only core distances should be used]
+        :paran accessory: [bool whether only accessory distances should be used]
+        :return dict: dict of dict with cluster assignments (keys are sequence names)
+        """
+        lineage_clustering = assign_query_hdf5(
+            dbFuncs=dbFuncs,
+            ref_db=self.db_paths.lineage_model(lineage_dbs[strain]),
+            qNames=query_strains[strain],
+            output=self.fs.lineages_output(self.p_hash),
+            qc_dict=qc_dict,
+            update_db=self.args.assign.update_db,
+            write_references=self.args.assign.write_references,
+            distances=self.db_paths.lineage_distances(lineage_dbs[strain]),
+            serial=self.args.assign.serial,
+            threads=self.args.assign.threads,
+            overwrite=self.args.assign.overwrite,
+            plot_fit=self.args.assign.plot_fit,
+            graph_weights=self.args.assign.graph_weights,
+            model_dir=self.db_paths.lineage_model(lineage_dbs[strain]),
+            strand_preserved=strand_preserved,
+            previous_clustering=self.db_paths.lineage_model(lineage_dbs[strain]),
+            external_clustering=self.args.assign.external_clustering,
+            core=core,
+            accessory=accessory,
+            gpu_dist=self.args.assign.gpu_dist,
+            gpu_graph=self.args.assign.gpu_graph,
+            save_partial_query_graph=self.args.assign.save_partial_query_graph
+        )
+        return lineage_clustering
 
     def create_microreact(self, cluster: str) -> None:
         """
@@ -128,7 +176,7 @@ class PoppunkWrapper:
             model_dir=self.db_paths.db,
             previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
-                self.fs.lineages_output(self.p_hash) + '.csv'),
+                self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
             previous_distances=None,
             network_file=self.fs.network_file(self.p_hash),
