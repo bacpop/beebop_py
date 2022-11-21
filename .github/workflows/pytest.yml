@@ -22,16 +22,18 @@ jobs:
       with: 
         path: main
 
+    - name: get lineage databases
+      uses: actions/checkout@v3
+      with:
+        repository:  bacpop/beebop_data
+        path: ./main/storage
+
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
         ./scripts/download_db --small storage
 
-    - name: add lineage databases
-      uses: actions/checkout@v3
-      with:
-        repository:  bacpop/beebop_data
-        path: ./main/storage
+    
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
