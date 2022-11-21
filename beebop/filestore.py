@@ -197,7 +197,7 @@ class DatabaseFileStore:
         :param lineage_path: [path to lineage database folder]
         :return str: [path to lineage model directory]
         """
-        return str(PurePath(self.path, lineage_path))
+        return './' + str(PurePath(self.path, lineage_path))
 
     def lineage_distances(self, lineage_path: str) -> str:
         """
