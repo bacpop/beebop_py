@@ -1,25 +1,10 @@
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-import re
 import os
 
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-
-
-def hex_to_decimal(sketches_dict) -> None:
-    """
-    [Converts all hexadecimal numbers in the sketches into decimal numbers.
-    These have been stored in hexadecimal format to not loose precision when
-    sending the sketches from the backend to the frontend]
-
-    :param sketches_dict: [dictionary holding all sketches]
-    """
-    for sample in list(sketches_dict.values()):
-        if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
-            for x in range(14, 30, 3):
-                sample[str(x)] = list(map(lambda x: int(x, 16),
-                                          sample[str(x)]))
+from beebop.utils import hex_to_decimal
 
 
 def get_clusters(hashes_list: list,
@@ -63,15 +48,19 @@ def get_clusters(hashes_list: list,
 
     # run query assignment
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
-    wrapper.assign_clusters(dbFuncs, qc_dict, qNames)
+    isolateClustering = wrapper.assign_clusters(dbFuncs, qc_dict, qNames)
 
-    queries_names, queries_clusters, _, _, _, _, _ = \
-        summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
+    # Process clustering
+    query_strains = {}
+    clustering_type = 'combined'
+    for isolate in isolateClustering[clustering_type]:
+        if isolate in qNames:
+            strain = isolateClustering[clustering_type][isolate]
+            if strain in query_strains:
+                query_strains[strain].append(isolate)
+            else:
+                query_strains[strain] = [isolate]
 
-    result = {}
-    for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
-        result[i] = {
-            "hash": name,
-            "cluster": cluster
-        }
-    return result
+    summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
+
+    return query_strains

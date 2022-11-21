@@ -55,10 +55,8 @@ def microreact_internal(assign_result,
         corresponding filenames (values) of all query samples.]
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
-    queries_clusters = []
-    for item in assign_result.values():
-        queries_clusters.append(item['cluster'])
-    for cluster_no in set(queries_clusters):
+    queries_clusters = list(assign_result.keys())
+    for cluster_no in queries_clusters:
         wrapper.create_microreact(cluster_no)
         replace_filehashes(fs.output_microreact(p_hash, cluster_no),
                            name_mapping)

@@ -15,6 +15,21 @@ ET.register_namespace('', "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
 
 
+def hex_to_decimal(sketches_dict) -> None:
+    """
+    [Converts all hexadecimal numbers in the sketches into decimal numbers.
+    These have been stored in hexadecimal format to not loose precision when
+    sending the sketches from the backend to the frontend]
+
+    :param sketches_dict: [dictionary holding all sketches]
+    """
+    for sample in list(sketches_dict.values()):
+        if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
+            for x in range(14, 30, 3):
+                sample[str(x)] = list(map(lambda x: int(x, 16),
+                                          sample[str(x)]))
+
+
 def get_args() -> dict:
     """
     [Read in fixed arguments to poppunk that are always set, or used as
@@ -90,9 +105,9 @@ def delete_component_files(cluster_component_dict: dict,
     """
     queries_clusters = []
     queries_components = []
-    for item in assign_result.values():
-        queries_clusters.append(item['cluster'])
-        queries_components.append(cluster_component_dict[str(item['cluster'])])
+    for item in list(assign_result.keys()):
+        queries_clusters.append(item)
+        queries_components.append(cluster_component_dict[str(item)])
     components = set(queries_components)
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",

@@ -13,6 +13,7 @@ import random
 import os
 from flask import Flask
 from unittest.mock import Mock, patch
+from unittest import TestCase
 from io import BytesIO
 import xml.etree.ElementTree as ET
 
@@ -20,6 +21,7 @@ from beebop import __version__ as beebop_version
 from beebop import app
 from beebop import versions
 from beebop import assignClusters
+from beebop import assignLineages
 from beebop import visualise
 from beebop import utils
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
@@ -68,16 +70,60 @@ def test_assign_clusters():
         db_paths,
         args)
     expected = {
-            0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-            1: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-            2: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
-    assert list(result.values()) == unordered(list(expected.values()))
+            '9': ['02ff334f17f17d775b9ecd69046ed296'],
+            '41': ['9c00583e2f24fed5e3c6baa87a4bfa4c'],
+            '10': ['99965c83b1839b25c3c27bd2910da00a']}
+    assert result == expected
+
+
+def test_assign_lineages(mocker):
+    def mock_get_current_job(Redis):
+        assign_result = {'9': ['02ff334f17f17d775b9ecd69046ed296'],
+                         '41': ['9c00583e2f24fed5e3c6baa87a4bfa4c'],
+                         '10': ['99965c83b1839b25c3c27bd2910da00a']}
+
+        class mock_dependency:
+            def __init__(self, result):
+                self.result = result
+
+        class mock_job:
+            def __init__(self, result):
+                self.dependency = mock_dependency(result)
+        return mock_job(assign_result)
+    mocker.patch(
+        'beebop.assignLineages.get_current_job',
+        new=mock_get_current_job
+    )
+    hashes_list = [
+            '02ff334f17f17d775b9ecd69046ed296',
+            '9c00583e2f24fed5e3c6baa87a4bfa4c',
+            '99965c83b1839b25c3c27bd2910da00a']
+
+    result = assignLineages.get_lineages(
+        hashes_list,
+        'unit_test_poppunk_assign',
+        fs,
+        db_paths,
+        args)
+    expected = {
+            9: ['02ff334f17f17d775b9ecd69046ed296'],
+            41: ['9c00583e2f24fed5e3c6baa87a4bfa4c'],
+            10: ['99965c83b1839b25c3c27bd2910da00a']}
+    assert result['9']['Rank_1']['02ff334f17f17d775b9ecd69046ed296'] == 13
+    assert result['41']['Rank_1']['9c00583e2f24fed5e3c6baa87a4bfa4c'] == 2
+    assert result['10']['Rank_1']['99965c83b1839b25c3c27bd2910da00a'] == 39
+    assert result['9']['Rank_2']['02ff334f17f17d775b9ecd69046ed296'] == 1
+    assert result['41']['Rank_2']['9c00583e2f24fed5e3c6baa87a4bfa4c'] == 1
+    assert result['10']['Rank_2']['99965c83b1839b25c3c27bd2910da00a'] == 4
+    assert result['9']['Rank_3']['02ff334f17f17d775b9ecd69046ed296'] == 1
+    assert result['41']['Rank_3']['9c00583e2f24fed5e3c6baa87a4bfa4c'] == 1
+    assert result['10']['Rank_3']['99965c83b1839b25c3c27bd2910da00a'] == 2
 
 
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                         1: {'cluster': 59, 'hash': 'another_hash'}}
+        assign_result = {5: ['some_hash'],
+                         59: ['another_hash']}
 
         class mock_dependency:
             def __init__(self, result):
@@ -102,8 +148,8 @@ def test_microreact(mocker):
 
 
 def test_microreact_internal():
-    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                     1: {'cluster': 59, 'hash': 'another_hash'}}
+    assign_result = {5: ['some_hash'],
+                     59: ['another_hash']}
     p_hash = 'unit_test_visualisations'
     name_mapping = {
         "hash1": "name1.fa",
@@ -117,8 +163,8 @@ def test_microreact_internal():
 
 def test_network(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                         1: {'cluster': 59, 'hash': 'another_hash'}}
+        assign_result = {5: ['some_hash'],
+                         59: ['another_hash']}
 
         class mock_dependency:
             def __init__(self, result):
@@ -144,8 +190,8 @@ def test_network(mocker):
 
 
 def test_network_internal():
-    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                     1: {'cluster': 59, 'hash': 'another_hash'}}
+    assign_result = {5: ['some_hash'],
+                     59: ['another_hash']}
     p_hash = 'unit_test_visualisations'
     name_mapping = {
         "hash1": "name1.fa",
@@ -190,19 +236,25 @@ def test_run_poppunk_internal(qtbot):
     # submits assign job to queue
     worker = SimpleWorker([queue], connection=queue.connection)
     worker.work(burst=True)  # Runs enqueued job
-    job_assign = Job.fetch(job_ids["assign"], connection=redis)
+    job_assign_clusters = Job.fetch(job_ids["assign_clusters"],
+                                    connection=redis)
     status_options = ['queued', 'started', 'finished', 'scheduled']
-    assert job_assign.get_status() in status_options
+    assert job_assign_clusters.get_status() in status_options
     # saves p-hash with job id in redis
-    assert read_redis("beebop:hash:job:assign",
-                      project_hash, redis) == job_ids["assign"]
+    assert read_redis("beebop:hash:job:assignClusters",
+                      project_hash, redis) == job_ids["assign_clusters"]
 
     # wait for assign job to be finished
-    def assign_status_finished():
-        job = Job.fetch(job_ids["assign"], connection=redis)
+    def assign_clusters_status_finished():
+        job = Job.fetch(job_ids["assign_clusters"], connection=redis)
         assert job.get_status() == 'finished'
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
-    # submits visualisation jobs to queue
+    qtbot.waitUntil(assign_clusters_status_finished, timeout=200000)
+    # submits lineage assignment and visualisation jobs to queue
+    job_lineage = Job.fetch(job_ids["assign_lineages"], connection=redis)
+    assert job_lineage.get_status() in status_options
+    assert read_redis("beebop:hash:job:assignLineages",
+                      project_hash,
+                      redis) == job_ids["assign_lineages"]
     job_microreact = Job.fetch(job_ids["microreact"], connection=redis)
     assert job_microreact.get_status() in status_options
     assert read_redis("beebop:hash:job:microreact",
@@ -220,7 +272,7 @@ def test_get_clusters_internal(client):
     q = Queue(connection=redis)
     job = q.enqueue(dummy_fct, 5)
     hash = "unit_test_get_clusters_internal"
-    redis.hset("beebop:hash:job:assign", hash, job.id)
+    redis.hset("beebop:hash:job:assignClusters", hash, job.id)
     result1 = app.get_clusters_internal(hash, redis)
     assert read_data(result1[0])['error'] == {
         "status": "failure",
@@ -234,6 +286,8 @@ def test_get_clusters_internal(client):
     while finished is False:
         time.sleep(1)
         result2 = app.get_clusters_internal(hash, redis)
+        if type(result2) is tuple:
+            continue
         if read_data(result2)['status'] == 'success':
             finished = True
     assert read_data(result2) == {
@@ -253,19 +307,22 @@ def test_get_status_internal(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=Redis())
-    job_assign = q.enqueue(dummy_fct, 1)
+    job_assign_clusters = q.enqueue(dummy_fct, 1)
+    job_assign_lineages = q.enqueue(dummy_fct, 1)
     job_microreact = q.enqueue(dummy_fct, 1)
     job_network = q.enqueue(dummy_fct, 1)
     worker = SimpleWorker([q], connection=q.connection)
     worker.work(burst=True)
     hash = "unit_test_get_status_internal"
-    redis.hset("beebop:hash:job:assign", hash, job_assign.id)
+    redis.hset("beebop:hash:job:assignClusters", hash, job_assign_clusters.id)
+    redis.hset("beebop:hash:job:assignLineages", hash, job_assign_lineages.id)
     redis.hset("beebop:hash:job:microreact", hash, job_microreact.id)
     redis.hset("beebop:hash:job:network", hash, job_network.id)
     result = app.get_status_internal(hash, redis)
     assert read_data(result)['status'] == 'success'
     status_options = ['queued', 'started', 'finished', 'scheduled', 'waiting']
-    assert read_data(result)['data']['assign'] in status_options
+    assert read_data(result)['data']['assignClusters'] in status_options
+    assert read_data(result)['data']['assignLineages'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
     assert read_data(app.get_status_internal("wrong-hash",
@@ -386,7 +443,7 @@ def test_send_zip_internal(client):
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
-        cluster = None
+        cluster = 1
         type = 'network'
         response = app.send_zip_internal(project_hash,
                                          type,
@@ -395,6 +452,7 @@ def test_send_zip_internal(client):
         response.direct_passthrough = False
         assert 'network_cytoscape.csv'.encode('utf-8') in response.data
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
+        assert 'network_component_38.graphml'.encode('utf-8') in response.data
 
 
 def test_download_graphml_internal():
@@ -412,6 +470,19 @@ def test_download_graphml_internal():
     response_error2 = app.download_graphml_internal(project_hash,
                                                     cluster_no_network_file,
                                                     storage_location)
+    error2 = read_data(response_error2[0])['error']['errors'][0]
+    assert error2['error'] == 'File not found'
+
+
+def test_get_lineages_internal():
+    project_hash = 'test_lineage_csv'
+    response = app.get_lineages_internal(project_hash,
+                                         storage_location)
+    data = read_data(response)['data']
+    assert {"rank1": '20', "rank2": '3', "rank3": '2'} == data['7622_5_91']
+    hash_no_lineage_file = 'test microreact_api'
+    response_error2 = app.get_lineages_internal(hash_no_lineage_file,
+                                                storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
     assert error2['error'] == 'File not found'
 
@@ -516,8 +587,8 @@ def test_delete_component_files():
         '12': '3'
     }
     assign_result = {
-        0: {'cluster': '4'},
-        1: {'cluster': '5'}
+        4: ['hash'],
+        5: ['hash2']
     }
     p_hash = 'results_modifications'
     utils.delete_component_files(cluster_component_dict,

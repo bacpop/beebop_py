@@ -3,14 +3,9 @@
   "type": "object",
   "patternProperties": {
     "[0-9]*": {
-      "type": "object",
-      "properties": {
-        "hash": {
-          "type": "string"
-        },
-        "cluster": {
-          "type": ["integer", "string"]
-        }
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     }
   }

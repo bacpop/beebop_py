@@ -41,17 +41,18 @@ def test_run_poppunk(client, qtbot):
     # retrieve job status
     status = client.get("/status/" + p_hash)
     status_options = ['queued', 'started', 'finished', 'waiting']
-    assert read_data(status)['assign'] in status_options
+    assert read_data(status)['assignClusters'] in status_options
+    assert read_data(status)['assignLineages'] in status_options
     assert read_data(status)['microreact'] in status_options
     assert read_data(status)['network'] in status_options
 
     # retrieve cluster result when finished
-    def assign_status_finished():
+    def assignClusters_status_finished():
         status = client.get("/status/" + p_hash)
-        assert read_data(status)['assign'] == 'finished'
+        assert read_data(status)['assignClusters'] == 'finished'
 
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
-    result = client.post("/results/assign", json={
+    qtbot.waitUntil(assignClusters_status_finished, timeout=200000)
+    result = client.post("/results/assignClusters", json={
         'projectHash': p_hash})
     result_object = json.loads(result.data.decode("utf-8"))
     assert result_object["status"] == "success"
@@ -75,6 +76,15 @@ def test_run_poppunk(client, qtbot):
                           "/network/network_cytoscape.graphml")
     assert os.path.exists(storage + p_hash +
                           "/network/cluster_component_dict.pickle")
+
+
+def test_results_lineage(client):
+    p_hash = 'test_lineage_csv'
+    response = client.post("/results/assignLineages", json={
+        'projectHash': p_hash,
+        'cluster': 1})
+    data = json.loads(response.data.decode('utf-8'))['data']
+    assert {"rank1": '20', "rank2": '3', "rank3": '2'} == data['7622_5_91']
 
 
 def test_results_microreact(client):
@@ -102,8 +112,9 @@ def test_results_zip(client):
     type = 'network'
     response = client.post("/results/zip", json={
         'projectHash': p_hash,
-        'cluster': None,
+        'cluster': 1,
         'type': type})
+    assert 'network_component_38.graphml'.encode('utf-8') in response.data
     assert 'network_cytoscape.csv'.encode('utf-8') in response.data
     assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 

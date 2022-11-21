@@ -1,6 +1,6 @@
 import os
 import json
-from pathlib import PurePath
+from pathlib import PurePath, Path
 
 
 class FileStore:
@@ -138,6 +138,14 @@ class PoppunkFileStore:
                             "network",
                             "network_cytoscape.csv"))
 
+    def lineages_csv(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to lineages csv file]
+        """
+        return str(PurePath(self.output(p_hash),
+                            "lineages_output.csv"))
+
     def network_output_component(self, p_hash, component_number) -> str:
         """
         :param p_hash: [project hash]
@@ -158,6 +166,13 @@ class PoppunkFileStore:
                             "network",
                             'cluster_component_dict.pickle'))
 
+    def lineages_output(self, p_hash) -> str:
+        """
+        :param p_hash: [project_hash]
+        :return str: [path to lineage results]
+        """
+        return str(PurePath(self.output(p_hash), "lineages_output"))
+
 
 class DatabaseFileStore:
     """
@@ -174,3 +189,21 @@ class DatabaseFileStore:
                                       self.name).with_suffix('.dists.pkl'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
+
+        self.lineage_scheme = PurePath(self.path, 'example_lineage_scheme.pkl')
+
+    def lineage_model(self, lineage_path: str) -> str:
+        """
+        :param lineage_path: [path to lineage database folder]
+        :return str: [path to lineage model directory]
+        """
+        return './' + str(PurePath(self.path, lineage_path))
+
+    def lineage_distances(self, lineage_path: str) -> str:
+        """
+        :param lineage_path: [path to lineage database folder]
+        :return str: [path to distances file]
+        """
+        return str(PurePath(self.path,
+                            lineage_path,
+                            f"{Path(lineage_path).name}.dists"))
