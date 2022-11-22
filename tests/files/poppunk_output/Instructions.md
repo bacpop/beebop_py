@@ -1,0 +1,1 @@
+Files needed for testing (like the `.graphml` files) can be generated through the beebop pipeline by submitting .fa files (examples can be found in `/tests/files/sketchlib_input`) and extracting the result files either directly from the storage location or by downloading the zipped results via the frontend.
