@@ -65,11 +65,15 @@ def check_connection(redis) -> None:
         abort(500, description="Redis not found")
 
 
-def generate_zip(path_folder: str, type: str, cluster: str) -> BytesIO:
+def generate_zip(fs: PoppunkFileStore,
+                 p_hash: str,
+                 type: str,
+                 cluster: str) -> BytesIO:
     """
     [This generates a .zip folder with results data.]
 
-    :param path_folder: [path to folder to be zipped]
+    :param fs: [PoppunkFileStore with path to folder to be zipped]
+    :param p_hash: [project hash]
     :param type: [can be either 'microreact' or 'network']
     :param cluster: [only relevant for 'network', since there are multiple
         component files stored in the folder, but only the right one should
@@ -79,9 +83,14 @@ def generate_zip(path_folder: str, type: str, cluster: str) -> BytesIO:
     """
     memory_file = BytesIO()
     if type == 'microreact':
+        path_folder = fs.output_microreact(p_hash, cluster)
         add_files(memory_file, path_folder)
     elif type == 'network':
-        file_list = (f'network_component_{cluster}.graphml',
+        path_folder = fs.output_network(p_hash)
+        with open(fs.network_mapping(p_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        component = cluster_component_mapping[str(cluster)]
+        file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
         add_files(memory_file, path_folder, file_list)
@@ -364,12 +373,8 @@ def send_zip_internal(p_hash: str,
     :return any: [zipfile]
     """
     fs = PoppunkFileStore(storage_location)
-    if type == 'microreact':
-        path_folder = fs.output_microreact(p_hash, cluster)
-    elif type == 'network':
-        path_folder = fs.output_network(p_hash)
     # generate zipfile
-    memory_file = generate_zip(path_folder, type, cluster)
+    memory_file = generate_zip(fs, p_hash, type, cluster)
     return send_file(memory_file,
                      download_name=type + '.zip',
                      as_attachment=True)

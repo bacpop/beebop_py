@@ -386,7 +386,7 @@ def test_send_zip_internal(client):
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
-        cluster = None
+        cluster = 1
         type = 'network'
         response = app.send_zip_internal(project_hash,
                                          type,
@@ -395,6 +395,7 @@ def test_send_zip_internal(client):
         response.direct_passthrough = False
         assert 'network_cytoscape.csv'.encode('utf-8') in response.data
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
+        assert 'network_component_38.graphml'.encode('utf-8') in response.data
 
 
 def test_download_graphml_internal():
