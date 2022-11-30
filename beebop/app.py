@@ -218,7 +218,6 @@ def run_poppunk_internal(sketches: dict,
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     # create visualisations
-    
     # network
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,

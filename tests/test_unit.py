@@ -264,7 +264,12 @@ def test_get_status_internal(client):
     redis.hset("beebop:hash:job:network", hash, job_network.id)
     result = app.get_status_internal(hash, redis)
     assert read_data(result)['status'] == 'success'
-    status_options = ['queued', 'started', 'finished', 'scheduled', 'waiting', 'deferred']
+    status_options = ['queued',
+                      'started',
+                      'finished',
+                      'scheduled',
+                      'waiting',
+                      'deferred']
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
