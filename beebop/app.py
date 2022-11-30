@@ -218,16 +218,6 @@ def run_poppunk_internal(sketches: dict,
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     # create visualisations
-    # microreact
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(p_hash,
-                                     fs,
-                                     db_paths,
-                                     args,
-                                     name_mapping),
-                               depends_on=job_assign, job_timeout=job_timeout)
-    redis.hset("beebop:hash:job:microreact", p_hash,
-               job_microreact.id)
     # network
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,
@@ -237,6 +227,16 @@ def run_poppunk_internal(sketches: dict,
                                   name_mapping),
                             depends_on=job_assign, job_timeout=job_timeout)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
+    # microreact
+    job_microreact = q.enqueue(visualise.microreact,
+                               args=(p_hash,
+                                     fs,
+                                     db_paths,
+                                     args,
+                                     name_mapping),
+                               depends_on=job_network, job_timeout=job_timeout)
+    redis.hset("beebop:hash:job:microreact", p_hash,
+               job_microreact.id)
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
                                      "network": job_network.id}))

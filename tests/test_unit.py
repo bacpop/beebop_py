@@ -191,7 +191,7 @@ def test_run_poppunk_internal(qtbot):
     worker = SimpleWorker([queue], connection=queue.connection)
     worker.work(burst=True)  # Runs enqueued job
     job_assign = Job.fetch(job_ids["assign"], connection=redis)
-    status_options = ['queued', 'started', 'finished', 'scheduled']
+    status_options = ['queued', 'started', 'finished', 'scheduled', 'deferred']
     assert job_assign.get_status() in status_options
     # saves p-hash with job id in redis
     assert read_redis("beebop:hash:job:assign",
@@ -264,7 +264,12 @@ def test_get_status_internal(client):
     redis.hset("beebop:hash:job:network", hash, job_network.id)
     result = app.get_status_internal(hash, redis)
     assert read_data(result)['status'] == 'success'
-    status_options = ['queued', 'started', 'finished', 'scheduled', 'waiting']
+    status_options = ['queued',
+                      'started',
+                      'finished',
+                      'scheduled',
+                      'waiting',
+                      'deferred']
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options

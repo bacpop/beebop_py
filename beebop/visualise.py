@@ -91,6 +91,8 @@ def network(p_hash: str,
     assign_result = current_job.dependency.result
     network_internal(assign_result, p_hash, fs, db_paths, args, name_mapping)
 
+    return assign_result
+
 
 def network_internal(assign_result,
                      p_hash,
