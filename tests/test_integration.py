@@ -40,7 +40,7 @@ def test_run_poppunk(client, qtbot):
     assert response.status_code == 200
     # retrieve job status
     status = client.get("/status/" + p_hash)
-    status_options = ['queued', 'started', 'finished', 'waiting']
+    status_options = ['queued', 'started', 'finished', 'waiting', 'deferred']
     assert read_data(status)['assign'] in status_options
     assert read_data(status)['microreact'] in status_options
     assert read_data(status)['network'] in status_options
