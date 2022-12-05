@@ -215,37 +215,18 @@ def test_run_poppunk_internal(qtbot):
 
 
 def test_get_clusters_internal(client):
-    # queue example job
-    redis = Redis()
-    q = Queue(connection=redis)
-    job = q.enqueue(dummy_fct, 5)
     hash = "unit_test_get_clusters_internal"
-    redis.hset("beebop:hash:job:assign", hash, job.id)
-    result1 = app.get_clusters_internal(hash, redis)
-    assert read_data(result1[0])['error'] == {
-        "status": "failure",
-        "errors": [{"error": "Result not ready yet"}],
-        "data": []
-    }
-    worker = SimpleWorker([q], connection=q.connection)
-    worker.work(burst=True)
-    finished = False
-    # wait until results are available
-    while finished is False:
-        time.sleep(1)
-        result2 = app.get_clusters_internal(hash, redis)
-        if read_data(result2)['status'] == 'success':
-            finished = True
-    assert read_data(result2) == {
+    result = app.get_clusters_internal(hash, storage_location)
+    expected_result = {'0': {'hash': '24280624a730ada7b5bccea16306765c',
+                             'cluster': 3},
+                       '1': {'hash': '7e5ddeb048075ac23ab3672769bda17d',
+                             'cluster': 53},
+                       '2': {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
+                             'cluster': 24}}
+    assert read_data(result) == {
         "status": "success",
         "errors": [],
-        "data": "Result"
-    }
-    assert read_data(app.get_clusters_internal("wrong-hash",
-                                               redis)[0])['error'] == {
-        "status": "failure",
-        "errors": [{"error": "Unknown project hash"}],
-        "data": []
+        "data": expected_result
     }
 
 

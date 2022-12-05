@@ -310,7 +310,7 @@ def get_results(result_type) -> json:
     """
     if result_type == 'assign':
         p_hash = request.json['projectHash']
-        return get_clusters_internal(p_hash, redis)
+        return get_clusters_internal(p_hash, storage_location)
     elif result_type == 'zip':
         p_hash = request.json['projectHash']
         visualisation_type = request.json['type']
@@ -337,26 +337,18 @@ def get_results(result_type) -> json:
                                          storage_location)
 
 
-def get_clusters_internal(p_hash: str, redis: Redis) -> json:
+def get_clusters_internal(p_hash: str, storage_location: str) -> json:
     """
     [returns cluster assignment results]
 
     :param p_hash: [project hash]
-    :param redis: [Redis instance]
+    :param storage_location: [storage location]
     :return json: [response object with cluster results stored in 'data']
     """
-    check_connection(redis)
-    try:
-        id = redis.hget("beebop:hash:job:assign", p_hash).decode("utf-8")
-        job = Job.fetch(id, connection=redis)
-        if job.result is None:
-            return jsonify(error=response_failure({
-                "error": "Result not ready yet"})), 500
-        else:
-            return jsonify(response_success(job.result))
-    except AttributeError:
-        return jsonify(error=response_failure({
-            "error": "Unknown project hash"})), 500
+    fs = PoppunkFileStore(storage_location)
+    with open(fs.output_cluster(p_hash), 'rb') as f:
+        cluster_result = pickle.load(f)
+        return jsonify(response_success(cluster_result))
 
 
 def send_zip_internal(p_hash: str,
