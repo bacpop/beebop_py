@@ -2,6 +2,7 @@ from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
 import re
 import os
+import pickle
 
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -74,4 +75,9 @@ def get_clusters(hashes_list: list,
             "hash": name,
             "cluster": cluster
         }
+
+    # save result to retrieve when reloading project results
+    with open(fs.output_cluster(p_hash), 'wb') as f:
+        pickle.dump(result, f)
+
     return result
