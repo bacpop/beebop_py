@@ -460,5 +460,17 @@ def download_graphml_internal(p_hash: str,
     return f
 
 
+# load project data
+@app.route("/project/<p_hash>", methods=['GET'])
+def get_project(result_type) -> json:
+    """
+    [Loads all project data for a given project hash so the project can be re-opened in beebop. This is in a work
+    in progress, and only loading sketch data has been implemented so far.]
+
+    :param project_hash: [identifying hash for the project]
+    """
+    # pickle load, share code with get clutsers internal
+    # load json from hashes in the cluster data
+
 if __name__ == "__main__":
     serve(app)  # pragma: no cover

@@ -6,8 +6,10 @@ ignored
 !tests/files/json/*
 !*.schema.json
 !args.json
-tests/results
+tests/resultss
 storage/poppunk_output
 node_modules
 storage/GPS_v4*
+storage/._GPS_v4*
 storage/strain_*_lineage_db
+.idea
