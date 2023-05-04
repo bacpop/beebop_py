@@ -216,7 +216,7 @@ def test_run_poppunk_internal(qtbot):
 
 def test_get_clusters_internal(client):
     hash = "unit_test_get_clusters_internal"
-    result = app.get_clusters_internal(hash, storage_location)
+    result = app.get_clusters_json(hash, storage_location)
     expected_result = {'0': {'hash': '24280624a730ada7b5bccea16306765c',
                              'cluster': 3},
                        '1': {'hash': '7e5ddeb048075ac23ab3672769bda17d',

@@ -32,7 +32,7 @@ database_location = os.environ.get('DB_LOCATION')
 def response_success(data) -> dict:
     """
     :param data: [data to be stored in response object]
-    :return dict: [response object for successfull response holding data]
+    :return dict: [response object for successful response holding data]
     """
     response = {
         "status": "success",
@@ -310,7 +310,7 @@ def get_results(result_type) -> json:
     """
     if result_type == 'assign':
         p_hash = request.json['projectHash']
-        return get_clusters_internal(p_hash, storage_location)
+        return get_clusters_json(p_hash, storage_location)
     elif result_type == 'zip':
         p_hash = request.json['projectHash']
         visualisation_type = request.json['type']
@@ -337,9 +337,9 @@ def get_results(result_type) -> json:
                                          storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location: str) -> json:
+def get_clusters_internal(p_hash: str, storage_location):
     """
-    [returns cluster assignment results]
+    [returns cluster assignment results ]
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
@@ -348,7 +348,18 @@ def get_clusters_internal(p_hash: str, storage_location: str) -> json:
     fs = PoppunkFileStore(storage_location)
     with open(fs.output_cluster(p_hash), 'rb') as f:
         cluster_result = pickle.load(f)
-        return jsonify(response_success(cluster_result))
+        return cluster_result
+
+def get_clusters_json(p_hash: str, storage_location: str) -> json:
+    """
+    [returns cluster assignment results as json response]
+
+    :param p_hash: [project hash]
+    :param storage_location: [storage location]
+    :return json: [response object with cluster results stored in 'data']
+    """
+    cluster_result = get_clusters_internal(p_hash, storage_location)
+    return jsonify(response_success(cluster_result))
 
 
 def send_zip_internal(p_hash: str,
@@ -462,15 +473,16 @@ def download_graphml_internal(p_hash: str,
 
 # load project data
 @app.route("/project/<p_hash>", methods=['GET'])
-def get_project(result_type) -> json:
+def get_project(p_hash) -> json:
     """
     [Loads all project data for a given project hash so the project can be re-opened in beebop. This is in a work
     in progress, and only loading sketch data has been implemented so far.]
 
     :param project_hash: [identifying hash for the project]
     """
-    # pickle load, share code with get clutsers internal
+    clusters = get_clusters_internal(p_hash, storage_location)
     # load json from hashes in the cluster data
+    return jsonify(clusters)
 
 if __name__ == "__main__":
     serve(app)  # pragma: no cover
