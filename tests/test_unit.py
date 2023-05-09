@@ -214,7 +214,7 @@ def test_run_poppunk_internal(qtbot):
                       project_hash, redis) == job_ids["network"]
 
 
-def test_get_clusters_internal(client):
+def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
     expected_result = {'0': {'hash': '24280624a730ada7b5bccea16306765c',
@@ -229,6 +229,47 @@ def test_get_clusters_internal(client):
         "data": expected_result
     }
 
+def test_get_project(client):
+    hash = "unit_test_get_clusters_internal"
+    result = app.get_project("unit_test_get_clusters_internal")
+    expected_filename = "unknown.fa"
+    expected_amr = {
+      "filename": placeholder_filename,
+      "Penicillin": 0.1,
+      "Chloramphenicol": 0.2,
+      "Erythromycin": 0.3,
+      "Tetracycline": 0.4,
+      "Trim_sulfa": 0.5,
+      "length": True,
+      "species": True
+    }
+    expected_result = {
+        'hash': 'unit_test_get_clusters_internal',
+        'samples': [
+            {
+                'hash': '24280624a730ada7b5bccea16306765c',
+                'filename': 'unknown.fa',
+                'amr': 'expected_amr'
+            }
+        ]
+    }
+    assert result.status = "success"
+    data = result.data
+    assert data.hash == "unit_test_get_clusters_internal"
+    samples = data.samples
+    assert len(samples) == 3
+    assert samples[0].hash == "24280624a730ada7b5bccea16306765c"
+    assert samples[0].filename = expected_filename
+    assert samples[0].amr = expected_amr
+    assert samples[0].sketch.bbits = 3
+    assert samples[1].hash == "7e5ddeb048075ac23ab3672769bda17d"
+    assert samples[1].filename = expected_filename
+    assert samples[1].amr = expected_amr
+    assert samples[1].sketch.bbits = 53
+    assert samples[2].hash == "24280624a730ada7b5bccea16306765c"
+    assert samples[2].filename = expected_filename
+    assert samples[2].amr = expected_amr
+    assert samples[2].sketch.bbits = 14
 
 def test_get_status_internal(client):
     # queue example job

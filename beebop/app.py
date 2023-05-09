@@ -485,7 +485,7 @@ def get_project(p_hash) -> json:
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
     # TODO: AMR and filenames will be persisted and returned in future tickets
-    placeholder_filename = "unknown.fast"
+    placeholder_filename = "unknown.fa"
     placeholder_amr = {
       "filename": placeholder_filename,
       "Penicillin": 0.1,
