@@ -350,6 +350,7 @@ def get_clusters_internal(p_hash: str, storage_location):
         cluster_result = pickle.load(f)
         return cluster_result
 
+
 def get_clusters_json(p_hash: str, storage_location: str) -> json:
     """
     [returns cluster assignment results as json response]
@@ -475,14 +476,15 @@ def download_graphml_internal(p_hash: str,
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:
     """
-    [Loads all project data for a given project hash so the project can be re-opened in beebop. This is in a work
-    in progress, and only loading sketch data has been implemented so far.]
+    [Loads all project data for a given project hash so the project can be
+    re-opened in beebop. This is in a work in progress, and only loading
+    sketch data has been implemented so far.]
 
     :param project_hash: [identifying hash for the project]
     """
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
-    #TODO: AMR and filenames will be persisted and returned in future tickets
+    # TODO: AMR and filenames will be persisted and returned in future tickets
     placeholder_filename = "unknown.fast"
     placeholder_amr = {
       "filename": placeholder_filename,
@@ -500,9 +502,14 @@ def get_project(p_hash) -> json:
     for key, value in sketch_clusters:
         sketch_hash = value.hash
         sketch = fs.input.get(sketch_hash)
-        samples.push({"hash": sketch_hash, "filename": placeholder_filename, "amr": placeholder_amr "sketch": sketch})
+        samples.push({
+          "hash": sketch_hash,
+          "filename": placeholder_filename,
+          "amr": placeholder_amr,
+          "sketch": sketch})
 
     return jsonify(response_success({"hash": p_hash, "samples": samples}))
+
 
 if __name__ == "__main__":
     serve(app)  # pragma: no cover
