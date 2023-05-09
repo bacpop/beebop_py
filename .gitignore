@@ -6,7 +6,7 @@ ignored
 !tests/files/json/*
 !*.schema.json
 !args.json
-tests/resultss
+tests/results
 storage/poppunk_output
 node_modules
 storage/GPS_v4*

@@ -51,7 +51,7 @@ conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopyth
 
 The `graph-tool` package must be installed from `conda-forge`:
 ```
-conda install -c conda-forge graph-tool
+conda install -c conda-forge graph-tool mandrake
 ```
 
 
