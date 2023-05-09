@@ -76,8 +76,9 @@ def test_run_poppunk(client, qtbot):
     assert os.path.exists(storage + p_hash +
                           "/network/cluster_component_dict.pickle")
 
+    # check can load project data from client
     project_data = client.get("/project/" + p_hash)
-    print(jsonify(project_data))
+
 
 
 def test_results_microreact(client):

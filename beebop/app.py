@@ -499,10 +499,10 @@ def get_project(p_hash) -> json:
 
     fs = PoppunkFileStore(storage_location)
     samples = []
-    for key, value in sketch_clusters:
-        sketch_hash = value.hash
+    for value in sketch_clusters.values():
+        sketch_hash = value["hash"]
         sketch = fs.input.get(sketch_hash)
-        samples.push({
+        samples.append({
           "hash": sketch_hash,
           "filename": placeholder_filename,
           "amr": placeholder_amr,
