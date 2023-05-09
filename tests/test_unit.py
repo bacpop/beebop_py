@@ -243,16 +243,6 @@ def test_get_project(client):
       "length": True,
       "species": True
     }
-    expected_result = {
-        'hash': 'unit_test_get_clusters_internal',
-        'samples': [
-            {
-                'hash': '24280624a730ada7b5bccea16306765c',
-                'filename': 'unknown.fa',
-                'amr': 'expected_amr'
-            }
-        ]
-    }
     assert result.status = "success"
     data = result.data
     assert data.hash == "unit_test_get_clusters_internal"

@@ -484,6 +484,7 @@ def get_project(p_hash) -> json:
     """
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
+    # TODO: error handling
     # TODO: AMR and filenames will be persisted and returned in future tickets
     placeholder_filename = "unknown.fa"
     placeholder_amr = {
