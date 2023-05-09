@@ -480,9 +480,29 @@ def get_project(p_hash) -> json:
 
     :param project_hash: [identifying hash for the project]
     """
-    clusters = get_clusters_internal(p_hash, storage_location)
-    # load json from hashes in the cluster data
-    return jsonify(clusters)
+    sketch_clusters = get_clusters_internal(p_hash, storage_location)
+
+    #TODO: AMR and filenames will be persisted and returned in future tickets
+    placeholder_filename = "unknown.fast"
+    placeholder_amr = {
+      "filename": placeholder_filename,
+      "Penicillin": 0.1,
+      "Chloramphenicol": 0.2,
+      "Erythromycin": 0.3,
+      "Tetracycline": 0.4,
+      "Trim_sulfa": 0.5,
+      "length": True,
+      "species": True
+    }
+
+    fs = PoppunkFileStore(storage_location)
+    samples = []
+    for key, value in sketch_clusters:
+        sketch_hash = value.hash
+        sketch = fs.input.get(sketch_hash)
+        samples.push({"hash": sketch_hash, "filename": placeholder_filename, "amr": placeholder_amr "sketch": sketch})
+
+    return jsonify(response_success({"hash": p_hash, "samples": samples}))
 
 if __name__ == "__main__":
     serve(app)  # pragma: no cover
