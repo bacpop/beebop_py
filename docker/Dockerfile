@@ -1,4 +1,4 @@
-FROM mrcide/poppunk:master
+FROM mrcide/poppunk
 WORKDIR /
 
 RUN pip install poetry
