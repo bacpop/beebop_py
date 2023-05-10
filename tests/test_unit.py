@@ -229,6 +229,7 @@ def test_get_clusters_json(client):
         "data": expected_result
     }
 
+
 def test_get_project(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_project("unit_test_get_clusters_internal")
@@ -260,6 +261,7 @@ def test_get_project(client):
     assert samples[2].filename == expected_filename
     assert samples[2].amr == expected_amr
     assert samples[2].sketch.bbits == 14
+
 
 def test_get_status_internal(client):
     # queue example job

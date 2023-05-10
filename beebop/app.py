@@ -337,13 +337,13 @@ def get_results(result_type) -> json:
                                          storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location):
+def get_clusters_internal(p_hash: str, storage_location) -> dict:
     """
     [returns cluster assignment results ]
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
-    :return json: [response object with cluster results stored in 'data']
+    :return dict: [cluster results]
     """
     fs = PoppunkFileStore(storage_location)
     with open(fs.output_cluster(p_hash), 'rb') as f:
@@ -472,7 +472,6 @@ def download_graphml_internal(p_hash: str,
     return f
 
 
-# load project data
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:
     """
@@ -480,7 +479,8 @@ def get_project(p_hash) -> json:
     re-opened in beebop. This is in a work in progress, and only loading
     sketch data has been implemented so far.]
 
-    :param project_hash: [identifying hash for the project]
+    :param p_hash: [identifying hash for the project]
+    :return: [project data]
     """
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
