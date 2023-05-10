@@ -1,4 +1,4 @@
-FROM mrcide/poppunk
+FROM mrcide/poppunk:indiv-viz
 WORKDIR /
 
 RUN pip install poetry
