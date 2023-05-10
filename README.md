@@ -46,10 +46,10 @@ If there are problems installing PopPUNK, you may need to install one or more of
 
 Please install the dependencies for PopPUNK with:
 ```
-conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift mandrake rapidnj 
+conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
 ```
 
-The `graph-tool` package must be installed from `conda-forge`:
+The `graph-tool` and `mandrake` packages must be installed from `conda-forge`:
 ```
 conda install -c conda-forge graph-tool mandrake
 ```
