@@ -243,7 +243,7 @@ def test_get_project(client):
       "length": True,
       "species": True
     }
-    assert result.status = "success"
+    assert result.status == "success"
     data = result.data
     assert data.hash == "unit_test_get_clusters_internal"
     samples = data.samples
@@ -257,9 +257,9 @@ def test_get_project(client):
     assert samples[1].amr = expected_amr
     assert samples[1].sketch.bbits = 53
     assert samples[2].hash == "24280624a730ada7b5bccea16306765c"
-    assert samples[2].filename = expected_filename
-    assert samples[2].amr = expected_amr
-    assert samples[2].sketch.bbits = 14
+    assert samples[2].filename == expected_filename
+    assert samples[2].amr == expected_amr
+    assert samples[2].sketch.bbits == 14
 
 def test_get_status_internal(client):
     # queue example job
