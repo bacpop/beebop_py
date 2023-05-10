@@ -249,13 +249,13 @@ def test_get_project(client):
     samples = data.samples
     assert len(samples) == 3
     assert samples[0].hash == "24280624a730ada7b5bccea16306765c"
-    assert samples[0].filename = expected_filename
-    assert samples[0].amr = expected_amr
-    assert samples[0].sketch.bbits = 3
+    assert samples[0].filename == expected_filename
+    assert samples[0].amr == expected_amr
+    assert samples[0].sketch.bbits == 3
     assert samples[1].hash == "7e5ddeb048075ac23ab3672769bda17d"
-    assert samples[1].filename = expected_filename
-    assert samples[1].amr = expected_amr
-    assert samples[1].sketch.bbits = 53
+    assert samples[1].filename == expected_filename
+    assert samples[1].amr == expected_amr
+    assert samples[1].sketch.bbits == 53
     assert samples[2].hash == "24280624a730ada7b5bccea16306765c"
     assert samples[2].filename == expected_filename
     assert samples[2].amr == expected_amr

@@ -83,7 +83,6 @@ def test_run_poppunk(client, qtbot):
     assert project_data.data.samples[0].sketch == sketches[0]
 
 
-
 def test_results_microreact(client):
     p_hash = 'test_microreact_api'
     cluster = 7
