@@ -337,7 +337,7 @@ def get_results(result_type) -> json:
                                          storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location) -> dict:
+def get_clusters_internal(p_hash: str, storage_location: str) -> dict:
     """
     [returns cluster assignment results ]
 
