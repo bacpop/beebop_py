@@ -235,7 +235,7 @@ def test_get_project(client):
     result = app.get_project("unit_test_get_clusters_internal")
     expected_filename = "unknown.fa"
     expected_amr = {
-      "filename": placeholder_filename,
+      "filename": expected_filename,
       "Penicillin": 0.1,
       "Chloramphenicol": 0.2,
       "Erythromycin": 0.3,
