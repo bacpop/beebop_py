@@ -26,8 +26,6 @@ def test_run_poppunk(client, qtbot):
     os.makedirs(storage, exist_ok=True)
     # generate sketches
     sketches = json.loads(setup.generate_json())
-    print("here's the sketches")
-    print(sketches)
     name_mapping = {
         "hash1": "name1.fa",
         "hash2": "name2.fa"
