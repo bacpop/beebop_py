@@ -267,7 +267,8 @@ def test_get_project(client):
     assert samples[2]["filename"] == expected_filename
     assert samples[2]["amr"] == expected_amr
     assert samples[2]["sketch"]["bbits"] == 14
-    assert jsonschema.validate(data, schemas.project, resolver=resolver) is None
+    schema = schemas.project
+    assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
 def test_get_status_internal(client):
