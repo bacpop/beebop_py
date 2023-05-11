@@ -26,6 +26,8 @@ def test_run_poppunk(client, qtbot):
     os.makedirs(storage, exist_ok=True)
     # generate sketches
     sketches = json.loads(setup.generate_json())
+    print("here's the sketches")
+    print(sketches)
     name_mapping = {
         "hash1": "name1.fa",
         "hash2": "name2.fa"
@@ -81,8 +83,8 @@ def test_run_poppunk(client, qtbot):
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert len(project_data["samples"]) == 2
-    assert project_data["samples"][0]["sketch"] == sketches[0]
-    assert project_data["samples"][1]["sketch"] == sketches[1]
+    assert project_data["samples"][0]["sketch"] == sketches["6930_8_9"]
+    assert project_data["samples"][1]["sketch"] == sketches["7622_5_91"]
 
 
 def test_results_microreact(client):
