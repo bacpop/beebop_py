@@ -79,7 +79,7 @@ def test_run_poppunk(client, qtbot):
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
-    assert project_data.hash == p_hash
+    assert project_data["hash"] == p_hash
     assert len(project_data.samples) == 1
     assert project_data.samples[0].sketch == sketches[0]
 

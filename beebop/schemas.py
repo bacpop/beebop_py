@@ -19,4 +19,5 @@ class Schema:
         self.sketch = read_schema("sketch")
         self.sketches = read_schema("sketches")
         self.cluster = read_schema("cluster")
+        self.project = read_schema("project")
         # add new schemas here
