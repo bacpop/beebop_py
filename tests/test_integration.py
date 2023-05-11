@@ -81,7 +81,8 @@ def test_run_poppunk(client, qtbot):
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert len(project_data["samples"]) == 2
-    assert project_data.samples[0]["sketch"] == sketches[0]
+    assert project_data["samples"][0]["sketch"] == sketches[0]
+    assert project_data["samples"][1]["sketch"] == sketches[1]
 
 
 def test_results_microreact(client):
