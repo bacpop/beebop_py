@@ -10,4 +10,6 @@ tests/results
 storage/poppunk_output
 node_modules
 storage/GPS_v4*
+storage/._GPS_v4*
 storage/strain_*_lineage_db
+.idea

@@ -33,16 +33,27 @@ To install PopPUNK v2.5, follow these steps:
 First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_py`
 
 
-Then install PopPUNK v2.5 to your computer: 
+Then install PopPUNK to your computer: 
 ```
-pip3 install git+https://github.com/bacpop/PopPUNK@bacpop-43#egg=PopPUNK
+pip3 install git+https://github.com/bacpop/PopPUNK#egg=PopPUNK
 ```
 
+If there are problems installing PopPUNK, you may need to install one or more of the following packages with `sudo apt get install`:
+- cmake
+- libhdf5-dev
+- libeigen3-dev
+- libopenblas-dev
 
 Please install the dependencies for PopPUNK with:
 ```
-conda install requests pandas graph-tool networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift mandrake rapidnj 
+conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
 ```
+
+The `graph-tool` and `mandrake` packages must be installed from `conda-forge`:
+```
+conda install -c conda-forge graph-tool mandrake
+```
+
 
 ##### Other dependencies
 To install all other required dependencies go into the beebop_py project folder and run (having the conda environment 'beebop_py' activated)

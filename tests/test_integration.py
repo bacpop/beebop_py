@@ -76,6 +76,15 @@ def test_run_poppunk(client, qtbot):
     assert os.path.exists(storage + p_hash +
                           "/network/cluster_component_dict.pickle")
 
+    # check can load project data from client
+    project_response = client.get("/project/" + p_hash)
+    project_data = read_data(project_response)
+    assert project_data["hash"] == p_hash
+    assert len(project_data["samples"]) == 2
+    # check response data matches the generated data
+    assert project_data["samples"][0]["sketch"] == sketches["7622_5_91"]
+    assert project_data["samples"][1]["sketch"] == sketches["6930_8_9"]
+
 
 def test_results_microreact(client):
     p_hash = 'test_microreact_api'

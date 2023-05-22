@@ -30,6 +30,7 @@
         "grapetree":false,
         "cytoscape":false,
         "perplexity":20.0,
+        "maxIter":10000000,
         "strand_preserved":false,
         "info_csv":null,
         "tree": "nj",

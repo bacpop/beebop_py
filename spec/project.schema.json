@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "hash": {
+      "type": "string"
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "amr": { "$ref": "amr.schema.json" },
+          "sketch": { "$ref": "sketch.schema.json" }
+        },
+        "required": ["hash", "filename", "amr", "sketch"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["hash", "samples"],
+  "additionalProperties": false
+}
