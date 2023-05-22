@@ -83,7 +83,9 @@ def test_run_poppunk(client, qtbot):
     assert len(project_data["samples"]) == 2
     # check response data matches the generated data
     assert project_data["samples"][0]["sketch"] == sketches["7622_5_91"]
+    assert project_data["samples"][0]["cluster"] == 5
     assert project_data["samples"][1]["sketch"] == sketches["6930_8_9"]
+    assert project_data["samples"][59]["cluster"] == 5
 
 
 def test_results_microreact(client):

@@ -505,6 +505,7 @@ def get_project(p_hash) -> json:
         sketch = fs.input.get(sketch_hash)
         samples.append({
           "hash": sketch_hash,
+          "cluster": value["cluster"],
           "filename": placeholder_filename,
           "amr": placeholder_amr,
           "sketch": sketch})
