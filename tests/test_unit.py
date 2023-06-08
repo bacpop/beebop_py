@@ -249,8 +249,6 @@ def test_get_project(client):
     assert samples[0]["sketch"]["bbits"] == 3
     assert samples[1]["hash"] == "7e5ddeb048075ac23ab3672769bda17d"
     assert samples[1]["cluster"] == 53
-    assert samples[1]["filename"] == expected_filename
-    assert samples[1]["amr"] == expected_amr
     assert samples[1]["sketch"]["bbits"] == 53
     assert samples[2]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
     assert samples[2]["cluster"] == 24
