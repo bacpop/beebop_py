@@ -290,7 +290,7 @@ def test_get_status_response(client):
     redis.hset("beebop:hash:job:assign", hash, job_assign.id)
     redis.hset("beebop:hash:job:microreact", hash, job_microreact.id)
     redis.hset("beebop:hash:job:network", hash, job_network.id)
-    result = app.get_status_internal(hash, redis)
+    result = app.get_status_response(hash, redis)
     assert read_data(result)['status'] == 'success'
     status_options = ['queued',
                       'started',
