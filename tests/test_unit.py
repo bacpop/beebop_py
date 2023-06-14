@@ -270,11 +270,14 @@ def test_get_project(client):
     assert samples[2]["filename"] == expected_filename
     assert samples[2]["amr"] == expected_amr
     assert samples[2]["sketch"]["bbits"] == 14
+    assert data["status"]["assign"] == "finished"
+    assert data["status"]["microreact"] == "finished"
+    assert data["status"]["network"] == "finished"
     schema = schemas.project
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
-def test_get_status_internal(client):
+def test_get_status_response(client):
     # queue example job
     redis = Redis()
     q = Queue(connection=Redis())
@@ -298,7 +301,7 @@ def test_get_status_internal(client):
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
-    assert read_data(app.get_status_internal("wrong-hash",
+    assert read_data(app.get_status_response("wrong-hash",
                                              redis)[0])['error'] == {
         "status": "failure",
         "errors": [{"error": "Unknown project hash"}],
