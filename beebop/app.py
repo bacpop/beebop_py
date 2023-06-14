@@ -253,17 +253,27 @@ def get_status(p_hash) -> json:
     :param p_hash: [project hash]
     :return json: [response object with job statuses]
     """
-    return get_status_internal(p_hash, redis)
+    return get_status_response(p_hash, redis)
+
+def get_status_response(p_hash: str, redis: Redis)-> json:
+    """
+    [returns jsonified response of all job statuses for a project]
+
+    :param p_hash: [project hash]
+    :param redis: [Redis instance]
+    :return json: [response object with job statuses]
+    """
+    return jsonify(response_success(get_status_internal(p_hash, redis))
 
 
-def get_status_internal(p_hash: str, redis: Redis) -> json:
+def get_status_internal(p_hash: str, redis: Redis) -> dict:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
     microreact and network visualisations)]
 
     :param p_hash: [project hash]
     :param redis: [Redis instance]
-    :return json: [response object with job statuses]
+    :dict: [dict with job statuses]
     """
     check_connection(redis)
 
@@ -278,9 +288,9 @@ def get_status_internal(p_hash: str, redis: Redis) -> json:
         else:
             status_microreact = "waiting"
             status_network = "waiting"
-        return jsonify(response_success({"assign": status_assign,
-                                         "microreact": status_microreact,
-                                         "network": status_network}))
+        return {"assign": status_assign,
+                "microreact": status_microreact,
+                "network": status_network}
     except AttributeError:
         return jsonify(error=response_failure({
             "error": "Unknown project hash"})), 500
@@ -510,7 +520,9 @@ def get_project(p_hash) -> json:
           "amr": placeholder_amr,
           "sketch": sketch})
 
-    return jsonify(response_success({"hash": p_hash, "samples": samples}))
+    statug = get_status_internal(p_hash, redis)
+
+    return jsonify(response_success({"hash": p_hash, "samples": samples, "status": status}))
 
 
 if __name__ == "__main__":

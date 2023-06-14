@@ -22,11 +22,12 @@
           "amr": { "$ref": "amr.schema.json" },
           "sketch": { "$ref": "sketch.schema.json" }
         },
-        "required": ["hash", "filename", "amr", "sketch", "cluster"],
+        "required": ["hash", "filename", "amr", "sketcsh", "cluster"],
         "additionalProperties": false
       }
-    }
+    },
+    "status": { "$ref": "status.schema.json" }
   },
-  "required": ["hash", "samples"],
+  "required": ["hash", "samples", "status"],
   "additionalProperties": false
 }
