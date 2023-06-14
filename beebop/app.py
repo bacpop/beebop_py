@@ -255,6 +255,7 @@ def get_status(p_hash) -> json:
     """
     return get_status_response(p_hash, redis)
 
+
 def get_status_response(p_hash: str, redis: Redis)-> json:
     """
     [returns jsonified response of all job statuses for a project]
@@ -263,7 +264,8 @@ def get_status_response(p_hash: str, redis: Redis)-> json:
     :param redis: [Redis instance]
     :return json: [response object with job statuses]
     """
-    return jsonify(response_success(get_status_internal(p_hash, redis))
+    status = get_status_internal(p_hash, redis)
+    return jsonify(response_success(status))
 
 
 def get_status_internal(p_hash: str, redis: Redis) -> dict:
