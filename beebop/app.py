@@ -522,7 +522,7 @@ def get_project(p_hash) -> json:
           "amr": placeholder_amr,
           "sketch": sketch})
 
-    statug = get_status_internal(p_hash, redis)
+    status = get_status_internal(p_hash, redis)
 
     return jsonify(response_success({"hash": p_hash, "samples": samples, "status": status}))
 
