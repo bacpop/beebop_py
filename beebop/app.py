@@ -264,11 +264,11 @@ def get_status_response(p_hash: str, redis: Redis)-> json:
     :param redis: [Redis instance]
     :return json: [response object with job statuses]
     """
-    status = get_status_internal(p_hash, redis)
+    response = get_status_internal(p_hash, redis)
     if "error" in response:
       return jsonify(error=response_failure(response)), 500
     else:
-      return response_success(status)
+      return response_success(response)
 
 
 def get_status_internal(p_hash: str, redis: Redis) -> dict:
@@ -512,8 +512,8 @@ def get_project(p_hash) -> json:
           "sketch": sketch})
 
     status = get_status_internal(p_hash, redis)
-    if "error" in response:
-      return jsonify(error=response_failure(response)), 500
+    if "error" in status:
+      return jsonify(error=response_failure(status)), 500
     else:
       return jsonify(response_success({"hash": p_hash, "samples": samples, "status": status}))
 
