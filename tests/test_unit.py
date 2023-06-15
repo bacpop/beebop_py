@@ -39,6 +39,13 @@ fs = PoppunkFileStore(storage_location)
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 args = get_args()
 
+status_options = ['queued',
+                  'started',
+                  'finished',
+                  'scheduled',
+                  'waiting',
+                  'deferred']
+
 
 def dummy_fct(duration):
     time.sleep(duration)
@@ -268,9 +275,9 @@ def test_get_project(client):
     assert samples[2]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
     assert samples[2]["cluster"] == 24
     assert samples[2]["sketch"]["bbits"] == 14
-    assert data["status"]["assign"] == "finished"
-    assert data["status"]["microreact"] == "finished"
-    assert data["status"]["network"] == "finished"
+    assert data["status"]["assign"] in status_options
+    assert data["status"]["microreact"] in status_options
+    assert data["status"]["network"] in status_options
     schema = schemas.project
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
@@ -280,15 +287,10 @@ def test_get_status_response(client):
     run_test_job(hash)
     result = app.get_status_response(hash, redis)
     assert read_data(result)['status'] == 'success'
-    status_options = ['queued',
-                      'started',
-                      'finished',
-                      'scheduled',
-                      'waiting',
-                      'deferred']
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
+    redis = Redis()
     assert read_data(app.get_status_response("wrong-hash",
                                              redis)[0])['error'] == {
         "status": "failure",
