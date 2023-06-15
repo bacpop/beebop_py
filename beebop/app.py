@@ -256,7 +256,7 @@ def get_status(p_hash) -> json:
     return get_status_response(p_hash, redis)
 
 
-def get_status_response(p_hash: str, redis: Redis)-> json:
+def get_status_response(p_hash: str, redis: Redis) -> json:
     """
     [returns jsonified response of all job statuses for a project]
 
@@ -266,9 +266,9 @@ def get_status_response(p_hash: str, redis: Redis)-> json:
     """
     response = get_status_internal(p_hash, redis)
     if "error" in response:
-      return jsonify(error=response_failure(response)), 500
+        return jsonify(error=response_failure(response)), 500
     else:
-      return response_success(response)
+        return jsonify(response_success(response))
 
 
 def get_status_internal(p_hash: str, redis: Redis) -> dict:
@@ -297,8 +297,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
                 "microreact": status_microreact,
                 "network": status_network}
     except AttributeError:
-        return jsonify(error=response_failure({
-            "error": "Unknown project hash"})), 500
+        return { "error": "Unknown project hash"}
 
 
 # get job result
@@ -513,9 +512,13 @@ def get_project(p_hash) -> json:
 
     status = get_status_internal(p_hash, redis)
     if "error" in status:
-      return jsonify(error=response_failure(status)), 500
+        return jsonify(error=response_failure(status)), 500
     else:
-      return jsonify(response_success({"hash": p_hash, "samples": samples, "status": status}))
+        return jsonify(response_success({
+            "hash": p_hash,
+            "samples": samples,
+            "status": status
+        }))
 
 
 if __name__ == "__main__":
