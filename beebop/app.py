@@ -278,7 +278,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
 
     :param p_hash: [project hash]
     :param redis: [Redis instance]
-    :dict: [dict with job statuses]
+    :return: [dict with job statuses]
     """
     check_connection(redis)
 
