@@ -285,12 +285,12 @@ def test_get_project(client):
 def test_get_status_response(client):
     hash = "unit_test_get_status_internal"
     run_test_job(hash)
+    redis = Redis()
     result = app.get_status_response(hash, redis)
     assert read_data(result)['status'] == 'success'
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
-    redis = Redis()
     assert read_data(app.get_status_response("wrong-hash",
                                              redis)[0])['error'] == {
         "status": "failure",
