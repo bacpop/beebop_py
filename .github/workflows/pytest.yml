@@ -49,19 +49,20 @@ jobs:
       with:
         path: ${{ env.CONDA }}/envs
         key:
+          # Refresh cache each day
           conda-${{ runner.os }}--${{ runner.arch }}--${{
-          steps.get-date.outputs.today }}-${{
-          hashFiles('etc/example-environment-caching.yml') }}-${{ env.CACHE_NUMBER
-          }}
+          steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER}}
       env:
-        # Increase this value to reset cache if etc/example-environment.yml has not changed
+        # Increase this value to reset cache
         CACHE_NUMBER: 0
       id: cache
 
+    - name: update environment
+      run: source $CONDA/etc/profile.d/conda.sh
+      if: steps.cache.outputs-cache-hit != 'true'
+
     - name: activate environment
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
+      run: conda activate beebop_py
 
 #    - name: Install poppunk
 #      run: conda install poppunk
