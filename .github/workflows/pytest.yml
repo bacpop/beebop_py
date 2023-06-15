@@ -78,8 +78,6 @@ jobs:
     - name: install poppunk & dependencies
       working-directory: ./poppunk
       run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
         conda install graph-tool
         conda install mandrake
         conda install rapidnj
