@@ -124,7 +124,7 @@ jobs:
           conda-${{ runner.os }}--${{ runner.arch }}--${{
           steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER}}
       env:
-        # Increase this value to reset cache
+        # Increase this value to reset cache.
         CACHE_NUMBER: 2
       id: cache
 
