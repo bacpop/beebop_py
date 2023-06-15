@@ -283,10 +283,9 @@ def test_get_project(client):
 
 
 def test_get_project_status_error(client):
-    hash = "unit_test_get_clusters_internal"
+    hash = "non_existent"
     result = app.get_project("unit_test_get_clusters_internal")
-    data = read_data(result)["data"]
-    errors = read_data(result)["data"]
+    errors = read_data(result)["errors"]
     assert len(errors) == 1
     assert errors[1]["error"] == "Unknown project hash"
 

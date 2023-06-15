@@ -498,22 +498,21 @@ def get_project(p_hash) -> json:
     """
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
-    # TODO: error handling
-
-    fs = PoppunkFileStore(storage_location)
-    samples = []
-    for value in sketch_clusters.values():
-        sketch_hash = value["hash"]
-        sketch = fs.input.get(sketch_hash)
-        samples.append({
-          "hash": sketch_hash,
-          "cluster": value["cluster"],
-          "sketch": sketch})
-
     status = get_status_internal(p_hash, redis)
+
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
+        fs = PoppunkFileStore(storage_location)
+        samples = []
+        for value in sketch_clusters.values():
+            sketch_hash = value["hash"]
+            sketch = fs.input.get(sketch_hash)
+            samples.append({
+              "hash": sketch_hash,
+              "cluster": value["cluster"],
+              "sketch": sketch})
+
         return jsonify(response_success({
             "hash": p_hash,
             "samples": samples,
