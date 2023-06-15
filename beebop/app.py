@@ -485,18 +485,6 @@ def get_project(p_hash) -> json:
     sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
     # TODO: error handling
-    # TODO: AMR and filenames will be persisted and returned in future tickets
-    placeholder_filename = "unknown.fa"
-    placeholder_amr = {
-      "filename": placeholder_filename,
-      "Penicillin": 0.1,
-      "Chloramphenicol": 0.2,
-      "Erythromycin": 0.3,
-      "Tetracycline": 0.4,
-      "Trim_sulfa": 0.5,
-      "length": True,
-      "species": True
-    }
 
     fs = PoppunkFileStore(storage_location)
     samples = []
@@ -506,8 +494,6 @@ def get_project(p_hash) -> json:
         samples.append({
           "hash": sketch_hash,
           "cluster": value["cluster"],
-          "filename": placeholder_filename,
-          "amr": placeholder_amr,
           "sketch": sketch})
 
     return jsonify(response_success({"hash": p_hash, "samples": samples}))

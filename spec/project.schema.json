@@ -16,13 +16,9 @@
           "cluster": {
             "type": "integer"
           },
-          "filename": {
-            "type": "string"
-          },
-          "amr": { "$ref": "amr.schema.json" },
           "sketch": { "$ref": "sketch.schema.json" }
         },
-        "required": ["hash", "filename", "amr", "sketch", "cluster"],
+        "required": ["hash", "sketch", "cluster"],
         "additionalProperties": false
       }
     }

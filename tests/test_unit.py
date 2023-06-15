@@ -239,17 +239,6 @@ def test_get_clusters_json(client):
 def test_get_project(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_project("unit_test_get_clusters_internal")
-    expected_filename = "unknown.fa"
-    expected_amr = {
-      "filename": expected_filename,
-      "Penicillin": 0.1,
-      "Chloramphenicol": 0.2,
-      "Erythromycin": 0.3,
-      "Tetracycline": 0.4,
-      "Trim_sulfa": 0.5,
-      "length": True,
-      "species": True
-    }
     assert result.status == "200 OK"
     data = read_data(result)["data"]
     assert data["hash"] == "unit_test_get_clusters_internal"
@@ -257,18 +246,12 @@ def test_get_project(client):
     assert len(samples) == 3
     assert samples[0]["hash"] == "24280624a730ada7b5bccea16306765c"
     assert samples[0]["cluster"] == 3
-    assert samples[0]["filename"] == expected_filename
-    assert samples[0]["amr"] == expected_amr
     assert samples[0]["sketch"]["bbits"] == 3
     assert samples[1]["hash"] == "7e5ddeb048075ac23ab3672769bda17d"
     assert samples[1]["cluster"] == 53
-    assert samples[1]["filename"] == expected_filename
-    assert samples[1]["amr"] == expected_amr
     assert samples[1]["sketch"]["bbits"] == 53
     assert samples[2]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
     assert samples[2]["cluster"] == 24
-    assert samples[2]["filename"] == expected_filename
-    assert samples[2]["amr"] == expected_amr
     assert samples[2]["sketch"]["bbits"] == 14
     schema = schemas.project
     assert jsonschema.validate(data, schema, resolver=resolver) is None
