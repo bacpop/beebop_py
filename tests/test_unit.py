@@ -283,8 +283,7 @@ def test_get_project(client):
 
 
 def test_get_project_status_error(client):
-    hash = "non_existent"
-    result = app.get_project("unit_test_get_clusters_internal")
+    result = app.get_project("non_existent")
     response = read_data(result)
     data = response["data"]
     assert data is None
