@@ -287,7 +287,7 @@ def test_get_project_status_error(client):
     result = app.get_project("unit_test_get_clusters_internal")
     response = read_data(result)
     data = response["data"]
-    assert data == None
+    assert data is None
     errors = response["errors"]
     assert len(errors) == 1
     assert errors[1]["error"] == "Unknown project hash"
