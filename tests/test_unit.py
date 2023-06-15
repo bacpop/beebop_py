@@ -53,6 +53,20 @@ def read_redis(name, key, redis):
     return redis.hget(name, key).decode("utf-8")
 
 
+def run_test_job(p_hash):
+    # queue example job
+    redis = Redis()
+    q = Queue(connection=Redis())
+    job_assign = q.enqueue(dummy_fct, 1)
+    job_microreact = q.enqueue(dummy_fct, 1)
+    job_network = q.enqueue(dummy_fct, 1)
+    worker = SimpleWorker([q], connection=q.connection)
+    worker.work(burst=True)
+    redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
+    redis.hset("beebop:hash:job:network", p_hash, job_network.id)
+
+
 def test_get_version():
     assert versions.get_version() == [
         {"name": "beebop", "version": beebop_version},
@@ -238,8 +252,7 @@ def test_get_clusters_json(client):
 
 def test_get_project(client):
     hash = "unit_test_get_clusters_internal"
-    redis = Redis()
-    redis.hset("beebop:hash:job:assign", hash, "running")
+    run_test_job(hash)
     result = app.get_project("unit_test_get_clusters_internal")
     assert result.status == "200 OK"
     data = read_data(result)["data"]
@@ -263,18 +276,8 @@ def test_get_project(client):
 
 
 def test_get_status_response(client):
-    # queue example job
-    redis = Redis()
-    q = Queue(connection=Redis())
-    job_assign = q.enqueue(dummy_fct, 1)
-    job_microreact = q.enqueue(dummy_fct, 1)
-    job_network = q.enqueue(dummy_fct, 1)
-    worker = SimpleWorker([q], connection=q.connection)
-    worker.work(burst=True)
     hash = "unit_test_get_status_internal"
-    redis.hset("beebop:hash:job:assign", hash, job_assign.id)
-    redis.hset("beebop:hash:job:microreact", hash, job_microreact.id)
-    redis.hset("beebop:hash:job:network", hash, job_network.id)
+    run_test_job(hash)
     result = app.get_status_response(hash, redis)
     assert read_data(result)['status'] == 'success'
     status_options = ['queued',
