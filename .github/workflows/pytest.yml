@@ -66,7 +66,7 @@ jobs:
 
 #    - name: Install poppunk
 #      run: conda install poppunk
-# currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
+#  currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
 
     - name: Get poppunk source code
       uses: actions/checkout@v3
