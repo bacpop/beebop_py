@@ -496,13 +496,12 @@ def get_project(p_hash) -> json:
     :param p_hash: [identifying hash for the project]
     :return: [project data]
     """
-    sketch_clusters = get_clusters_internal(p_hash, storage_location)
-
     status = get_status_internal(p_hash, redis)
 
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
+        sketch_clusters = get_clusters_internal(p_hash, storage_location)
         fs = PoppunkFileStore(storage_location)
         samples = []
         for value in sketch_clusters.values():
