@@ -238,6 +238,7 @@ def test_get_clusters_json(client):
 
 def test_get_project(client):
     hash = "unit_test_get_clusters_internal"
+    redis.hset("beebop:hash:job:assign", hash, "running")
     result = app.get_project("unit_test_get_clusters_internal")
     assert result.status == "200 OK"
     data = read_data(result)["data"]
