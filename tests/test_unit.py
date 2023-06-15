@@ -282,6 +282,15 @@ def test_get_project(client):
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
+def test_get_project_status_error(client):
+    hash = "unit_test_get_clusters_internal"
+    result = app.get_project("unit_test_get_clusters_internal")
+    data = read_data(result)["data"]
+    errors = read_data(result)["data"]
+    assert len(errors) == 1
+    assert errors[1]["error"] == "Unknown project hash"
+
+
 def test_get_status_response(client):
     hash = "unit_test_get_status_internal"
     run_test_job(hash)
