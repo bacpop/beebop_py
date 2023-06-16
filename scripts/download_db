@@ -41,6 +41,8 @@ else
     DEST_DIR=$DEST/GPS_v4_references
 fi
 
+echo "DEST_DIR is $DEST_DIR"
+
 if [ -d "$DEST_DIR" ]; then
     echo "Database already exists at $DEST"
     echo "To redownload, please remove $DEST_DIR and run $0 again"
