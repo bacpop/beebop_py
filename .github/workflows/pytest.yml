@@ -22,6 +22,11 @@ jobs:
       with: 
         path: main
 
+    - name: Restore GPS database from cache
+      uses: actions/cache@v2
+      with:
+        path: storage/GPS_v4
+
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
@@ -55,7 +60,7 @@ jobs:
       env:
         # Increment this value to manually reset cache.
         CACHE_NUMBER: 2
-      id: cache
+      id: cache-conda
 
 #    - name: Install poppunk
 #      run: conda install poppunk
