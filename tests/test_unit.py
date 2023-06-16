@@ -284,7 +284,7 @@ def test_get_project(client):
 
 def test_get_project_status_error(client):
     result = app.get_project("non_existent")
-    response = read_data(result)
+    response = read_data(result)[0]
     data = response["data"]
     assert data is None
     errors = response["errors"]
