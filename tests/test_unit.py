@@ -283,13 +283,11 @@ def test_get_project(client):
 
 
 def test_get_project_status_error(client):
-    result = app.get_project("non_existent")[0]
-    response = read_data(result)
-    data = response["data"]
-    assert data is None
+    result = app.get_project("non_existent")
+    response = read_data(result[0])["error"]
     errors = response["errors"]
     assert len(errors) == 1
-    assert errors[1]["error"] == "Unknown project hash"
+    assert errors[0]["error"] == "Unknown project hash"
 
 
 def test_get_status_response(client):
