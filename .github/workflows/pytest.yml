@@ -33,7 +33,6 @@ jobs:
       working-directory: ./main
       run: |
         ./scripts/download_db --small storage
-      if: steps.cache-db.outputs-cache-hit != 'true'
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
