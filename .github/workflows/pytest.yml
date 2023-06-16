@@ -25,7 +25,7 @@ jobs:
     - name: Restore GPS database from cache
       uses: actions/cache@v2
       with:
-        path: ./main/storage/GPS_v4
+        path: storage/GPS_v4_references
         key: gps-db
       id: cache-db
 
