@@ -25,8 +25,8 @@ jobs:
     - name: Restore GPS database from cache
       uses: actions/cache@v2
       with:
-        path: storage/GPS_v4_references
-        key: gps-v4-db
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v4_references
+        key: cache-gps-v4-db
       id: cache-db
 
     - name: Download and extract GPS database
