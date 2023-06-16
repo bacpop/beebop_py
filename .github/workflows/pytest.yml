@@ -26,11 +26,14 @@ jobs:
       uses: actions/cache@v2
       with:
         path: storage/GPS_v4
+        key: gps-db
+      id: cache-db
 
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
         ./scripts/download_db --small storage
+      if: steps.cache-db.outputs-cache-hit != 'true'
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -59,7 +62,7 @@ jobs:
           steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER}}
       env:
         # Increment this value to manually reset cache.
-        CACHE_NUMBER: 2
+        CACHE_NUMBER: 0
       id: cache-conda
 
 #    - name: Install poppunk
