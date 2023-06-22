@@ -257,6 +257,17 @@ def test_get_project(client):
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
+def test_get_project_returns_empty_samples_if_no_clusters_file(client):
+    hash = "no_clusters"
+    result = app.get_project(hash)
+    assert result.status == "200 OK"
+    data = read_data(result)["data"]
+    assert data["hash"] == hash
+    samples = data["samples"]
+    assert len(samples) == 0
+
+
+
 def test_get_status_internal(client):
     # queue example job
     redis = Redis()

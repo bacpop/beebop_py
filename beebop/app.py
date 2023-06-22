@@ -482,9 +482,11 @@ def get_project(p_hash) -> json:
     :param p_hash: [identifying hash for the project]
     :return: [project data]
     """
-    sketch_clusters = get_clusters_internal(p_hash, storage_location)
-
-    # TODO: error handling
+    # TODO: confirm project exists and return a 404 if it does not
+    try:
+        sketch_clusters = get_clusters_internal(p_hash, storage_location)
+    except (FileNotFoundError):
+        sketch_clusters = []
 
     fs = PoppunkFileStore(storage_location)
     samples = []
