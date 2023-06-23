@@ -511,17 +511,18 @@ def get_project(p_hash) -> json:
             sketch_clusters = get_clusters_internal(p_hash, storage_location)
         except (FileNotFoundError):
             # clusters are still being calculated - return empty samples array
-            sketch_clusters = {"values": []}
+            sketch_clusters = None
 
         fs = PoppunkFileStore(storage_location)
         samples = []
-        for value in sketch_clusters.values():
-            sketch_hash = value["hash"]
-            sketch = fs.input.get(sketch_hash)
-            samples.append({
-              "hash": sketch_hash,
-              "cluster": value["cluster"],
-              "sketch": sketch})
+        if sketch_clusters is not None:
+            for value in sketch_clusters.values():
+                sketch_hash = value["hash"]
+                sketch = fs.input.get(sketch_hash)
+                samples.append({
+                  "hash": sketch_hash,
+                  "cluster": value["cluster"],
+                  "sketch": sketch})
 
         return jsonify(response_success({
             "hash": p_hash,
