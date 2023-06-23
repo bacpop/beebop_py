@@ -22,6 +22,13 @@ jobs:
       with: 
         path: main
 
+    - name: Restore GPS database from cache
+      uses: actions/cache@v2
+      with:
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v4_references
+        key: cache-gps-v4-db
+      id: cache-db
+
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
@@ -39,14 +46,27 @@ jobs:
         activate-environment: beebop_py
         channels: bioconda, conda-forge
 
-    - name: activate environment
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
+    - name: Get Date
+      id: get-date
+      run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Restore Conda env from cache
+      uses: actions/cache@v2
+      with:
+        path: /usr/share/miniconda/envs/beebop_py
+        key:
+          # Refresh cache each day
+          conda-${{ runner.os }}--${{ runner.arch }}--${{
+          steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER}}
+      env:
+        # Increment this value to manually reset cache.
+        CACHE_NUMBER: 0
+      id: cache-conda
 
 #    - name: Install poppunk
 #      run: conda install poppunk
-# currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
+#  currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
 
     - name: Get poppunk source code
       uses: actions/checkout@v3
