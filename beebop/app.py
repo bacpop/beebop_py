@@ -482,10 +482,17 @@ def get_project(p_hash) -> json:
     :param p_hash: [identifying hash for the project]
     :return: [project data]
     """
-    # TODO: confirm project exists and return a 404 if it does not
+    job_id = redis.hget("beebop:hash:job:assign", p_hash)
+    if job_id is None:
+        return jsonify(error=response_failure({
+            "error": "Project hash not found",
+            "detail": "Project hash does not have an associate job"
+        }), 404
+
     try:
         sketch_clusters = get_clusters_internal(p_hash, storage_location)
     except (FileNotFoundError):
+        # clusters are still being calculated - return empty samples array
         sketch_clusters = []
 
     fs = PoppunkFileStore(storage_location)
