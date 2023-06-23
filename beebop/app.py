@@ -500,7 +500,7 @@ def get_project(p_hash) -> json:
         return jsonify(error=response_failure({
             "error": "Project hash not found",
             "detail": "Project hash does not have an associated job"
-        }), 404
+        })), 404
 
     status = get_status_internal(p_hash, redis)
 

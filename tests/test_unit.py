@@ -289,7 +289,10 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
     data = read_data(result)["data"]
     assert data is None
     errors = read_data(result)["errors"]
-    assert errors[0] = {"error": "Project hash not found", "detail": "Project has does not have an associated job"}
+    assert errors[0] = {
+        "error": "Project hash not found",
+        "detail": "Project has does not have an associated job"
+    }
 
 
 def test_get_project_returns_empty_samples_if_no_cluster_file_yet(client):
