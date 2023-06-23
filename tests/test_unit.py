@@ -257,16 +257,27 @@ def test_get_project(client):
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
-def test_get_project_returns_empty_samples_if_no_clusters_file(client):
-    hash = "no_clusters"
+def test_get_project_returns_404_if_unknown_project_hash(client):
+    hash = "unit_test_not_known"
+    result = app.get_project(hash)
+    assert result.status == "404 Not Found"
+    data = read_data(result)["data"]
+    assert data is None
+    errors = read_data(result)["errors"]
+    assert errors[0] = {"error": "Project hash not found", "detail": "Project has does not have an associated job"}
+
+
+def test_get_project_returns_empty_samples_if_no_cluster_file_yet(client):
+    # Fake a project hash that doesn't have clusters yet by adding it to redis
+    hash = "unit_test_no_clusters_yet"
+    redis = Redis()
+    redis.hset("beebop:hash:job:assign", hash, "9999")
     result = app.get_project(hash)
     assert result.status == "200 OK"
     data = read_data(result)["data"]
     assert data["hash"] == hash
     samples = data["samples"]
     assert len(samples) == 0
-
-
 
 def test_get_status_internal(client):
     # queue example job

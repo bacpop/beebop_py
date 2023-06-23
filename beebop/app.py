@@ -476,8 +476,7 @@ def download_graphml_internal(p_hash: str,
 def get_project(p_hash) -> json:
     """
     [Loads all project data for a given project hash so the project can be
-    re-opened in beebop. This is in a work in progress, and only loading
-    sketch data has been implemented so far.]
+    re-opened in beebop.]
 
     :param p_hash: [identifying hash for the project]
     :return: [project data]
@@ -486,14 +485,14 @@ def get_project(p_hash) -> json:
     if job_id is None:
         return jsonify(error=response_failure({
             "error": "Project hash not found",
-            "detail": "Project hash does not have an associate job"
+            "detail": "Project hash does not have an associated job"
         }), 404
 
     try:
         sketch_clusters = get_clusters_internal(p_hash, storage_location)
     except (FileNotFoundError):
         # clusters are still being calculated - return empty samples array
-        sketch_clusters = []
+        sketch_clusters = {"values": []}
 
     fs = PoppunkFileStore(storage_location)
     samples = []
