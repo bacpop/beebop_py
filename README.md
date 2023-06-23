@@ -73,9 +73,7 @@ In a second terminal, you can now query the flask endpoints, e.g.:
 ### Testing
 Before testing, Redis and rqworker must be running. From the root of beebop_py, run (with 'beebop_py' env activated)
 ```
-docker pull redis
-docker run --rm -d --name=redis -p 6379:6379 redis
-rq worker
+./scripts/run_test_dependencies
 ```
 Testing can be done in a second terminal (make sure to activate 'beebop_py') by running 
 ```
