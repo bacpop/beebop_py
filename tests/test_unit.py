@@ -285,10 +285,11 @@ def test_get_project(client):
 def test_get_project_returns_404_if_unknown_project_hash(client):
     hash = "unit_test_not_known"
     result = app.get_project(hash)
-    assert result.status == "404 Not Found"
-    data = read_data(result)["data"]
+    assert result[0].status == "404 Not Found"
+    response = read_data(result[0])
+    data = response["data"]
     assert data is None
-    errors = read_data(result)["errors"]
+    errors = response["errors"]
     assert errors[0] == {
         "error": "Project hash not found",
         "detail": "Project has does not have an associated job"
@@ -299,7 +300,9 @@ def test_get_project_returns_empty_samples_if_no_cluster_file_yet(client):
     # Fake a project hash that doesn't have clusters yet by adding it to redis
     hash = "unit_test_no_clusters_yet"
     redis = Redis()
-    redis.hset("beebop:hash:job:assign", hash, "9999")
+    redis.hset("beebop:hash:job:assign", hash, "9991")
+    redis.hset("beebop:hash:job:microreact", hash, "9992")
+    redis.hset("beebop:hash:job:network", hash, "9993")
     result = app.get_project(hash)
     assert result.status == "200 OK"
     data = read_data(result)["data"]
