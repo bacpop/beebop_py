@@ -294,14 +294,19 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
         "detail": "Project hash does not have an associated job"
     }
 
-
-def test_get_project_returns_empty_samples_if_no_cluster_file_yet(client):
+@patch('rq.job.Job.fetch')
+def test_get_project_returns_empty_samples_if_no_cluster_file_yet(mock_fetch):
     # Fake a project hash that doesn't have clusters yet by adding it to redis
+    # and mocking the rq job
     hash = "unit_test_no_clusters_yet"
     redis = Redis()
     redis.hset("beebop:hash:job:assign", hash, "9991")
     redis.hset("beebop:hash:job:microreact", hash, "9992")
     redis.hset("beebop:hash:job:network", hash, "9993")
+    mock_fetch.return_value = Mock(ok=True)
+    mock_get_status = Mock()
+    mock_get_status.return_value = "waiting"
+    mock_fetch.return_value.get_status = mock_get_status
     result = app.get_project(hash)
     assert result.status == "200 OK"
     data = read_data(result)["data"]
