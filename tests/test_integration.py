@@ -91,6 +91,15 @@ def test_run_poppunk(client, qtbot):
     assert project_data["status"]["network"] == "finished"
 
 
+def test_project_not_found(client):
+    response = client.get("/project/not_a_hash")
+    assert response.status_code == 404
+    error = json.loads(response.data)["error"]
+    assert error["status"] == "failure"
+    assert error["errors"][0]["error"] == "Project hash not found"
+    assert error["errors"][0]["detail"] == "Project hash does not have an associated job"
+
+
 def test_results_microreact(client):
     p_hash = 'test_microreact_api'
     cluster = 7

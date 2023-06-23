@@ -285,14 +285,13 @@ def test_get_project(client):
 def test_get_project_returns_404_if_unknown_project_hash(client):
     hash = "unit_test_not_known"
     result = app.get_project(hash)
-    assert result[0].status == "404 Not Found"
-    response = read_data(result[0])
+    assert result[1] == 404
+    response = read_data(result[0])["error"]
     data = response["data"]
-    assert data is None
     errors = response["errors"]
     assert errors[0] == {
         "error": "Project hash not found",
-        "detail": "Project has does not have an associated job"
+        "detail": "Project hash does not have an associated job"
     }
 
 
