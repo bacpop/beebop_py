@@ -294,6 +294,7 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
         "detail": "Project hash does not have an associated job"
     }
 
+
 @patch('rq.job.Job.fetch')
 def test_get_project_returns_empty_samples_if_no_cluster_file_yet(mock_fetch):
     # Fake a project hash that doesn't have clusters yet by adding it to redis

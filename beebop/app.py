@@ -511,6 +511,9 @@ def get_project(p_hash) -> json:
             sketch_clusters = get_clusters_internal(p_hash, storage_location)
         except (FileNotFoundError):
             # clusters are still being calculated - return empty samples array
+            # TODO: it would be good to also return the sketches for samples
+            # for incomplete projects, but these are not currently saved until
+            # the job completes.
             sketch_clusters = None
 
         fs = PoppunkFileStore(storage_location)
