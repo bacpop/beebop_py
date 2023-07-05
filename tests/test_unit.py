@@ -230,6 +230,7 @@ def test_run_poppunk_internal(qtbot):
         initial_output = pickle.load(f)
         assert initial_output[0]["hash"] == 'e868c76fec83ee1f69a95bd27b8d5e76'
         assert initial_output[1]["hash"] == 'f3d9b387e311d5ab59a8c08eb3545dbb'
+
     # wait for assign job to be finished
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
