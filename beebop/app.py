@@ -200,11 +200,17 @@ def run_poppunk_internal(sketches: dict,
     args = get_args()
     # set database paths
     db_paths = DatabaseFileStore(database_location)
-    # store json sketches in storage
+    # store json sketches in storage, and store an initial output_cluster file to record sample hashes for the project
     hashes_list = []
-    for key, value in sketches:
+    initial_output = {}
+    for i, (key, value) in sketches:
         hashes_list.append(key)
         fs.input.put(key, value)
+        initial_output[i] = {
+            "hash": key
+        }
+    with open(fs.output_cluster(p_hash), 'wb') as f:
+            pickle.dump(initial_output, f)
     # check connection to redis
     check_connection(redis)
     # submit list of hashes to redis worker
@@ -507,25 +513,21 @@ def get_project(p_hash) -> json:
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
-        try:
-            sketch_clusters = get_clusters_internal(p_hash, storage_location)
-        except (FileNotFoundError):
-            # clusters are still being calculated - return empty samples array
-            # TODO: it would be good to also return the sketches for samples
-            # for incomplete projects, but these are not currently saved until
-            # the job completes.
-            sketch_clusters = None
+        sketch_clusters = get_clusters_internal(p_hash, storage_location)
 
         fs = PoppunkFileStore(storage_location)
         samples = []
-        if sketch_clusters is not None:
-            for value in sketch_clusters.values():
-                sketch_hash = value["hash"]
-                sketch = fs.input.get(sketch_hash)
-                samples.append({
-                  "hash": sketch_hash,
-                  "cluster": value["cluster"],
-                  "sketch": sketch})
+        for value in sketch_clusters.values():
+            sketch_hash = value["hash"]
+            sketch = fs.input.get(sketch_hash)
+            sample = {
+                       "hash": sketch_hash,
+                       "sketch": sketch
+                     }
+            # Cluster may not have been assigned yet
+            if "cluster" in value:
+              sample["cluster"] = value["cluster"]
+            samples.append(sample)
 
         return jsonify(response_success({
             "hash": p_hash,
