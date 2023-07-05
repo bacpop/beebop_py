@@ -224,7 +224,11 @@ def test_run_poppunk_internal(qtbot):
     # saves p-hash with job id in redis
     assert read_redis("beebop:hash:job:assign",
                       project_hash, redis) == job_ids["assign"]
-
+    # writes initial output file linking project hash with sample hashes
+    with open(fs.output_cluster(project_hash), 'rb') as f:
+        initial_output = pickle.load(f)
+        assert initial_output[0]["hash"] == 'e868c76fec83ee1f69a95bd27b8d5e76'
+        assert initial_output[1]["hash"] == 'f3d9b387e311d5ab59a8c08eb3545dbb'
     # wait for assign job to be finished
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
@@ -298,9 +302,9 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
 
 @patch('rq.job.Job.fetch')
 def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
-    # Fake a project hash that doesn't have clusters yet by adding it to redis
-    # and mocking the rq job, and writing out initial output file without
-    # cluster assignments.
+    # Fake a project hash that doesn't have clusters yet by adding it to redis,
+    # mocking the rq job, and writing out initial output file without cluster
+    # assignments.
     hash = "unit_test_no_clusters_yet"
     redis = Redis()
     redis.hset("beebop:hash:job:assign", hash, "9991")
