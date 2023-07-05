@@ -203,7 +203,7 @@ def run_poppunk_internal(sketches: dict,
     # store json sketches in storage, and store an initial output_cluster file to record sample hashes for the project
     hashes_list = []
     initial_output = {}
-    for i, (key, value) in sketches:
+    for i, (key, value) in enumerate(sketches):
         hashes_list.append(key)
         fs.input.put(key, value)
         initial_output[i] = {
