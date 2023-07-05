@@ -20,9 +20,8 @@ def hex_to_decimal(sketches_dict):
 storageLocation = './tests/files'
 p_hash = 'unit_test_visualisations'
 fs = PoppunkFileStore(storageLocation)
+fs.ensure_output_dir_exists(p_hash)
 outdir = fs.output(p_hash)
-if not os.path.exists(outdir):
-    os.mkdir(outdir)
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 args = get_args()
 qc_dict = {'run_qc': False}
