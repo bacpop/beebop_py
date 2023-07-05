@@ -200,7 +200,8 @@ def run_poppunk_internal(sketches: dict,
     args = get_args()
     # set database paths
     db_paths = DatabaseFileStore(database_location)
-    # store json sketches in storage, and store an initial output_cluster file to record sample hashes for the project
+    # store json sketches in storage, and store an initial output_cluster file
+    # to record sample hashes for the project
     hashes_list = []
     initial_output = {}
     for i, (key, value) in enumerate(sketches):
@@ -211,7 +212,7 @@ def run_poppunk_internal(sketches: dict,
         }
     fs.ensure_output_dir_exists(p_hash)
     with open(fs.output_cluster(p_hash), 'wb') as f:
-            pickle.dump(initial_output, f)
+        pickle.dump(initial_output, f)
     # check connection to redis
     check_connection(redis)
     # submit list of hashes to redis worker
@@ -527,7 +528,7 @@ def get_project(p_hash) -> json:
                      }
             # Cluster may not have been assigned yet
             if "cluster" in value:
-              sample["cluster"] = value["cluster"]
+                sample["cluster"] = value["cluster"]
             samples.append(sample)
 
         return jsonify(response_success({
