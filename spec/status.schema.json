@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "assign": {
+      "type": "string"
+    },
+    "microreact": {
+      "type": "string"
+    },
+    "network": {
+      "type": "string"
+    }
+  },
+  "required": ["assign", "microreact", "network"]
+}

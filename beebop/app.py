@@ -253,17 +253,32 @@ def get_status(p_hash) -> json:
     :param p_hash: [project hash]
     :return json: [response object with job statuses]
     """
-    return get_status_internal(p_hash, redis)
+    return get_status_response(p_hash, redis)
 
 
-def get_status_internal(p_hash: str, redis: Redis) -> json:
+def get_status_response(p_hash: str, redis: Redis) -> json:
+    """
+    [returns jsonified response of all job statuses for a project]
+
+    :param p_hash: [project hash]
+    :param redis: [Redis instance]
+    :return json: [response object with job statuses]
+    """
+    response = get_status_internal(p_hash, redis)
+    if "error" in response:
+        return jsonify(error=response_failure(response)), 500
+    else:
+        return jsonify(response_success(response))
+
+
+def get_status_internal(p_hash: str, redis: Redis) -> dict:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
     microreact and network visualisations)]
 
     :param p_hash: [project hash]
     :param redis: [Redis instance]
-    :return json: [response object with job statuses]
+    :return: [dict with job statuses]
     """
     check_connection(redis)
 
@@ -278,12 +293,11 @@ def get_status_internal(p_hash: str, redis: Redis) -> json:
         else:
             status_microreact = "waiting"
             status_network = "waiting"
-        return jsonify(response_success({"assign": status_assign,
-                                         "microreact": status_microreact,
-                                         "network": status_network}))
+        return {"assign": status_assign,
+                "microreact": status_microreact,
+                "network": status_network}
     except AttributeError:
-        return jsonify(error=response_failure({
-            "error": "Unknown project hash"})), 500
+        return {"error": "Unknown project hash"}
 
 
 # get job result
@@ -482,21 +496,27 @@ def get_project(p_hash) -> json:
     :param p_hash: [identifying hash for the project]
     :return: [project data]
     """
-    sketch_clusters = get_clusters_internal(p_hash, storage_location)
+    status = get_status_internal(p_hash, redis)
 
-    # TODO: error handling
+    if "error" in status:
+        return jsonify(error=response_failure(status)), 500
+    else:
+        sketch_clusters = get_clusters_internal(p_hash, storage_location)
+        fs = PoppunkFileStore(storage_location)
+        samples = []
+        for value in sketch_clusters.values():
+            sketch_hash = value["hash"]
+            sketch = fs.input.get(sketch_hash)
+            samples.append({
+              "hash": sketch_hash,
+              "cluster": value["cluster"],
+              "sketch": sketch})
 
-    fs = PoppunkFileStore(storage_location)
-    samples = []
-    for value in sketch_clusters.values():
-        sketch_hash = value["hash"]
-        sketch = fs.input.get(sketch_hash)
-        samples.append({
-          "hash": sketch_hash,
-          "cluster": value["cluster"],
-          "sketch": sketch})
-
-    return jsonify(response_success({"hash": p_hash, "samples": samples}))
+        return jsonify(response_success({
+            "hash": p_hash,
+            "samples": samples,
+            "status": status
+        }))
 
 
 if __name__ == "__main__":

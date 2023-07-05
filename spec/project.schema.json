@@ -21,8 +21,9 @@
         "required": ["hash", "sketch", "cluster"],
         "additionalProperties": false
       }
-    }
+    },
+    "status": { "$ref": "status.schema.json" }
   },
-  "required": ["hash", "samples"],
+  "required": ["hash", "samples", "status"],
   "additionalProperties": false
 }

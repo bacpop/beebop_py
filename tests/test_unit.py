@@ -39,6 +39,13 @@ fs = PoppunkFileStore(storage_location)
 db_paths = DatabaseFileStore('./storage/GPS_v4_references')
 args = get_args()
 
+status_options = ['queued',
+                  'started',
+                  'finished',
+                  'scheduled',
+                  'waiting',
+                  'deferred']
+
 
 def dummy_fct(duration):
     time.sleep(duration)
@@ -51,6 +58,20 @@ def read_data(response):
 
 def read_redis(name, key, redis):
     return redis.hget(name, key).decode("utf-8")
+
+
+def run_test_job(p_hash):
+    # queue example job
+    redis = Redis()
+    q = Queue(connection=Redis())
+    job_assign = q.enqueue(dummy_fct, 1)
+    job_microreact = q.enqueue(dummy_fct, 1)
+    job_network = q.enqueue(dummy_fct, 1)
+    worker = SimpleWorker([q], connection=q.connection)
+    worker.work(burst=True)
+    redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
+    redis.hset("beebop:hash:job:network", p_hash, job_network.id)
 
 
 def test_get_version():
@@ -238,6 +259,7 @@ def test_get_clusters_json(client):
 
 def test_get_project(client):
     hash = "unit_test_get_clusters_internal"
+    run_test_job(hash)
     result = app.get_project("unit_test_get_clusters_internal")
     assert result.status == "200 OK"
     data = read_data(result)["data"]
@@ -253,35 +275,31 @@ def test_get_project(client):
     assert samples[2]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
     assert samples[2]["cluster"] == 24
     assert samples[2]["sketch"]["bbits"] == 14
+    assert data["status"]["assign"] in status_options
+    assert data["status"]["microreact"] in status_options
+    assert data["status"]["network"] in status_options
     schema = schemas.project
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
-def test_get_status_internal(client):
-    # queue example job
-    redis = Redis()
-    q = Queue(connection=Redis())
-    job_assign = q.enqueue(dummy_fct, 1)
-    job_microreact = q.enqueue(dummy_fct, 1)
-    job_network = q.enqueue(dummy_fct, 1)
-    worker = SimpleWorker([q], connection=q.connection)
-    worker.work(burst=True)
+def test_get_project_status_error(client):
+    result = app.get_project("non_existent")
+    response = read_data(result[0])["error"]
+    errors = response["errors"]
+    assert len(errors) == 1
+    assert errors[0]["error"] == "Unknown project hash"
+
+
+def test_get_status_response(client):
     hash = "unit_test_get_status_internal"
-    redis.hset("beebop:hash:job:assign", hash, job_assign.id)
-    redis.hset("beebop:hash:job:microreact", hash, job_microreact.id)
-    redis.hset("beebop:hash:job:network", hash, job_network.id)
-    result = app.get_status_internal(hash, redis)
+    run_test_job(hash)
+    redis = Redis()
+    result = app.get_status_response(hash, redis)
     assert read_data(result)['status'] == 'success'
-    status_options = ['queued',
-                      'started',
-                      'finished',
-                      'scheduled',
-                      'waiting',
-                      'deferred']
     assert read_data(result)['data']['assign'] in status_options
     assert read_data(result)['data']['microreact'] in status_options
     assert read_data(result)['data']['network'] in status_options
-    assert read_data(app.get_status_internal("wrong-hash",
+    assert read_data(app.get_status_response("wrong-hash",
                                              redis)[0])['error'] == {
         "status": "failure",
         "errors": [{"error": "Unknown project hash"}],

@@ -86,6 +86,9 @@ def test_run_poppunk(client, qtbot):
     assert project_data["samples"][0]["cluster"] == 5
     assert project_data["samples"][1]["sketch"] == sketches["6930_8_9"]
     assert project_data["samples"][1]["cluster"] == 59
+    assert project_data["status"]["assign"] == "finished"
+    assert project_data["status"]["microreact"] == "finished"
+    assert project_data["status"]["network"] == "finished"
 
 
 def test_results_microreact(client):
