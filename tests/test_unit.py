@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 from io import BytesIO
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import pickle
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -296,9 +297,10 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
 
 
 @patch('rq.job.Job.fetch')
-def test_get_project_returns_empty_samples_if_no_cluster_file_yet(mock_fetch):
+def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     # Fake a project hash that doesn't have clusters yet by adding it to redis
-    # and mocking the rq job
+    # and mocking the rq job, and writing out initial output file without
+    # cluster assignments.
     hash = "unit_test_no_clusters_yet"
     redis = Redis()
     redis.hset("beebop:hash:job:assign", hash, "9991")
@@ -308,12 +310,27 @@ def test_get_project_returns_empty_samples_if_no_cluster_file_yet(mock_fetch):
     mock_get_status = Mock()
     mock_get_status.return_value = "waiting"
     mock_fetch.return_value.get_status = mock_get_status
+    fs.ensure_output_dir_exists(hash)
+    sample_hash_1 = "24280624a730ada7b5bccea16306765c"
+    sample_hash_2 = "7e5ddeb048075ac23ab3672769bda17d"
+    initial_output = {
+        0: {"hash": sample_hash_1},
+        1: {"hash": sample_hash_2}
+    }
+    with open(fs.output_cluster(hash), 'wb') as f:
+        pickle.dump(initial_output, f)
     result = app.get_project(hash)
     assert result.status == "200 OK"
     data = read_data(result)["data"]
     assert data["hash"] == hash
     samples = data["samples"]
-    assert len(samples) == 0
+    assert len(samples) == 2
+    sample_1 = samples[0]
+    assert sample_1["hash"] == sample_hash_1
+    assert "cluster" not in sample_1
+    sample_2 = samples[1]
+    assert sample_2["hash"] == sample_hash_2
+    assert "cluster" not in sample_2
 
 
 def test_get_status_internal(client):
