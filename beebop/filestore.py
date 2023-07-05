@@ -73,7 +73,7 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
-    def ensure_output_dir_exists(self, p_hash) -> void:
+    def ensure_output_dir_exists(self, p_hash) -> None:
         """
         :param p_hash: [project hash]
         """
