@@ -76,7 +76,9 @@ def get_clusters(hashes_list: list,
             "cluster": cluster
         }
 
-    # save result to retrieve when reloading project results
+    # save result to retrieve when reloading project results - this
+    # overwrites the initial output file written before the assign
+    # job ran
     with open(fs.output_cluster(p_hash), 'wb') as f:
         pickle.dump(result, f)
 

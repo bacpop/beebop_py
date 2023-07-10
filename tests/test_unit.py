@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 from io import BytesIO
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import pickle
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -223,6 +224,12 @@ def test_run_poppunk_internal(qtbot):
     # saves p-hash with job id in redis
     assert read_redis("beebop:hash:job:assign",
                       project_hash, redis) == job_ids["assign"]
+    # writes initial output file linking project hash with sample hashes
+    results_fs = PoppunkFileStore(results_storage_location)
+    with open(results_fs.output_cluster(project_hash), 'rb') as f:
+        initial_output = pickle.load(f)
+        assert initial_output[0]["hash"] == 'e868c76fec83ee1f69a95bd27b8d5e76'
+        assert initial_output[1]["hash"] == 'f3d9b387e311d5ab59a8c08eb3545dbb'
 
     # wait for assign job to be finished
     def assign_status_finished():
@@ -282,12 +289,79 @@ def test_get_project(client):
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
 
-def test_get_project_status_error(client):
-    result = app.get_project("non_existent")
+def test_get_project_returns_404_if_unknown_project_hash(client):
+    hash = "unit_test_not_known"
+    result = app.get_project(hash)
+    assert result[1] == 404
     response = read_data(result[0])["error"]
+    data = response["data"]
     errors = response["errors"]
-    assert len(errors) == 1
-    assert errors[0]["error"] == "Unknown project hash"
+    assert errors[0] == {
+        "error": "Project hash not found",
+        "detail": "Project hash does not have an associated job"
+    }
+
+
+@patch('rq.job.Job.fetch')
+def test_get_project_returns_500_if_status_error(mock_fetch):
+    hash = "unit_test_get_clusters_internal"
+
+    def side_effect(id, connection):
+        raise AttributeError("test")
+    mock_fetch.side_effect = side_effect
+    result = app.get_project(hash)
+    assert result[1] == 500
+    response = read_data(result[0])["error"]
+    assert response["status"] == "failure"
+    assert response["errors"] == [{"error": "Unknown project hash"}]
+
+
+@patch('rq.job.Job.fetch')
+def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
+    # Fake a project hash that doesn't have clusters yet by adding it to redis,
+    # mocking the rq job, and writing out initial output file without cluster
+    # assignments.
+    hash = "unit_test_no_clusters_yet"
+    redis = Redis()
+    redis.hset("beebop:hash:job:assign", hash, "9991")
+    redis.hset("beebop:hash:job:microreact", hash, "9992")
+    redis.hset("beebop:hash:job:network", hash, "9993")
+    mock_fetch.return_value = Mock(ok=True)
+    mock_get_status = Mock()
+    mock_get_status.return_value = "waiting"
+    mock_fetch.return_value.get_status = mock_get_status
+    fs.ensure_output_dir_exists(hash)
+    sample_hash_1 = "24280624a730ada7b5bccea16306765c"
+    sample_hash_2 = "7e5ddeb048075ac23ab3672769bda17d"
+    initial_output = {
+        0: {"hash": sample_hash_1},
+        1: {"hash": sample_hash_2}
+    }
+    with open(fs.output_cluster(hash), 'wb') as f:
+        pickle.dump(initial_output, f)
+    result = app.get_project(hash)
+    assert result.status == "200 OK"
+    data = read_data(result)["data"]
+    assert data["hash"] == hash
+    samples = data["samples"]
+    assert len(samples) == 2
+    sample_1 = samples[0]
+    assert sample_1["hash"] == sample_hash_1
+    assert "cluster" not in sample_1
+    sample_2 = samples[1]
+    assert sample_2["hash"] == sample_hash_2
+    assert "cluster" not in sample_2
+
+
+def test_get_status_internal(client):
+    # queue example job
+    redis = Redis()
+    q = Queue(connection=Redis())
+    job_assign = q.enqueue(dummy_fct, 1)
+    job_microreact = q.enqueue(dummy_fct, 1)
+    job_network = q.enqueue(dummy_fct, 1)
+    worker = SimpleWorker([q], connection=q.connection)
+    worker.work(burst=True)
 
 
 def test_get_status_response(client):

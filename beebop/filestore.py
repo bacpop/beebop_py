@@ -73,6 +73,14 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
+    def ensure_output_dir_exists(self, p_hash) -> None:
+        """
+        :param p_hash: [project hash]
+        """
+        outdir = self.output(p_hash)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
     def output_cluster(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
