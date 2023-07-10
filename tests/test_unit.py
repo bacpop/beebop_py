@@ -303,6 +303,20 @@ def test_get_project_returns_404_if_unknown_project_hash(client):
 
 
 @patch('rq.job.Job.fetch')
+def test_get_project_returns_500_if_status_error(mock_fetch):
+    hash = "unit_test_get_clusters_internal"
+
+    def side_effect(id, connection):
+        raise AttributeError("test")
+    mock_fetch.side_effect = side_effect
+    result = app.get_project(hash)
+    assert result[1] == 500
+    response = read_data(result[0])["error"]
+    assert response["status"] == "failure"
+    assert response["errors"] == [{"error": "Unknown project hash"}]
+
+
+@patch('rq.job.Job.fetch')
 def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     # Fake a project hash that doesn't have clusters yet by adding it to redis,
     # mocking the rq job, and writing out initial output file without cluster
