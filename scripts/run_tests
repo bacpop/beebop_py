@@ -1,1 +1,1 @@
-STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v4_references poetry run coverage run -m pytest
+STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v6 poetry run coverage run -m pytest

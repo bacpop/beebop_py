@@ -37,7 +37,8 @@ resolver = jsonschema.validators.RefResolver(
 )
 storage_location = './tests/results'
 fs = PoppunkFileStore(storage_location)
-db_paths = DatabaseFileStore('./storage/GPS_v4_references')
+# db_paths = DatabaseFileStore('./storage/GPS_v6_references')
+db_paths = DatabaseFileStore('./storage/GPS_v6')
 args = get_args()
 
 status_options = ['queued',

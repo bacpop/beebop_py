@@ -11,7 +11,7 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
 
-You will need the GPS_v4 database, please download and extract it into `/storage`:
+You will need the GPS_v6 database, please download and extract it into `/storage`:
 
 ```
 ./scripts/download_db --small storage
