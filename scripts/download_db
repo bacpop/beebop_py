@@ -48,7 +48,7 @@ if [ -d "$DEST_DIR" ]; then
 fi
 
 echo "Downloading $FILENAME"
-URL=https://sketchdb.blob.core.windows.net/public-dbs/$FILENAME
+URL=https://mrcdata.dide.ic.ac.uk/beebop/$FILENAME
 DBBZ2=$(mktemp).tar.bz2
 wget  --progress=dot:giga $URL -O $DBBZ2
 echo "Unpacking to $DEST"
