@@ -26,7 +26,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v6_references
-        key: cache-gps-v4-db
+        key: cache-gps-v6-db
       id: cache-db
 
     - name: Download and extract GPS database
