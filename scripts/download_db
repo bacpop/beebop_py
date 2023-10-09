@@ -34,11 +34,11 @@ if [ -z $DEST ]; then
 fi
 
 if [ $SMALL == 0 ]; then
-    FILENAME=GPS_v4_full.tar.bz2
-    DEST_DIR=$DEST/GPS_v4
+    FILENAME=GPS_v6_full.tar.bz2
+    DEST_DIR=$DEST/GPS_v6
 else
-    FILENAME=GPS_v4_references.tar.bz2
-    DEST_DIR=$DEST/GPS_v4_references
+    FILENAME=GPS_v6_references.tar.bz2
+    DEST_DIR=$DEST/GPS_v6_references
 fi
 
 if [ -d "$DEST_DIR" ]; then
