@@ -60,6 +60,9 @@ jobs:
         CACHE_NUMBER: 0
       id: cache-conda
 
+    - name: install poppunk dependencies
+      run: sudo apt-get install libeigen3-dev libegl1
+
     - name: Install poppunk
       run: conda install poppunk
 #  currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
