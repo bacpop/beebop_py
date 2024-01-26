@@ -1,4 +1,11 @@
-FROM mrcide/poppunk:master
+FROM continuumio/miniconda3
+
+RUN conda config --append channels conda-forge
+RUN conda config --append channels bioconda
+
+RUN conda install bioconda::poppunk
+
+######
 WORKDIR /
 
 RUN pip install poetry
