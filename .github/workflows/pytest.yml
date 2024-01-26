@@ -123,9 +123,8 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         rq worker > rq_output.txt 2>&1 &
-        STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v6_references poetry run pytest
-
-    #STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v6_references poetry run coverage run -m pytest
+        STORAGE_LOCATION=./storage DB_LOCATION=./storage/GPS_v6_references FLASK_APP=beebop/app.py poetry run flask run
+      #STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v6_references poetry run coverage run -m pytest
 
     - name: Process coverage
       working-directory: ./main
