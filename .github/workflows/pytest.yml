@@ -124,6 +124,7 @@ jobs:
         export PATH="/usr/share/miniconda/bin:$PATH"
         rq worker > rq_output.txt 2>&1 &
         STORAGE_LOCATION=./storage DB_LOCATION=./storage/GPS_v6_references FLASK_APP=beebop/app.py poetry run flask run &
+        sleep 30
         curl -d '{"projectHash": "123", "sketches": {}, "names": []}' http://127.0.0.1:5000/poppunk
       #STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v6_references poetry run coverage run -m pytest
 
