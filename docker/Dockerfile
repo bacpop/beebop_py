@@ -3,10 +3,8 @@ FROM continuumio/miniconda3
 RUN conda config --append channels conda-forge
 RUN conda config --append channels bioconda
 
-RUN conda install bioconda::poppunk
-
-######
-WORKDIR /
+RUN conda install python=3.10
+RUN conda install poppunk
 
 RUN pip install poetry
 COPY  *.toml *.lock /
@@ -18,3 +16,4 @@ WORKDIR /beebop
 EXPOSE 5000
 
 CMD poetry run waitress-serve --port=5000 'beebop.app:app'
+
