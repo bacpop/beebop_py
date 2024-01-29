@@ -11,7 +11,8 @@ from tests import setup
 
 def hex_to_decimal(sketches_dict):
     for sample in list(sketches_dict.values()):
-        if isInstance(sample['14'][0], str) and re.match('0x.*', sample['14'][0]):
+        if isInstance(sample['14'][0], str) and \
+                re.match('0x.*', sample['14'][0]):
             for x in range(14, 30, 3):
                 sample[str(x)] = list(map(lambda x: int(x, 16),
                                           sample[str(x)]))
