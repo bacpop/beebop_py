@@ -11,5 +11,7 @@ storage/poppunk_output
 node_modules
 storage/GPS_v4*
 storage/._GPS_v4*
+storage/GPS_v6*
+storage/._GPS_v6*
 storage/strain_*_lineage_db
 .idea

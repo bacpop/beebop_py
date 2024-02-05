@@ -9,7 +9,7 @@ class NpEncoder(json.JSONEncoder):
         if isinstance(obj, np.uint64):  # this only applies to attributes
             return int(obj)
         if isinstance(obj, np.ndarray):
-            if type(obj[0]) == np.uint64:  # this applies to the datasets
+            if isinstance(obj[0], np.uint64):  # this applies to the datasets
                 obj_hex = np.array([hex(x) for x in obj])
                 return obj_hex.tolist()
             else:  # this applies to base_freq

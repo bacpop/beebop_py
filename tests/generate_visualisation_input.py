@@ -11,7 +11,8 @@ from tests import setup
 
 def hex_to_decimal(sketches_dict):
     for sample in list(sketches_dict.values()):
-        if type(sample['14'][0]) == str and re.match('0x.*', sample['14'][0]):
+        if isinstance(sample['14'][0], str) and \
+                re.match('0x.*', sample['14'][0]):
             for x in range(14, 30, 3):
                 sample[str(x)] = list(map(lambda x: int(x, 16),
                                           sample[str(x)]))
@@ -22,7 +23,7 @@ p_hash = 'unit_test_visualisations'
 fs = PoppunkFileStore(storageLocation)
 fs.ensure_output_dir_exists(p_hash)
 outdir = fs.output(p_hash)
-db_paths = DatabaseFileStore('./storage/GPS_v4_references')
+db_paths = DatabaseFileStore('./storage/GPS_v6_references')
 args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign)

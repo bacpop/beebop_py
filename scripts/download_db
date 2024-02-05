@@ -34,11 +34,15 @@ if [ -z $DEST ]; then
 fi
 
 if [ $SMALL == 0 ]; then
-    FILENAME=GPS_v4_full.tar.bz2
-    DEST_DIR=$DEST/GPS_v4
+    BASE_URL=https://gps-project.cog.sanger.ac.uk
+    FILENAME=GPS_v6.zip
+    DEST_DIR=$DEST/GPS_v6
+    SUFFIX=zip
 else
-    FILENAME=GPS_v4_references.tar.bz2
-    DEST_DIR=$DEST/GPS_v4_references
+    BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
+    FILENAME=GPS_v6_references.tar.bz2
+    DEST_DIR=$DEST/GPS_v6_references
+    SUFFIX=tar.bz2
 fi
 
 if [ -d "$DEST_DIR" ]; then
@@ -48,9 +52,19 @@ if [ -d "$DEST_DIR" ]; then
 fi
 
 echo "Downloading $FILENAME"
-URL=https://mrcdata.dide.ic.ac.uk/beebop/$FILENAME
-DBBZ2=$(mktemp).tar.bz2
+
+URL=$BASE_URL/$FILENAME
+DBBZ2=$(mktemp).${SUFFIX}
 wget  --progress=dot:giga $URL -O $DBBZ2
 echo "Unpacking to $DEST"
 mkdir -p $DEST
-(cd $DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
+
+function extract() {
+    if [ $SMALL == 0 ]; then
+      unzip $DBBZ2
+    else
+      tar -xf $DBBZ2
+    fi
+}
+
+(cd $DEST && extract && rm -f $DBBZ2)
