@@ -42,7 +42,7 @@ jobs:
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
-        python-version: 3.10
+        python-version: 3.9
         activate-environment: beebop_py
         channels: bioconda, conda-forge
 
@@ -61,8 +61,11 @@ jobs:
           steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER}}
       env:
         # Increment this value to manually reset cache.
-        CACHE_NUMBER: 1
+        CACHE_NUMBER: 0
       id: cache-conda
+
+    - name: Install Python 3.10
+      run: conda install python=3.10
 
     - name: Install poppunk
       run: conda install poppunk
