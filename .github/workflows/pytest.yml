@@ -67,7 +67,8 @@ jobs:
     - name: Install poppunk dependencies
       run: |
           conda install python=3.10
-          apt-get update && apt-get install libgl1
+          sudo apt-get update 
+          sudo apt-get install libgl1
 
     - name: Install poppunk
       run: conda install poppunk
