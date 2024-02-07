@@ -36,8 +36,8 @@ jobs:
 
     - name: Install Linux packages
       run: |
-        sudo apt-get update
-        sudo apt-get install ffmpeg libsm6 libxext6  -y
+        sudo apt-get update -q 
+        sudo apt-get install -q -y --no-install-recommends bzip2 ca-certificates git libglib2.0-0 libsm6 libxext6 libxrender1 mercurial openssh-client procps subversion wget
         
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
