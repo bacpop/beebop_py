@@ -34,15 +34,15 @@ jobs:
       run: |
         ./scripts/download_db --small storage
         
-    - name: Set up Python 3.9
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.9"
+        python-version: "3.10"
 
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2.1.1
       with:
-        python-version: 3.9
+        python-version: 3.10
         activate-environment: beebop_py
         channels: bioconda, conda-forge
 
@@ -64,32 +64,8 @@ jobs:
         CACHE_NUMBER: 0
       id: cache-conda
 
-#    - name: Install poppunk
-#      run: conda install poppunk
-#  currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
-
-    - name: Get poppunk source code
-      uses: actions/checkout@v3
-      with:
-        repository:  bacpop/PopPUNK 
-        ref: fix-json-serialisation
-        path: poppunk
-
-    - name: install poppunk & dependencies
-      working-directory: ./poppunk
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda activate beebop_py
-        conda install graph-tool
-        conda install mandrake
-        conda install rapidnj
-        sudo apt-get update
-        sudo apt-get install libeigen3-dev libegl1
-        sudo apt-get install libopenblas-dev
-        sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
-        pip install joblib==1.1.0
-        conda install -c bioconda pp-sketchlib=2.0.0
-        pip3 install git+https://github.com/bacpop/PopPUNK
+    - name: Install poppunk
+      run: conda install poppunk
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
