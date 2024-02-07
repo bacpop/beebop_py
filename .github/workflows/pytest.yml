@@ -33,6 +33,11 @@ jobs:
       working-directory: ./main
       run: |
         ./scripts/download_db --small storage
+
+    - name: Install Linux packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ffmpeg libsm6 libxext6  -y
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
@@ -67,8 +72,6 @@ jobs:
     - name: Install poppunk dependencies
       run: |
           conda install python=3.10
-          sudo apt-get update 
-          sudo apt-get install ffmpeg libsm6 libxext6  -y
 
     - name: Install poppunk
       run: conda install poppunk
