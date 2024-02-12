@@ -335,8 +335,14 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     check_connection(redis)
 
     def get_status_job(job, p_hash, redis):
-        id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
-        return Job.fetch(id, connection=redis).get_status()
+        # Check high-level status recorded in redis - only check the (ephemeral) rq Job status if
+        # high-level status is 'incomplete'
+        project_job_status = redis.hget(f"beebop:hash:status:{job}", p_hash)
+        if (project_job_status != ProjectJobStatus.incomplete):
+            return project_job_status
+        else:
+            id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
+            return Job.fetch(id, connection=redis).get_status()
     try:
         status_assign = get_status_job('assign', p_hash, redis)
         if status_assign == "finished":
@@ -360,7 +366,7 @@ def set_project_job_status(p_hash: str, job: JobType, status: ProjectJobStatus, 
         :param status [project job statys]
         :param redis: [Redis instance]
     """
-    redis.hset(f"beebop:hash:{job}:status", p_hash, status)
+    redis.hset(f"beebop:hash:status:{job}", p_hash, status)
 
 # get job result
 @app.route("/results/<result_type>", methods=['POST'])
