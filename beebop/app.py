@@ -218,8 +218,8 @@ def run_poppunk_internal(sketches: dict,
     # keep results forever
     queue_kwargs = {
           "job_timeout": job_timeout,
-          "result_ttl": None,
-          "failure_ttl": None
+          "result_ttl": -1,
+          "failure_ttl": -1
         }
     # submit list of hashes to redis worker
     job_assign = q.enqueue(assignClusters.get_clusters,
