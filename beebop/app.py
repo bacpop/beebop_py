@@ -1,4 +1,3 @@
-from enum import Enum
 from flask import Flask, jsonify, request, abort, send_file
 from flask_expects_json import expects_json
 from waitress import serve
@@ -6,7 +5,6 @@ from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
 from rq.job import Job
-from typing import Callable
 import os
 from io import BytesIO
 import zipfile
@@ -29,16 +27,6 @@ job_timeout = 600
 
 storage_location = os.environ.get('STORAGE_LOCATION')
 database_location = os.environ.get('DB_LOCATION')
-
-class ProjectJobStatus(Enum):
-    incomplete ='incomplete'
-    finished = 'finished'
-    failed = 'failed'
-
-class JobType(Enum):
-    assign: "assign",
-    microreact: "microreact",
-    network: "network"
 
 
 def response_success(data) -> dict:
@@ -183,22 +171,6 @@ def run_poppunk() -> json:
     q = Queue(connection=redis)
     return run_poppunk_internal(sketches, p_hash, name_mapping,
                                 storage_location, redis, q)
-# TODO: Make p_hash a kwarg in both job and wrapper so don't need to repeat it
-def job_wrapper(job_fn: Callable, p_hash: str, job: JobType, redis: Redis, *args, **kwargs):
-    """
-    [Wrapper function which will record 'finished' status in redis if job function completes successfully, and 'failed'
-    if an error occurs]
-    :param job_fn: the main job function
-    :param *args: the positional arguments to the main job function
-    :param: **kwargs: the named arguments to the main job function
-    """
-    try:
-        job_fn(*args, **kwargs)
-        set_project_job_status(p_hash, job, ProjectJobStatus.finished, redis)
-    except:
-        set_project_job_status(p_hash, job, ProjectJobStatus.error, redis)
-        # Rethrow the error so rq also considers the job as failed
-        raise
 
 
 def run_poppunk_internal(sketches: dict,
@@ -222,10 +194,6 @@ def run_poppunk_internal(sketches: dict,
     :param q: [redis queue]
     :return json: [response object with all job IDs stored in 'data']
     """
-    # set initial job statuses to incomplete
-    set_project_job_status(p_hash, JobType.assign, ProjectStatus.incomplete, redis)
-    set_project_job_status(p_hash, JobType.microreact, ProjectStatus.incomplete, redis)
-    set_project_job_status(p_hash, JobType.cluster, ProjectStatus.incomplete, redis)
     # create FS
     fs = PoppunkFileStore(storage_location)
     # read arguments
@@ -247,46 +215,40 @@ def run_poppunk_internal(sketches: dict,
         pickle.dump(initial_output, f)
     # check connection to redis
     check_connection(redis)
+    # keep results forever
+    queue_kwargs = {
+          "job_timeout": job_timeout,
+          "result_ttl": None,
+          "failure_ttl": None
+        }
     # submit list of hashes to redis worker
-    job_assign = q.enqueue(job_wrapper,
-                           args=(assignClusters.get_clusters,
-                                   p_hash,
-                                   JobType.cluster,
-                                   redis,
-                                   hashes_list,
-                                   p_hash,
-                                   fs,
-                                   db_paths,
-                                   args),
-                           job_timeout=job_timeout)
+    job_assign = q.enqueue(assignClusters.get_clusters,
+                           hashes_list,
+                           p_hash,
+                           fs,
+                           db_paths,
+                           args,
+                           **queue_kwargs)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     # create visualisations
     # network
-    job_network = q.enqueue(job_wrapper,
-                            args=(visualise.network,
-                                p_hash,
-                                JobType.network,
-                                redis,
-                                p_hash,
-                                fs,
-                                db_paths,
-                                args,
-                                name_mapping),
-                            depends_on=job_assign, job_timeout=job_timeout)
+    job_network = q.enqueue(visualise.network,
+                            args=(p_hash,
+                                  fs,
+                                  db_paths,
+                                  args,
+                                  name_mapping),
+                            depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
-    job_microreact = q.enqueue(job_wrapper
-                              args=(visualise.microreact,
-                                    p_hash,
-                                    JobType.microreact,
-                                    redis,
-                                    p_hash,
-                                    fs,
-                                    db_paths,
-                                    args,
-                                    name_mapping),
-                               depends_on=job_network, job_timeout=job_timeout)
+    job_microreact = q.enqueue(visualise.microreact,
+                               args=(p_hash,
+                                     fs,
+                                     db_paths,
+                                     args,
+                                     name_mapping),
+                               depends_on=job_network, **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
     return jsonify(response_success({"assign": job_assign.id,
@@ -335,14 +297,8 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     check_connection(redis)
 
     def get_status_job(job, p_hash, redis):
-        # Check high-level status recorded in redis - only check the (ephemeral) rq Job status if
-        # high-level status is 'incomplete'
-        project_job_status = redis.hget(f"beebop:hash:status:{job}", p_hash)
-        if (project_job_status != ProjectJobStatus.incomplete):
-            return project_job_status
-        else:
-            id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
-            return Job.fetch(id, connection=redis).get_status()
+        id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
+        return Job.fetch(id, connection=redis).get_status()
     try:
         status_assign = get_status_job('assign', p_hash, redis)
         if status_assign == "finished":
@@ -357,16 +313,6 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     except AttributeError:
         return {"error": "Unknown project hash"}
 
-def set_project_job_status(p_hash: str, job: JobType, status: ProjectJobStatus, redis: Redis)
-    """
-        [sets the basic running status of a project - incomplete, finished or failed.]
-
-        :param p_hash: [project hash]
-        :param job: [job type]
-        :param status [project job statys]
-        :param redis: [Redis instance]
-    """
-    redis.hset(f"beebop:hash:status:{job}", p_hash, status)
 
 # get job result
 @app.route("/results/<result_type>", methods=['POST'])
