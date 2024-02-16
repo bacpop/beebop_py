@@ -305,7 +305,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
                 "microreact": status_microreact,
                 "network": status_network}
     except AttributeError as err:
-        return {"error": f"Unknown project hash error: {str(err)}"}
+        return {"error": f"Unknown project hash error (for job {job}): {str(err)}"}
 
 
 # get job result
