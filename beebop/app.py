@@ -231,6 +231,9 @@ def run_poppunk_internal(sketches: dict,
                            **queue_kwargs)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    # check we've actually saved the value
+    test_value = redis.hget("beebop:hash:job:assign", p_hash)
+    print(f"Read test_value {test_value} for job id {job_assign.id}")
     # create visualisations
     # network
     job_network = q.enqueue(visualise.network,
@@ -310,8 +313,8 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         return {"assign": status_assign,
                 "microreact": status_microreact,
                 "network": status_network}
-    except AttributeError:
-        return {"error": "Unknown project hash"}
+    except AttributeError as err:
+        return {"error": f"Unknown project hash error (for hash {p_hash}): {str(err)}"}
 
 
 # get job result
