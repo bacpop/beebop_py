@@ -225,6 +225,9 @@ def run_poppunk_internal(sketches: dict,
                            job_timeout=job_timeout)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    # check we've actually saved the value
+    test_value = redis.hget("beebop:hash:job:assign", p_hash)
+    print(f"Read test_value {test_value} for job id {job_assign.id}")
     # create visualisations
     # network
     job_network = q.enqueue(visualise.network,
