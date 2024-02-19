@@ -165,6 +165,7 @@ def run_poppunk() -> json:
 
     :return json: [response object with all job IDs stored in 'data']
     """
+    print("running poppunk")
     sketches = request.json['sketches'].items()
     p_hash = request.json['projectHash']
     name_mapping = request.json['names']
@@ -194,12 +195,16 @@ def run_poppunk_internal(sketches: dict,
     :param q: [redis queue]
     :return json: [response object with all job IDs stored in 'data']
     """
+    print("running poppunk internal")
     # create FS
     fs = PoppunkFileStore(storage_location)
+    print("created fs")
     # read arguments
     args = get_args()
+    print("got args")
     # set database paths
     db_paths = DatabaseFileStore(database_location)
+    print("set db paths")
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
     hashes_list = []
@@ -213,8 +218,10 @@ def run_poppunk_internal(sketches: dict,
     fs.ensure_output_dir_exists(p_hash)
     with open(fs.output_cluster(p_hash), 'wb') as f:
         pickle.dump(initial_output, f)
+    print("dumped sketches")
     # check connection to redis
     check_connection(redis)
+    print("checked redis")
     # submit list of hashes to redis worker
     job_assign = q.enqueue(assignClusters.get_clusters,
                            hashes_list,
