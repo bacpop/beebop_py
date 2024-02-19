@@ -215,6 +215,12 @@ def run_poppunk_internal(sketches: dict,
         pickle.dump(initial_output, f)
     # check connection to redis
     check_connection(redis)
+    # keep results forever
+    queue_kwargs = {
+          "job_timeout": job_timeout,
+          "result_ttl": -1,
+          "failure_ttl": -1
+        }
     # submit list of hashes to redis worker
     job_assign = q.enqueue(assignClusters.get_clusters,
                            hashes_list,
@@ -222,7 +228,7 @@ def run_poppunk_internal(sketches: dict,
                            fs,
                            db_paths,
                            args,
-                           job_timeout=job_timeout)
+                           **queue_kwargs)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     # create visualisations
@@ -233,7 +239,7 @@ def run_poppunk_internal(sketches: dict,
                                   db_paths,
                                   args,
                                   name_mapping),
-                            depends_on=job_assign, job_timeout=job_timeout)
+                            depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
@@ -242,7 +248,7 @@ def run_poppunk_internal(sketches: dict,
                                      db_paths,
                                      args,
                                      name_mapping),
-                               depends_on=job_network, job_timeout=job_timeout)
+                               depends_on=job_network, **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
     return jsonify(response_success({"assign": job_assign.id,
