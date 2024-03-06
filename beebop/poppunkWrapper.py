@@ -40,7 +40,7 @@ class PoppunkWrapper:
             output=self.fs.output(self.p_hash),
             qc_dict=qc_dict,
             update_db=self.args.assign.update_db,
-            write_references=self.args.assign.write_referen
+            write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
             serial=self.args.assign.serial,
             threads=self.args.assign.threads,
