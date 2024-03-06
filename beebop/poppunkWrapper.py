@@ -32,6 +32,7 @@ class PoppunkWrapper:
         :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
         """
+        print("!!Assigning cluster with external file: " + external_clustering)
         assign_query_hdf5(
             dbFuncs=dbFuncs,
             ref_db=self.db_paths.db,
@@ -39,7 +40,7 @@ class PoppunkWrapper:
             output=self.fs.output(self.p_hash),
             qc_dict=qc_dict,
             update_db=self.args.assign.update_db,
-            write_references=self.args.assign.write_references,
+            write_references=self.args.assign.write_referen
             distances=self.db_paths.distances,
             serial=self.args.assign.serial,
             threads=self.args.assign.threads,
