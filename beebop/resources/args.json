@@ -7,7 +7,7 @@
         "plot_fit": 0,
         "graph_weights": false,
         "strand_preserved": false,
-        "external_clustering": "./beebop/resources/GPS_v6_external_clusters.csv",
+        "external_clustering": "/beebop/resources/GPS_v6_external_clusters.csv",
         "core_only": false,
         "accessory_only": false,
         "gpu_sketch": false,
