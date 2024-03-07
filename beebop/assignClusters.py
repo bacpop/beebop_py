@@ -67,8 +67,13 @@ def get_clusters(hashes_list: list,
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.assign_clusters(dbFuncs, qc_dict, qNames)
 
-    queries_names, queries_clusters, _, _, _, _, _ = \
+    queries_names, queries_clusters, _, clusters, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
+
+    print("QUERIES CLUSTERS")
+    print(str(queries_clusters)
+    print("CLUSTERS")
+    print(str(clusters))
 
     result = {}
     for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
