@@ -71,7 +71,7 @@ def get_clusters(hashes_list: list,
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 
     print("QUERIES CLUSTERS")
-    print(str(queries_clusters)
+    print(str(queries_clusters))
     print("CLUSTERS")
     print(str(clusters))
 
