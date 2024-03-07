@@ -2,6 +2,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore
 import shutil
+import os
 
 
 class PoppunkWrapper:
@@ -33,6 +34,7 @@ class PoppunkWrapper:
         :param qNames: [hd5 database with all sketches]
         """
         print("!!Assigning cluster with external file: " + self.args.assign.external_clustering)
+        print("working directory is: " + os.getcwd())
         assign_query_hdf5(
             dbFuncs=dbFuncs,
             ref_db=self.db_paths.db,
