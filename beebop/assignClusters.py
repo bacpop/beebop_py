@@ -93,7 +93,7 @@ def get_clusters(hashes_list: list,
     external_clusters = get_external_clusters_from_file(external_clusters_file, hashes_list)
     print("External clusters: " + str(external_clusters))
     result = {}
-    for i, (name, cluster) in enumerate(external_clusters):
+    for i, (name, cluster) in enumerate(external_clusters.items()):
         result[i] = {
             "hash": name,
             "cluster": cluster
