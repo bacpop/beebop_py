@@ -77,7 +77,7 @@ def get_clusters(hashes_list: list,
             "cluster": cluster
         }
 
-    external_clusters_csv_name = fs.previous_query_clustering
+    external_clusters_csv_name = fs.previous_query_clustering(p_hash)
     print("Previous clusters files is " + external_clusters_csv_name)
     with open(external_clusters_csv_name) as f:
         for row in reader:
