@@ -172,3 +172,44 @@ def add_query_ref_status(fs: PoppunkFileStore,
         ET.indent(xml_tree, space='  ', level=0)
         with open(path, 'wb') as f:
             xml_tree.write(f, encoding='utf-8')
+
+def get_external_clusters_from_file(external_clusters_file: str,
+                                    hashes_list: list) -> dict:
+    """
+    [Finds sample hashes defined by hashes_list in the given external clusters
+    file and returns a dictionary of sample hash to external cluster number. If
+    there are multiple external clusters listed for a sample, the lowest cluster
+    number is returned]
+
+    :param external_clusters_file: [filename of the project's external clusters file]
+    :param hashes_list: [list of sample hashes to find samples for]
+    :return dict: [dictionary of sample hash to lowest numbered-cluster for that sample]
+    """
+    remaining_hashes=hashes_list[:]
+    result = {}
+    with open(external_clusters_csv_name) as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            # We expect two columns in the external clusters csv: the first contains the sample id
+            # (which will be the hash in the case of our uploaded samples), and the second contains
+            # all the external cluster numbers for the sample, separated by semicolons
+            sample_id = row[0]
+            if sample_id in remaining_hashes:
+                print("Found hash: " + sample_id)
+                print(', '.join(row))
+                # Add lowest numeric cluster to dictionary
+                if len(row) > 1:
+                    clusters = row[1].split(";")
+                    sorted_clusters = [int(x) for x in clusters].sort()
+                    print("Setting cluster {} for sample {}", sorted_clusters[0], sample_id)
+                    result[sample_id] = sorted_clusters[0]
+
+                # Remove sample id from remaining hashes to find
+                remaining_hashes.remove(sample_id)
+
+                # Break if no hashes left to find
+                if len(remaining_hashes) == 0;
+                    break
+
+    # TODO: error if a cluster not found for a sample?
+    return result
