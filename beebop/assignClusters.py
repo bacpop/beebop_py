@@ -80,6 +80,7 @@ def get_clusters(hashes_list: list,
     external_clusters_csv_name = fs.previous_query_clustering(p_hash)
     print("Previous clusters files is " + external_clusters_csv_name)
     with open(external_clusters_csv_name) as f:
+        reader = csv.reader(f, delimiter=',')
         for row in reader:
             if row[0] == hashes_list[0]:
                 print("Found hash: " + hashes_list[0])
