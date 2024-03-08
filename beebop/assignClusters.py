@@ -3,6 +3,7 @@ from PopPUNK.utils import setupDBFuncs
 import re
 import os
 import pickle
+import csv
 
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
