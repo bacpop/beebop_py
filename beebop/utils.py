@@ -187,7 +187,7 @@ def get_external_clusters_from_file(external_clusters_file: str,
     """
     remaining_hashes=hashes_list[:]
     result = {}
-    with open(external_clusters_csv_name) as f:
+    with open(external_clusters_file) as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             # We expect two columns in the external clusters csv: the first contains the sample id
