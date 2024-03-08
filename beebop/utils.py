@@ -208,7 +208,7 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 remaining_hashes.remove(sample_id)
 
                 # Break if no hashes left to find
-                if len(remaining_hashes) == 0;
+                if len(remaining_hashes) == 0:
                     break
 
     # TODO: error if a cluster not found for a sample?
