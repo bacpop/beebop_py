@@ -313,6 +313,30 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     except AttributeError:
         return {"error": "Unknown project hash"}
 
+@app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
+def get_network_graph(p_hash) -> json:
+    """
+    [returns all network graphml files for a given project hash]
+
+    :param p_hash: [project hash]
+    :return json: [response object with all graphml files stored in 'data']
+    """
+    fs = PoppunkFileStore(storage_location)
+    try:
+        with open(fs.network_mapping(p_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        graphmls = {}
+        for cluster, component in cluster_component_mapping.items():
+            path = fs.network_output_component(p_hash, component)
+            with open(path, 'r') as graphml_file:
+                graph = graphml_file.read()
+            graphmls[cluster] = graph
+        return jsonify(response_success(graphmls))
+    except FileNotFoundError:
+        return jsonify(error=response_failure({
+            "error": "File not found",
+            "detail": "GraphML files not found"
+        })), 404
 
 # get job result
 @app.route("/results/<result_type>", methods=['POST'])
