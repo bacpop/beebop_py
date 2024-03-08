@@ -200,9 +200,10 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
                     clusters = row[1].split(";")
-                    sorted_clusters = [int(x) for x in clusters].sort()
-                    print("Setting cluster {} for sample {}", sorted_clusters[0], sample_id)
-                    result[sample_id] = sorted_clusters[0]
+                    numeric_clusters = [int(x) for x in clusters]
+                    numeric_clusters.sort()
+                    print("Setting cluster {} for sample {}", numeric_clusters[0], sample_id)
+                    result[sample_id] = numeric_clusters[0]
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)
