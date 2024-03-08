@@ -77,6 +77,15 @@ def get_clusters(hashes_list: list,
             "cluster": cluster
         }
 
+    external_clusters_csv_name = db_paths.previous_clusters
+    print("Previous clusters files is " + external_clusters_csv_name)
+    with open(external_clusters_csv_name) as f:
+        for row in reader:
+            if row[0] == hashes_list[0]:
+                print("Found hash: " hashes_list[0])
+                print(', '.join(row))
+    print("searched all rows")
+
     # save result to retrieve when reloading project results - this
     # overwrites the initial output file written before the assign
     # job ran
