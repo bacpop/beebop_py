@@ -72,12 +72,12 @@ def get_clusters(hashes_list: list,
     queries_names, queries_clusters, _, _, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 
-    result = {}
-    for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
-        result[i] = {
-            "hash": name,
-            "cluster": cluster
-        }
+    #result = {}
+    #for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
+    #    result[i] = {
+    #        "hash": name,
+    #        "cluster": cluster
+    #    }
 
     external_clusters_file = fs.previous_query_clustering(p_hash)
     print("Previous clusters files is " + external_clusters_file)
@@ -92,12 +92,12 @@ def get_clusters(hashes_list: list,
 
     external_clusters = get_external_clusters_from_file(external_clusters_file, hashes_list)
     print("External clusters: " + str(external_clusters))
-    #result = {}
-    #for i, (name, cluster) in external_clusters:
-    #    result[i] = {
-    #        "hash": name,
-    #        "cluster": cluster
-    #    }
+    result = {}
+    for i, (name, cluster) in enumerate(external_clusters):
+        result[i] = {
+            "hash": name,
+            "cluster": cluster
+        }
 
     # save result to retrieve when reloading project results - this
     # overwrites the initial output file written before the assign
