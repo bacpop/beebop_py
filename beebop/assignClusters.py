@@ -82,7 +82,7 @@ def get_clusters(hashes_list: list,
     with open(external_clusters_csv_name) as f:
         for row in reader:
             if row[0] == hashes_list[0]:
-                print("Found hash: " hashes_list[0])
+                print("Found hash: " + hashes_list[0])
                 print(', '.join(row))
     print("searched all rows")
 
