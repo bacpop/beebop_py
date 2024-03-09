@@ -110,7 +110,7 @@ class PoppunkWrapper:
         previous assign_clusters.get_clusters() output.]
         """
         sys.stderr.write("Generating network with:\n")
-        sys.stderr.write("prev_clustering: {}\n".format(self.args.visualise.external_clustering)
+        sys.stderr.write("prev_clustering: {}\n".format(self.args.visualise.external_clustering))
         sys.stderr.write("previous_query_clustering: {}\n".format(self.fs.previous_query_clustering(self.p_hash))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
