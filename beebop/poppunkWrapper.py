@@ -3,6 +3,7 @@ from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore
 import shutil
 import os
+import sys
 
 
 class PoppunkWrapper:
