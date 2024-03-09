@@ -486,7 +486,8 @@ def download_graphml_internal(p_hash: str,
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         # TODO: use util to get cluster number
-        component = cluster_component_mapping[cluster.replace("GPSC", "")]
+        #component = cluster_component_mapping[cluster.replace("GPSC", "")]
+        component = cluster_component_mapping[str(cluster)]
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()

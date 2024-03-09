@@ -96,7 +96,9 @@ def delete_component_files(cluster_component_dict: dict,
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
         ## TODO: unmagic GPSC
-        queries_components.append(cluster_component_dict[item['cluster'].replace("GPSC", "")])
+        #queries_components.append(cluster_component_dict[item['cluster'].replace("GPSC", "")])
+        queries_components.append(cluster_component_dict[str(item['cluster'])])
+
     components = set(queries_components)
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
@@ -207,7 +209,8 @@ def get_external_clusters_from_file(external_clusters_file: str,
                     numeric_clusters = [int(x) for x in clusters]
                     numeric_clusters.sort()
                     print("Setting cluster {} for sample {}", numeric_clusters[0], sample_id)
-                    result[sample_id] = "GPSC{}".format(numeric_clusters[0])
+                    #result[sample_id] = "GPSC{}".format(numeric_clusters[0])
+                    result[sample_id] = numeric_clusters[0]
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)
