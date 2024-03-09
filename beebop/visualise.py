@@ -4,6 +4,7 @@ from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+import sys
 
 
 def microreact(p_hash: str,
@@ -115,5 +116,7 @@ def network_internal(assign_result,
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
     delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
+    sys.stderr.write("Name mapping:\n")
+    sys.stderr.write(str(name_mapping) + "\n")
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

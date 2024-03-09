@@ -71,8 +71,8 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
         pickle.dump(cluster_component_dict, mapping)
-    sys.stderr.write("Generated mapping:\n")
-    sys.stderr.write(str(cluster_component_dict) + "\n")
+    #sys.stderr.write("Generated mapping:\n")
+    #sys.stderr.write(str(cluster_component_dict) + "\n")
     return cluster_component_dict
 
 
