@@ -188,4 +188,4 @@ class DatabaseFileStore:
         self.distances = str(PurePath(self.db,
                                       self.name).with_suffix('.dists.pkl'))
         self.previous_clustering = str(PurePath(self.db,
-                                                f"{self.name}_clusters.csv"))
+                                                f"{self.name}_external_clusters.csv"))
