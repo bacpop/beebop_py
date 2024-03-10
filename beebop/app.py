@@ -87,6 +87,7 @@ def generate_zip(fs: PoppunkFileStore,
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
+        ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         component = cluster_component_mapping[str(cluster)]
@@ -483,11 +484,15 @@ def download_graphml_internal(p_hash: str,
     """
     fs = PoppunkFileStore(storage_location)
     try:
+        with open(fs.external_to_poppunk_clusters(p_hash)) as dict:
+            external_to_poppunk_clusters = pickle.load(dict)
+        ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         # TODO: use util to get cluster number
         #component = cluster_component_mapping[cluster.replace("GPSC", "")]
-        component = cluster_component_mapping[str(cluster)]
+        internal_cluster = external_to_poppunk_clusters[cluster]
+        component = cluster_component_mapping[str(internal_cluster)]
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
