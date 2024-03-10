@@ -5,6 +5,7 @@ from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import sys
+import pickle
 
 
 def microreact(p_hash: str,
