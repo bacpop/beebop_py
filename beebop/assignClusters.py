@@ -103,7 +103,7 @@ def get_clusters(hashes_list: list,
     # save a mapping of PopPUNK clusters to external clusters which we'll use to return
     # visualisations
     poppunk_to_external_clusters = {}
-    for i, name in queries_names:
+    for i, name in enumerate(queries_names):
         poppunk_to_external_clusters[queries_clusters[i]] = external_clusters[name]
     sys.stderr.write("Poppunk to external clusters mapping:\n")
     sys.stderr.write(str(poppunk_to_external_clusters) + "\n")
