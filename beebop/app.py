@@ -484,7 +484,7 @@ def download_graphml_internal(p_hash: str,
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        with open(fs.external_to_poppunk_clusters(p_hash)) as dict:
+        with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
             external_to_poppunk_clusters = pickle.load(dict)
         ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
