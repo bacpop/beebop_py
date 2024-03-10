@@ -11,6 +11,7 @@ import zipfile
 import json
 import requests
 import pickle
+import sys
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -492,8 +493,11 @@ def download_graphml_internal(p_hash: str,
         # TODO: use util to get cluster number
         #component = cluster_component_mapping[cluster.replace("GPSC", "")]
         internal_cluster = external_to_poppunk_clusters[cluster]
+        sys.stderr.write("internal cluster: " + internal_cluster + "\n")
         component = cluster_component_mapping[internal_cluster]
+        sys.stderr.write("component: " + component + "\n")
         path = fs.network_output_component(p_hash, component)
+        sys.stderr.write("path: " + path + "\n")
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
         f = jsonify(response_success({
