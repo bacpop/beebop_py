@@ -5,6 +5,7 @@ import re
 import os
 import pickle
 import csv
+import sys
 
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -98,6 +99,16 @@ def get_clusters(hashes_list: list,
             "hash": name,
             "cluster": cluster
         }
+
+    # save a mapping of PopPUNK clusters to external clusters which we'll use to return
+    # visualisations
+    poppunk_to_external_clusters = {}
+    for i, name in queries_names:
+        poppunk_to_external_clusters[queries_clusters[i]] = external_clusters[name]
+    sys.stderr.write("Poppunk to external clusters mapping:\n")
+    sys.stderr.write(str(poppunk_to_external_clusters) + "\n")
+    with open(fs.poppunk_to_external_clusters(p_hash), 'wb') as f:
+            pickle.dump(result, f)
 
     # save result to retrieve when reloading project results - this
     # overwrites the initial output file written before the assign

@@ -88,6 +88,13 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
 
+    def output_cluster(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to cluster results file]
+        """
+        return str(PurePath(self.output(p_hash), "poppunk_to_external_clusters.pickle"))
+
     def output_microreact(self, p_hash, cluster) -> str:
         """
         :param p_hash: [project hash]
