@@ -79,7 +79,8 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
 def delete_component_files(cluster_component_dict: dict,
                            fs: PoppunkFileStore,
                            assign_result: dict,
-                           p_hash: str) -> None:
+                           p_hash: str,
+                           external_to_poppunk_clusters: dict) -> None:
     """
     [poppunk generates >1100 component graph files. We only need to store those
     files from the clusters our queries belong to.]
@@ -91,18 +92,22 @@ def delete_component_files(cluster_component_dict: dict,
         which clusters we want to keep]
     :param p_hash: [project hash]
     """
-    queries_clusters = []
+    #queries_clusters = []
     queries_components = []
     for item in assign_result.values():
-        queries_clusters.append(item['cluster'])
+        #queries_clusters.append(item['cluster'])
         ## TODO: unmagic GPSC
         #queries_components.append(cluster_component_dict[item['cluster'].replace("GPSC", "")])
-        queries_components.append(cluster_component_dict[str(item['cluster'])])
+        external_cluster = str(item['cluster'])
+        internal_cluster = external_to_poppunk_clusters[external_cluster]
+        queries_components.append(cluster_component_dict[internal_cluster])
 
     components = set(queries_components)
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
                               components))
+
+    sys.stderr.write("Keeping network files: " + str(keep_filenames) + "\n")
     keep_filenames.append('network_cytoscape.csv')
     keep_filenames.append('network_cytoscape.graphml')
     keep_filenames.append('cluster_component_dict.pickle')

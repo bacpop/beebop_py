@@ -90,7 +90,9 @@ def network(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    network_internal(assign_result, p_hash, fs, db_paths, args, name_mapping)
+    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+        external_to_poppunk_clusters = pickle.load(dict)
+    network_internal(assign_result, p_hash, fs, db_paths, args, name_mapping, external_to_poppunk_clusters)
 
     return assign_result
 
@@ -100,7 +102,8 @@ def network_internal(assign_result,
                      fs,
                      db_paths,
                      args,
-                     name_mapping) -> None:
+                     name_mapping,
+                     external_to_poppunk_clusters) -> None:
     """
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
@@ -115,7 +118,7 @@ def network_internal(assign_result,
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
-    delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
+    delete_component_files(cluster_component_dict, fs, assign_result, p_hash, external_to_poppunk_clusters)
     sys.stderr.write("Name mapping:\n")
     sys.stderr.write(str(name_mapping) + "\n")
     replace_filehashes(fs.output_network(p_hash), name_mapping)
