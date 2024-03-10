@@ -104,7 +104,7 @@ def get_clusters(hashes_list: list,
     # visualisations
     external_to_poppunk_clusters = {}
     for i, name in enumerate(queries_names):
-        external_to_poppunk_clusters[external_clusters[name]] = queries_clusters[i]
+        external_to_poppunk_clusters[str(external_clusters[name])] = str(queries_clusters[i])
     sys.stderr.write("external to pp clusters mapping:\n")
     sys.stderr.write(str(external_to_poppunk_clusters) + "\n")
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:

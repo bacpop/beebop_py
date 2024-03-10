@@ -492,7 +492,7 @@ def download_graphml_internal(p_hash: str,
         # TODO: use util to get cluster number
         #component = cluster_component_mapping[cluster.replace("GPSC", "")]
         internal_cluster = external_to_poppunk_clusters[cluster]
-        component = cluster_component_mapping[str(internal_cluster)]
+        component = cluster_component_mapping[internal_cluster]
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
