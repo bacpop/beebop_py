@@ -34,8 +34,6 @@ class PoppunkWrapper:
         :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
         """
-        print("!!Assigning cluster with external file: " + self.args.assign.external_clustering)
-        print("working directory is: " + os.getcwd())
         assign_query_hdf5(
             dbFuncs=dbFuncs,
             ref_db=self.db_paths.db,
@@ -89,7 +87,6 @@ class PoppunkWrapper:
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=self.fs.include_files(self.p_hash, cluster),
             model_dir=self.db_paths.db,
-            #previous_clustering=self.db_paths.previous_clustering,
             previous_clustering=self.args.visualise.external_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
@@ -111,9 +108,6 @@ class PoppunkWrapper:
         [Generates network visualisation output in .graphml format based on
         previous assign_clusters.get_clusters() output.]
         """
-        sys.stderr.write("Generating network with:\n")
-        sys.stderr.write("prev_clustering: {}\n".format(self.args.visualise.external_clustering))
-        sys.stderr.write("previous_query_clustering: {}\n".format(self.fs.previous_query_clustering(self.p_hash)))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_paths.db,
@@ -133,9 +127,7 @@ class PoppunkWrapper:
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=None,
             model_dir=self.db_paths.db,
-            #previous_clustering=self.db_paths.previous_clustering,
             previous_clustering=self.args.visualise.external_clustering,
-            #previous_clustering=None,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,

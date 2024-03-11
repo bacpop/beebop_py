@@ -71,8 +71,6 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
         pickle.dump(cluster_component_dict, mapping)
-    #sys.stderr.write("Generated mapping:\n")
-    #sys.stderr.write(str(cluster_component_dict) + "\n")
     return cluster_component_dict
 
 
@@ -92,12 +90,8 @@ def delete_component_files(cluster_component_dict: dict,
         which clusters we want to keep]
     :param p_hash: [project hash]
     """
-    #queries_clusters = []
     queries_components = []
     for item in assign_result.values():
-        #queries_clusters.append(item['cluster'])
-        ## TODO: unmagic GPSC
-        #queries_components.append(cluster_component_dict[item['cluster'].replace("GPSC", "")])
         external_cluster = str(item['cluster'])
         internal_cluster = external_to_poppunk_clusters[external_cluster]
         queries_components.append(cluster_component_dict[internal_cluster])

@@ -73,23 +73,7 @@ def get_clusters(hashes_list: list,
     queries_names, queries_clusters, _, _, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 
-    #result = {}
-    #for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
-    #    result[i] = {
-    #        "hash": name,
-    #        "cluster": cluster
-    #    }
-
     external_clusters_file = fs.previous_query_external_clustering(p_hash)
-    print("Previous clusters files is " + external_clusters_file)
-
-    #with open(external_clusters_csv_name) as f:
-    #    reader = csv.reader(f, delimiter=',')
-    #    for row in reader:
-    #        if row[0] == hashes_list[0]:
-    #            print("Found hash: " + hashes_list[0])
-    #            print(', '.join(row))
-    #print("searched all rows")
 
     external_clusters = get_external_clusters_from_file(external_clusters_file, hashes_list)
     print("External clusters: " + str(external_clusters))
@@ -105,8 +89,7 @@ def get_clusters(hashes_list: list,
     external_to_poppunk_clusters = {}
     for i, name in enumerate(queries_names):
         external_to_poppunk_clusters[str(external_clusters[name])] = str(queries_clusters[i])
-    sys.stderr.write("external to pp clusters mapping:\n")
-    sys.stderr.write(str(external_to_poppunk_clusters) + "\n")
+
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
             pickle.dump(external_to_poppunk_clusters, f)
 

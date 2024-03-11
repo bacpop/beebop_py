@@ -64,6 +64,12 @@ def check_connection(redis) -> None:
         redis.ping()
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
         abort(500, description="Redis not found")
+s
+
+def poppunk_cluster_from_external_cluster(external_cluster: str) -> str:
+    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+         external_to_poppunk_clusters = pickle.load(dict)
+    return external_to_poppunk_clusters[external_cluster]
 
 
 def generate_zip(fs: PoppunkFileStore,
@@ -83,16 +89,13 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-         external_to_poppunk_clusters = pickle.load(dict)
-    internal_cluster = external_to_poppunk_clusters[str(cluster)]
+    internal_cluster = poppunk_cluster_from_external_cluster(str(cluster))
     if type == 'microreact':
         path_folder = fs.output_microreact(p_hash, internal_cluster)
         add_files(memory_file, path_folder)
         # TODO: should also map added filenames back to external cluster - but the cluster values in contents will be internal...
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
-        ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         component = cluster_component_mapping[internal_cluster]
@@ -489,19 +492,11 @@ def download_graphml_internal(p_hash: str,
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-            external_to_poppunk_clusters = pickle.load(dict)
-        ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        # TODO: use util to get cluster number
-        #component = cluster_component_mapping[cluster.replace("GPSC", "")]
-        internal_cluster = external_to_poppunk_clusters[cluster]
-        sys.stderr.write("internal cluster: " + internal_cluster + "\n")
+        internal_cluster = poppunk_cluster_from_external_cluster(cluster)
         component = cluster_component_mapping[internal_cluster]
-        sys.stderr.write("component: " + component + "\n")
         path = fs.network_output_component(p_hash, component)
-        sys.stderr.write("path: " + path + "\n")
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
         f = jsonify(response_success({
