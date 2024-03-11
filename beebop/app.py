@@ -64,7 +64,7 @@ def check_connection(redis) -> None:
         redis.ping()
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
         abort(500, description="Redis not found")
-s
+
 
 def poppunk_cluster_from_external_cluster(external_cluster: str) -> str:
     with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
