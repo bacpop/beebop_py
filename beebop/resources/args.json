@@ -25,7 +25,6 @@
         "gpu_dist":false,
         "deviceid":0,
         "external_clustering":"./beebop/resources/GPS_v6_external_clusters.csv",
-        "external_clustering_prev": "./beebop/resources/GPS_v6_external_clusters_prev.csv",
         "microreact":false,
         "phandango":false,
         "grapetree":false,
