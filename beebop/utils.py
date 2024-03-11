@@ -207,9 +207,9 @@ def get_external_clusters_from_file(external_clusters_file: str,
                     clusters = row[1].split(";")
                     numeric_clusters = [int(x) for x in clusters]
                     numeric_clusters.sort()
-                    print("Setting cluster {} for sample {}", numeric_clusters[0], sample_id)
-                    #result[sample_id] = "GPSC{}".format(numeric_clusters[0])
-                    result[sample_id] = numeric_clusters[0]
+                    result[sample_id] = "GPSC{}".format(numeric_clusters[0])
+                    sys.stderr.write("Setting cluster {} for sample {}", result[sample_id], sample_id)
+                    #result[sample_id] = numeric_clusters[0]
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)

@@ -64,6 +64,7 @@ def microreact_internal(assign_result,
     queries_clusters = []
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
+    # TODO: when PopPunk is using external_clustering, we should be able to skip the external -> internal mapping
     for external_cluster_no in set(queries_clusters):
         internal_cluster_no = int(external_to_poppunk_clusters[str(external_cluster_no)])
         wrapper.create_microreact(internal_cluster_no)
@@ -125,6 +126,7 @@ def network_internal(assign_result,
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
+    # TODO: when PopPunk is using external_clustering, we should be able to skip the external -> internal mapping
     delete_component_files(cluster_component_dict, fs, assign_result, p_hash, external_to_poppunk_clusters)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)
