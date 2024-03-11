@@ -69,8 +69,9 @@ def check_connection(redis) -> None:
 def poppunk_cluster_from_external_cluster(fs: PoppunkFileStore,
                                           p_hash: str,
                                           external_cluster: str) -> str:
-    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-         external_to_poppunk_clusters = pickle.load(dict)
+    path = fs.external_to_poppunk_clusters(p_hash)
+    with open(path, 'rb') as dict:
+        external_to_poppunk_clusters = pickle.load(dict)
     return external_to_poppunk_clusters[external_cluster]
 
 
@@ -91,12 +92,15 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    internal_cluster = poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
+    internal_cluster = \
+        poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
     if type == 'microreact':
         path_folder = fs.output_microreact(p_hash, internal_cluster)
         add_files(memory_file, path_folder)
-        # TODO: should also map added filenames back to external cluster - but the cluster values in contents will be internal...
-        # - also, this shouldn't be necessary when change to poppunk is done to use external clusters
+        # TODO: should also map added filenames back to external cluster -
+        # but the cluster values in contents will be internal...
+        # - also, this shouldn't be necessary when change to poppunk is done
+        # to use external clusters
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
@@ -497,7 +501,8 @@ def download_graphml_internal(p_hash: str,
     try:
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        internal_cluster = poppunk_cluster_from_external_cluster(fs, p_hash, cluster)
+        internal_cluster = \
+            poppunk_cluster_from_external_cluster(fs, p_hash, cluster)
         component = cluster_component_mapping[internal_cluster]
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:

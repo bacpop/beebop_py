@@ -178,26 +178,31 @@ def add_query_ref_status(fs: PoppunkFileStore,
         with open(path, 'wb') as f:
             xml_tree.write(f, encoding='utf-8')
 
+
 def get_external_clusters_from_file(external_clusters_file: str,
                                     hashes_list: list) -> dict:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
     file and returns a dictionary of sample hash to external cluster number. If
-    there are multiple external clusters listed for a sample, the lowest cluster
-    number is returned]
+    there are multiple external clusters listed for a sample, the lowest
+    cluster number is returned]
 
-    :param external_clusters_file: [filename of the project's external clusters file]
+    :param external_clusters_file: [filename of the project's external clusters
+        file]
     :param hashes_list: [list of sample hashes to find samples for]
-    :return dict: [dictionary of sample hash to lowest numbered-cluster for that sample]
+    :return dict: [dict of sample hash to lowest numbered-cluster for that
+        sample]
     """
-    remaining_hashes=hashes_list[:]
+    remaining_hashes = hashes_list[:]
     result = {}
     with open(external_clusters_file) as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
-            # We expect two columns in the external clusters csv: the first contains the sample id
-            # (which will be the hash in the case of our uploaded samples), and the second contains
-            # all the external cluster numbers for the sample, separated by semicolons
+            # We expect two columns in the external clusters csv: the
+            # first contains the sample id (which will be the hash in
+            # the case of our uploaded samples), and the second contains
+            # all the external cluster numbers for the sample, separated
+            # by semicolons
             sample_id = row[0]
             if sample_id in remaining_hashes:
                 print("Found hash: " + sample_id)
@@ -208,7 +213,8 @@ def get_external_clusters_from_file(external_clusters_file: str,
                     numeric_clusters = [int(x) for x in clusters]
                     numeric_clusters.sort()
                     result[sample_id] = "GPSC{}".format(numeric_clusters[0])
-                    sys.stderr.write("Setting cluster {} for sample {}\n".format(result[sample_id], sample_id))
+                    sys.stderr.write("Setting cluster {} for sample {}\n"
+                                     .format(result[sample_id], sample_id))
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)

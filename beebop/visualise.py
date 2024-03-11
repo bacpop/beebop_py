@@ -32,7 +32,7 @@ def microreact(p_hash: str,
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
     with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-            external_to_poppunk_clusters = pickle.load(dict)
+        external_to_poppunk_clusters = pickle.load(dict)
     microreact_internal(assign_result,
                         p_hash,
                         fs,
@@ -64,13 +64,14 @@ def microreact_internal(assign_result,
     queries_clusters = []
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
-    # TODO: when PopPunk is using external_clustering, we should be able to skip the external -> internal mapping
-    for external_cluster_no in set(queries_clusters):
-        internal_cluster_no = int(external_to_poppunk_clusters[str(external_cluster_no)])
+    # TODO: when PopPunk is using external_clustering, we should be able
+    # to skip the external -> internal mapping
+    for external_cluster in set(queries_clusters):
+        internal_cluster_no = \
+            int(external_to_poppunk_clusters[external_cluster])
         wrapper.create_microreact(internal_cluster_no)
         replace_filehashes(fs.output_microreact(p_hash, internal_cluster_no),
                            name_mapping)
-
 
 
 def network(p_hash: str,
@@ -100,8 +101,13 @@ def network(p_hash: str,
     assign_result = current_job.dependency.result
     with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
         external_to_poppunk_clusters = pickle.load(dict)
-    network_internal(assign_result, p_hash, fs, db_paths, args, name_mapping, external_to_poppunk_clusters)
-
+    network_internal(assign_result,
+                     p_hash,
+                     fs,
+                     db_paths,
+                     args,
+                     name_mapping,
+                     external_to_poppunk_clusters)
     return assign_result
 
 
@@ -126,7 +132,12 @@ def network_internal(assign_result,
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
-    # TODO: when PopPunk is using external_clustering, we should be able to skip the external -> internal mapping
-    delete_component_files(cluster_component_dict, fs, assign_result, p_hash, external_to_poppunk_clusters)
+    # TODO: when PopPunk is using external_clustering, we should
+    # be able to skip the external -> internal mapping
+    delete_component_files(cluster_component_dict,
+                           fs,
+                           assign_result,
+                           p_hash,
+                           external_to_poppunk_clusters)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)
