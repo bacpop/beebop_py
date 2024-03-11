@@ -65,7 +65,7 @@ def microreact_internal(assign_result,
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
     for external_cluster_no in set(queries_clusters):
-        internal_cluster_no = int(external_to_poppunk_clusters[external_cluster_no])
+        internal_cluster_no = int(external_to_poppunk_clusters[str(external_cluster_no)])
         wrapper.create_microreact(internal_cluster_no)
         replace_filehashes(fs.output_microreact(p_hash, internal_cluster_no),
                            name_mapping)
