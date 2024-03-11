@@ -209,7 +209,6 @@ def get_external_clusters_from_file(external_clusters_file: str,
                     numeric_clusters.sort()
                     result[sample_id] = "GPSC{}".format(numeric_clusters[0])
                     sys.stderr.write("Setting cluster {} for sample {}\n".format(result[sample_id], sample_id))
-                    #result[sample_id] = numeric_clusters[0]
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)
@@ -217,6 +216,4 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 # Break if no hashes left to find
                 if len(remaining_hashes) == 0:
                     break
-
-    # TODO: error if a cluster not found for a sample?
     return result

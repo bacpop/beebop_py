@@ -96,6 +96,7 @@ def generate_zip(fs: PoppunkFileStore,
         path_folder = fs.output_microreact(p_hash, internal_cluster)
         add_files(memory_file, path_folder)
         # TODO: should also map added filenames back to external cluster - but the cluster values in contents will be internal...
+        # - also, this shouldn't be necessary when change to poppunk is done to use external clusters
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
