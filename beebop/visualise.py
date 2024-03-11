@@ -31,12 +31,15 @@ def microreact(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
+    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+            external_to_poppunk_clusters = pickle.load(dict)
     microreact_internal(assign_result,
                         p_hash,
                         fs,
                         db_paths,
                         args,
-                        name_mapping)
+                        name_mapping,
+                        external_to_poppunk_clusters)
 
 
 def microreact_internal(assign_result,
@@ -44,7 +47,8 @@ def microreact_internal(assign_result,
                         fs,
                         db_paths,
                         args,
-                        name_mapping) -> None:
+                        name_mapping,
+                        external_to_poppunk_clusters) -> None:
     """
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
@@ -60,10 +64,12 @@ def microreact_internal(assign_result,
     queries_clusters = []
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
-    for cluster_no in set(queries_clusters):
-        wrapper.create_microreact(cluster_no)
-        replace_filehashes(fs.output_microreact(p_hash, cluster_no),
+    for external_cluster_no in set(queries_clusters):
+        internal_cluster_no = int(external_to_poppunk_clusters[external_cluster_no])
+        wrapper.create_microreact(internal_cluster_no)
+        replace_filehashes(fs.output_microreact(p_hash, internal_cluster_no),
                            name_mapping)
+
 
 
 def network(p_hash: str,
