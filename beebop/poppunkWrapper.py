@@ -87,7 +87,8 @@ class PoppunkWrapper:
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=self.fs.include_files(self.p_hash, cluster),
             model_dir=self.db_paths.db,
-            previous_clustering=self.args.visualise.external_clustering,
+            #previous_clustering=self.args.visualise.external_clustering,
+            previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
@@ -127,7 +128,8 @@ class PoppunkWrapper:
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=None,
             model_dir=self.db_paths.db,
-            previous_clustering=self.args.visualise.external_clustering,
+            #previous_clustering=self.args.visualise.external_clustering,
+            previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
