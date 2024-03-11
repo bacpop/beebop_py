@@ -91,7 +91,10 @@ def generate_zip(fs: PoppunkFileStore,
         ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[str(cluster)]
+        with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+             external_to_poppunk_clusters = pickle.load(dict)
+        internal_cluster = external_to_poppunk_clusters[str(cluster)]
+        component = cluster_component_mapping[internal_cluster]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
