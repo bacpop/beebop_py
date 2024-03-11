@@ -83,17 +83,18 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
+    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+         external_to_poppunk_clusters = pickle.load(dict)
+    internal_cluster = external_to_poppunk_clusters[str(cluster)]
     if type == 'microreact':
-        path_folder = fs.output_microreact(p_hash, cluster)
+        path_folder = fs.output_microreact(p_hash, internal_cluster)
         add_files(memory_file, path_folder)
+        # TODO: should also map added filenames back to external cluster - but the cluster values in contents will be internal...
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         ## TODO: make a util to get component from external cluster and use it in both places
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-             external_to_poppunk_clusters = pickle.load(dict)
-        internal_cluster = external_to_poppunk_clusters[str(cluster)]
         component = cluster_component_mapping[internal_cluster]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
