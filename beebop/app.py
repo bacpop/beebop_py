@@ -323,10 +323,13 @@ def get_network_graph(p_hash) -> json:
     """
     fs = PoppunkFileStore(storage_location)
     try:
+        cluster_result = get_clusters_internal(p_hash, storage_location)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         graphmls = {}
-        for cluster, component in cluster_component_mapping.items():
+        for cluster_info in cluster_result.values():
+            cluster = cluster_info["cluster"]
+            component = cluster_component_mapping[str(cluster)]
             path = fs.network_output_component(p_hash, component)
             with open(path, 'r') as graphml_file:
                 graph = graphml_file.read()
