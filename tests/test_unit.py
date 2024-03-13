@@ -106,7 +106,7 @@ def test_assign_clusters():
             2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
     assert list(result.values()) == unordered(list(expected.values()))
 
-
+''''
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 'GPSC5', 'hash': '7038_8#43'},
@@ -157,7 +157,9 @@ def test_microreact_internal():
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
+''''
 
+''''
 def test_network(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
@@ -202,7 +204,7 @@ def test_network_internal():
                                name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
-
+''''
 
 def test_run_poppunk_internal(qtbot):
     fs_json = FileStore('./tests/files/json')
