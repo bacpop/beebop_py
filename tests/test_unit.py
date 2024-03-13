@@ -135,7 +135,7 @@ def test_microreact(mocker):
 
     query_external_clusters_file = fs.previous_query_clustering(p_hash)
     db_external_clusters_file = fs.external_clustering
-    shutil.copyfile(db_external_clusters_file, fs.external_clustering)
+    shutil.copyfile(db_external_clusters_file, query_external_clusters_file)
 
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
