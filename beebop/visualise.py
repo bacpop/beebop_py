@@ -2,7 +2,7 @@ from rq import get_current_job
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
-from beebop.utils import replace_filehashes, add_query_ref_status, cluster_no_from_label
+from beebop.utils import replace_filehashes, add_query_ref_status, cluster_no_from_label, cluster_nos_from_assign_result
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import sys
 import pickle
@@ -127,7 +127,8 @@ def network_internal(assign_result,
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
-    cluster_component_dict = generate_mapping(p_hash, fs)
+    cluster_nos_to_map = cluster_nos_from_assign_result(assign_result)
+    cluster_component_dict = generate_mapping(p_hash, cluster_nos_to_map, fs)
     delete_component_files(cluster_component_dict,
                            fs,
                            assign_result,

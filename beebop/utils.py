@@ -29,7 +29,7 @@ def get_args() -> dict:
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
 
-def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
+def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore) -> dict:
     """
     [PopPUNKs network visualisation generates one overall .graphml file
     covering all clusters/ components. Furthermore, it generates one .graphml
@@ -45,8 +45,7 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
-    # TODO: can we just include the clusters of interest - those which contain query samples?
-    # dict to get cluster number from sample
+    sys.stderr.write("generating mapping for clusters: {}\n".format(str(cluster_nos_to_map)))
     samples_to_clusters = {}
     with open(fs.network_output_csv(p_hash)) as f:
         next(f)  # Skip the header
@@ -58,7 +57,8 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
             numeric_clusters = [int(x) for x in clusters]
             numeric_clusters.sort()
             cluster = str(numeric_clusters[0])
-            samples_to_clusters[row[0]] = cluster
+            if cluster in cluster_nos_to_map:
+                samples_to_clusters[row[0]] = cluster
 
     # list of all component graph filenames
     file_list = []
@@ -101,6 +101,12 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
 def cluster_no_from_label(cluster_label: str) -> int:
     return cluster_label.replace("GPSC", "")
 
+def cluster_nos_from_assign_result(assign_result: dict) -> list:
+   result = set()
+   for item in assign_result.values():
+       result.add(cluster_no_from_label(item['cluster']))
+   return list(result)
+
 def delete_component_files(cluster_component_dict: dict,
                            fs: PoppunkFileStore,
                            assign_result: dict,
@@ -116,12 +122,14 @@ def delete_component_files(cluster_component_dict: dict,
         which clusters we want to keep]
     :param p_hash: [project hash]
     """
-    queries_components = []
-    for item in assign_result.values():
-        cluster_no = cluster_no_from_label(item['cluster'])
-        queries_components.append(cluster_component_dict[cluster_no])
+    components = []
+    #for item in assign_result.values():
+    #    cluster_no = cluster_no_from_label(item['cluster'])
+    for cluster_no in cluster_nos_from_assign_result(assign_result):
+        components.append(cluster_component_dict[cluster_no])
 
-    components = set(queries_components)
+    #components = set(queries_components)
+
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
                               components))
