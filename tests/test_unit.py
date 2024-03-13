@@ -96,9 +96,9 @@ def test_assign_clusters():
         db_paths,
         args)
     expected = {
-            0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-            1: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-            2: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
+            0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
+            1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
+            2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
     assert list(result.values()) == unordered(list(expected.values()))
 
 

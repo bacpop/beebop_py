@@ -86,13 +86,15 @@ def get_clusters(hashes_list: list,
 
     # save a mapping of PopPUNK clusters to external clusters which
     # we'll use to return visualisations
-    external_to_poppunk_clusters = {}
-    for i, name in enumerate(queries_names):
-        external_to_poppunk_clusters[str(external_clusters[name])] = \
-            str(queries_clusters[i])
+   # external_to_poppunk_clusters = {}
+   # for i, name in enumerate(queries_names):
+   #     external_to_poppunk_clusters[str(external_clusters[name])] = \
+    #        str(queries_clusters[i])
 
-    with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
-        pickle.dump(external_to_poppunk_clusters, f)
+    #sys.stderr.write("EXTERNAL TO POPPUNK CLUSTERS:\n")
+    #sys.stderr.write(str(external_to_poppunk_clusters) + "\n")
+    #with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
+    #    pickle.dump(external_to_poppunk_clusters, f)
 
     # save result to retrieve when reloading project results - this
     # overwrites the initial output file written before the assign

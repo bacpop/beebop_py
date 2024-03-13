@@ -4,15 +4,19 @@ RUN conda config --append channels conda-forge
 RUN conda config --append channels bioconda
 
 RUN conda install python=3.10
-RUN conda install poppunk
+RUN conda install poppunk=2.6.4
 
 RUN pip install poetry
 COPY  *.toml *.lock /
 RUN poetry config virtualenvs.create false \
     && poetry install
 
+COPY /docker/visualise.py /opt/conda/lib/python3.10/site-packages/PopPUNK/visualise.py
+
 COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
 CMD poetry run waitress-serve --port=5000 'beebop.app:app'
+
+

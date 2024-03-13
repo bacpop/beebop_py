@@ -2,7 +2,7 @@ from rq import get_current_job
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
-from beebop.utils import replace_filehashes, add_query_ref_status
+from beebop.utils import replace_filehashes, add_query_ref_status, cluster_no_from_label
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import sys
 import pickle
@@ -31,15 +31,14 @@ def microreact(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-        external_to_poppunk_clusters = pickle.load(dict)
+    #with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+    #    external_to_poppunk_clusters = pickle.load(dict)
     microreact_internal(assign_result,
                         p_hash,
                         fs,
                         db_paths,
                         args,
-                        name_mapping,
-                        external_to_poppunk_clusters)
+                        name_mapping)
 
 
 def microreact_internal(assign_result,
@@ -47,8 +46,7 @@ def microreact_internal(assign_result,
                         fs,
                         db_paths,
                         args,
-                        name_mapping,
-                        external_to_poppunk_clusters) -> None:
+                        name_mapping) -> None:
     """
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
@@ -66,11 +64,12 @@ def microreact_internal(assign_result,
         queries_clusters.append(item['cluster'])
     # TODO: when PopPunk is using external_clustering, we should be able
     # to skip the external -> internal mapping
-    for external_cluster in set(queries_clusters):
-        internal_cluster_no = \
-            int(external_to_poppunk_clusters[external_cluster])
-        wrapper.create_microreact(internal_cluster_no)
-        replace_filehashes(fs.output_microreact(p_hash, internal_cluster_no),
+    for cluster in set(queries_clusters):
+        #internal_cluster_no = \
+        #    int(external_to_poppunk_clusters[external_cluster])
+        cluster_no = int(cluster_no_from_label(cluster))
+        wrapper.create_microreact(cluster_no)
+        replace_filehashes(fs.output_microreact(p_hash, cluster_no),
                            name_mapping)
 
 
@@ -99,15 +98,14 @@ def network(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-        external_to_poppunk_clusters = pickle.load(dict)
+    #with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+    #    external_to_poppunk_clusters = pickle.load(dict)
     network_internal(assign_result,
                      p_hash,
                      fs,
                      db_paths,
                      args,
-                     name_mapping,
-                     external_to_poppunk_clusters)
+                     name_mapping)
     return assign_result
 
 
@@ -116,8 +114,7 @@ def network_internal(assign_result,
                      fs,
                      db_paths,
                      args,
-                     name_mapping,
-                     external_to_poppunk_clusters) -> None:
+                     name_mapping) -> None:
     """
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
@@ -132,12 +129,9 @@ def network_internal(assign_result,
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
     cluster_component_dict = generate_mapping(p_hash, fs)
-    # TODO: when PopPunk is using external_clustering, we should
-    # be able to skip the external -> internal mapping
     delete_component_files(cluster_component_dict,
                            fs,
                            assign_result,
-                           p_hash,
-                           external_to_poppunk_clusters)
+                           p_hash)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

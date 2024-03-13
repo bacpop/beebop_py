@@ -45,11 +45,20 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
-    # dict to get cluster number from samplename
+    # TODO: can we just include the clusters of interest - those which contain query samples?
+    # dict to get cluster number from sample
+    samples_to_clusters = {}
     with open(fs.network_output_csv(p_hash)) as f:
         next(f)  # Skip the header
         reader = csv.reader(f, skipinitialspace=True)
-        samplename_cluster_dict = dict(reader)
+        for row in reader:
+            clusters = row[1].split(";")
+            # map external cluster rows to the lowest number cluster for that sample
+            # TODO: this logic should be a util as we also do it for assigning clusters
+            numeric_clusters = [int(x) for x in clusters]
+            numeric_clusters.sort()
+            cluster = str(numeric_clusters[0])
+            samples_to_clusters[row[0]] = cluster
 
     # list of all component graph filenames
     file_list = []
@@ -59,26 +68,43 @@ def generate_mapping(p_hash: str, fs: PoppunkFileStore) -> dict:
 
     # generate dict that maps cluster number to component number
     cluster_component_dict = {}
+    # Match each cluster with the component with which it shares the most samples -
+    # keep a tally on how many matches the current winner has
+    cluster_sample_counts = {}
+
     for component_filename in file_list:
         component_number = re.findall(R'\d+', component_filename)[0]
         component_xml = ET.parse(fs.network_output_component(
             p_hash,
             component_number)).getroot()
-        samplename = component_xml.find(
-            ".//{http://graphml.graphdrawing.org/xmlns}node[@id='n0']/").text
-        cluster_number = samplename_cluster_dict[samplename]
-        cluster_component_dict[cluster_number] = component_number
+        sample_nodes = component_xml.findall(
+                              ".//{http://graphml.graphdrawing.org/xmlns}node/")
+        component_cluster_counts = {}
+        for sample_node in sample_nodes:
+            sample_id = sample_node.text
+            if sample_id in samples_to_clusters.keys():
+               cluster = samples_to_clusters[sample_id]
+               if cluster not in component_cluster_counts.keys():
+                  component_cluster_counts[cluster] = 0
+               component_cluster_counts[cluster] = component_cluster_counts[cluster] + 1
+
+        for cluster, count in component_cluster_counts.items():
+            if cluster not in cluster_sample_counts.keys() or count > cluster_sample_counts[cluster]:
+                cluster_component_dict[cluster] = component_number
+                cluster_sample_counts[cluster] = count
+
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
         pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
 
+def cluster_no_from_label(cluster_label: str) -> int:
+    return cluster_label.replace("GPSC", "")
 
 def delete_component_files(cluster_component_dict: dict,
                            fs: PoppunkFileStore,
                            assign_result: dict,
-                           p_hash: str,
-                           external_to_poppunk_clusters: dict) -> None:
+                           p_hash: str) -> None:
     """
     [poppunk generates >1100 component graph files. We only need to store those
     files from the clusters our queries belong to.]
@@ -92,9 +118,8 @@ def delete_component_files(cluster_component_dict: dict,
     """
     queries_components = []
     for item in assign_result.values():
-        external_cluster = str(item['cluster'])
-        internal_cluster = external_to_poppunk_clusters[external_cluster]
-        queries_components.append(cluster_component_dict[internal_cluster])
+        cluster_no = cluster_no_from_label(item['cluster'])
+        queries_components.append(cluster_component_dict[cluster_no])
 
     components = set(queries_components)
     # delete redundant component files

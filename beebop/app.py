@@ -15,7 +15,7 @@ import sys
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args
+from beebop.utils import get_args, cluster_no_from_label
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -66,13 +66,13 @@ def check_connection(redis) -> None:
         abort(500, description="Redis not found")
 
 
-def poppunk_cluster_from_external_cluster(fs: PoppunkFileStore,
-                                          p_hash: str,
-                                          external_cluster: str) -> str:
-    path = fs.external_to_poppunk_clusters(p_hash)
-    with open(path, 'rb') as dict:
-        external_to_poppunk_clusters = pickle.load(dict)
-    return external_to_poppunk_clusters[external_cluster]
+#def poppunk_cluster_from_external_cluster(fs: PoppunkFileStore,
+#                                          p_hash: str,
+#                                          external_cluster: str) -> str:
+#    path = fs.external_to_poppunk_clusters(p_hash)
+#    with open(path, 'rb') as dict:
+#        external_to_poppunk_clusters = pickle.load(dict)
+#    return external_to_poppunk_clusters[external_cluster]
 
 
 def generate_zip(fs: PoppunkFileStore,
@@ -92,10 +92,11 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    internal_cluster = \
-        poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
+    #internal_cluster = \
+    #    poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
     if type == 'microreact':
-        path_folder = fs.output_microreact(p_hash, internal_cluster)
+        #path_folder = fs.output_microreact(p_hash, internal_cluster)
+        path_folder = fs.output_microreact(p_hash, cluster)
         add_files(memory_file, path_folder)
         # TODO: should also map added filenames back to external cluster -
         # but the cluster values in contents will be internal...
@@ -105,7 +106,8 @@ def generate_zip(fs: PoppunkFileStore,
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[internal_cluster]
+        #component = cluster_component_mapping[internal_cluster]
+        component = cluster_component_mapping[cluster_no_from_label(cluster)]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
@@ -501,9 +503,13 @@ def download_graphml_internal(p_hash: str,
     try:
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        internal_cluster = \
-            poppunk_cluster_from_external_cluster(fs, p_hash, cluster)
-        component = cluster_component_mapping[internal_cluster]
+        #internal_cluster = \
+        #    poppunk_cluster_from_external_cluster(fs, p_hash, cluster)
+        #component = cluster_component_mapping[internal_cluster]
+        component = cluster_component_mapping[cluster_no_from_label(cluster)]
+
+        sys.stderr.write("Returning component {} for cluster {}".format(component, cluster_no_from_label(cluster)))
+
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
             graph = graphml_file.read()
