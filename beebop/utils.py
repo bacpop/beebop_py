@@ -72,6 +72,9 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
     # keep a tally on how many matches the current winner has
     cluster_sample_counts = {}
 
+    # TODO: remove this, just a diagnostic check for Nick
+    single_isolate_components = []
+
     for component_filename in file_list:
         component_number = re.findall(R'\d+', component_filename)[0]
         component_xml = ET.parse(fs.network_output_component(
@@ -80,6 +83,8 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
         sample_nodes = component_xml.findall(
                               ".//{http://graphml.graphdrawing.org/xmlns}node/")
         component_cluster_counts = {}
+        # TODO: remove this
+        last_sample = {}
         for sample_node in sample_nodes:
             sample_id = sample_node.text
             if sample_id in samples_to_clusters.keys():
@@ -87,11 +92,18 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
                if cluster not in component_cluster_counts.keys():
                   component_cluster_counts[cluster] = 0
                component_cluster_counts[cluster] = component_cluster_counts[cluster] + 1
+               last_sample[cluster] = sample_id
 
         for cluster, count in component_cluster_counts.items():
+            if count == 1 and len(sample_nodes) == 1:
+               single_isolate_components.append("{},{},{}\n".format(cluster, component_number, last_sample[cluster]))
             if cluster not in cluster_sample_counts.keys() or count > cluster_sample_counts[cluster]:
                 cluster_component_dict[cluster] = component_number
                 cluster_sample_counts[cluster] = count
+
+    sys.stderr.write("SINGLE ISOLATE COMPONENTS:\n")
+    sys.stderr.write("external_cluster,component,sample\n")
+    sys.stderr.write(str(single_isolate_components))
 
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
