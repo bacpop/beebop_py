@@ -51,12 +51,7 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
         next(f)  # Skip the header
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
-            clusters = row[1].split(";")
-            # map external cluster rows to the lowest number cluster for that sample
-            # TODO: this logic should be a util as we also do it for assigning clusters
-            numeric_clusters = [int(x) for x in clusters]
-            numeric_clusters.sort()
-            cluster = str(numeric_clusters[0])
+            cluster = str(get_lowest_cluster(row[1]))
             if cluster in cluster_nos_to_map:
                 samples_to_clusters[row[0]] = cluster
 
@@ -223,6 +218,12 @@ def add_query_ref_status(fs: PoppunkFileStore,
         with open(path, 'wb') as f:
             xml_tree.write(f, encoding='utf-8')
 
+# map external cluster rows to the lowest number cluster for that sample
+def get_lowest_cluster(clusters_str: str) -> int:
+    clusters = clusters_str.split(";")
+    numeric_clusters = [int(x) for x in clusters]
+    numeric_clusters.sort()
+    return numeric_clusters[0]
 
 def get_external_clusters_from_file(external_clusters_file: str,
                                     hashes_list: list) -> dict:
@@ -254,10 +255,7 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 print(', '.join(row))
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
-                    clusters = row[1].split(";")
-                    numeric_clusters = [int(x) for x in clusters]
-                    numeric_clusters.sort()
-                    result[sample_id] = "GPSC{}".format(numeric_clusters[0])
+                    result[sample_id] = "GPSC{}".format(get_lowest_cluster(row[1]))
                     sys.stderr.write("Setting cluster {} for sample {}\n"
                                      .format(result[sample_id], sample_id))
 

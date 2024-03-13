@@ -16,5 +16,3 @@ WORKDIR /beebop
 EXPOSE 5000
 
 CMD poetry run waitress-serve --port=5000 'beebop.app:app'
-
-
