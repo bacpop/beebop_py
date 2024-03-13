@@ -47,6 +47,10 @@ status_options = ['queued',
                   'waiting',
                   'deferred']
 
+external_to_poppunk_clusters = {
+    "GPSC5": "3",
+    "GPSC60": "59"
+}
 
 def dummy_fct(duration):
     time.sleep(duration)
@@ -124,6 +128,10 @@ def test_microreact(mocker):
         "hash1": "name1.fa",
         "hash2": "name2.fa"
         }
+
+    with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
+       pickle.dump(external_to_poppunk_clusters, f)
+
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
@@ -133,10 +141,6 @@ def test_microreact_internal():
     assign_result = {0: {'cluster': 'GPSC3', 'hash': 'some_hash'},
                      1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
 
-    external_to_poppunk_clusters = {
-        "GPSC5": "3",
-        "GPSC60": "59"
-    }
     p_hash = 'unit_test_visualisations'
     name_mapping = {
         "hash1": "name1.fa",
