@@ -109,8 +109,8 @@ def test_assign_clusters():
 
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                         1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
+        assign_result = {0: {'cluster': 'GPSC5', 'hash': '7038_8#43'},
+                         1: {'cluster': 'GPSC60', 'hash': '6753_1#5'}}
 
         class mock_dependency:
             def __init__(self, result):
@@ -126,8 +126,8 @@ def test_microreact(mocker):
     )
     p_hash = 'unit_test_visualisations'
     name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
+        "7038_8#43": "name1.fa",
+        "6753_1#5": "name2.fa"
         }
 
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
