@@ -17,6 +17,7 @@ from io import BytesIO
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import pickle
+import shutil
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -131,6 +132,10 @@ def test_microreact(mocker):
 
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
        pickle.dump(external_to_poppunk_clusters, f)
+
+    query_external_clusters_file = fs.previous_query_clustering(p_hash)
+    db_external_clusters_file = fs.external_clustering
+    shutil.copyfile(db_external_clusters_file, fs.external_clustering)
 
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
