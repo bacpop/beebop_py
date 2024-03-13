@@ -88,9 +88,9 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
 
-    #def external_to_poppunk_clusters(self, p_hash) -> str:
-    #    return str(PurePath(self.output(p_hash),
-    #                        "external_to_poppunk_clusters.pickle"))
+    def external_to_poppunk_clusters(self, p_hash) -> str:
+        return str(PurePath(self.output(p_hash),
+                            "external_to_poppunk_clusters.pickle"))
 
     def output_microreact(self, p_hash, cluster) -> str:
         """

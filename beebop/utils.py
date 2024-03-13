@@ -208,7 +208,7 @@ def get_external_clusters_from_file(external_clusters_file: str,
                                     hashes_list: list) -> dict:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
-    file and returns a dictionary of sample hash to external cluster number. If
+    file and returns a dictionary of sample hash to external cluster name. If
     there are multiple external clusters listed for a sample, the lowest
     cluster number is returned]
 

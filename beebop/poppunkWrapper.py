@@ -59,7 +59,7 @@ class PoppunkWrapper:
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
 
-    def create_microreact(self, cluster: str) -> None:
+    def create_microreact(self, cluster: str, poppunk_cluster: str) -> None:
         """
         [Generates microreact visualisation output based on previous
         assign_clusters() output.]
@@ -85,7 +85,7 @@ class PoppunkWrapper:
             perplexity=self.args.visualise.perplexity,
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
-            include_files=self.fs.include_files(self.p_hash, cluster),
+            include_files=self.fs.include_files(self.p_hash, poppunk_cluster),
             model_dir=self.db_paths.db,
             previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(

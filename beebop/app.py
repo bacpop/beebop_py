@@ -94,20 +94,18 @@ def generate_zip(fs: PoppunkFileStore,
     memory_file = BytesIO()
     #internal_cluster = \
     #    poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
+    cluster_no = cluster_no_from_label(cluster)
     if type == 'microreact':
         #path_folder = fs.output_microreact(p_hash, internal_cluster)
-        path_folder = fs.output_microreact(p_hash, cluster)
+        path_folder = fs.output_microreact(p_hash, cluster_no)
+        sys.stderr.write("Attempting to output microreact zip for " + path_folder + "\n")
         add_files(memory_file, path_folder)
-        # TODO: should also map added filenames back to external cluster -
-        # but the cluster values in contents will be internal...
-        # - also, this shouldn't be necessary when change to poppunk is done
-        # to use external clusters
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
         #component = cluster_component_mapping[internal_cluster]
-        component = cluster_component_mapping[cluster_no_from_label(cluster)]
+        component = cluster_component_mapping[cluster_no]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
@@ -450,7 +448,8 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     """
     fs = PoppunkFileStore(storage_location)
 
-    path_json = fs.microreact_json(p_hash, cluster)
+    cluster_no = cluster_no_from_label(cluster)
+    path_json = fs.microreact_json(p_hash, cluster_no)
 
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
