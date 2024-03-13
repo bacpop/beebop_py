@@ -64,7 +64,7 @@ def test_run_poppunk(client, qtbot):
 
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
-                          "/microreact_5/microreact_5_core_NJ.nwk")
+                          "/microreact_3/microreact_3_core_NJ.nwk")
 
     def network_status_finished():
         status = client.get("/status/" + p_hash)
