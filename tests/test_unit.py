@@ -109,7 +109,7 @@ def test_assign_clusters():
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                         1: {'cluster': 'GPSC59', 'hash': 'another_hash'}}
+                         1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
 
         class mock_dependency:
             def __init__(self, result):
@@ -139,7 +139,7 @@ def test_microreact(mocker):
 
 def test_microreact_internal():
     assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                     1: {'cluster': 'GPSC59', 'hash': 'another_hash'}}
+                     1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
 
     p_hash = 'unit_test_visualisations'
     name_mapping = {
@@ -156,7 +156,7 @@ def test_microreact_internal():
 def test_network(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                         1: {'cluster': 'GPSC59', 'hash': 'another_hash'}}
+                         1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
 
         class mock_dependency:
             def __init__(self, result):
