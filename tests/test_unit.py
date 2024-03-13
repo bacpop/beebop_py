@@ -138,8 +138,8 @@ def test_microreact(mocker):
 
 
 def test_microreact_internal():
-    assign_result = {0: {'cluster': 'GPSC3', 'hash': 'some_hash'},
-                     1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
+    assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
+                     1: {'cluster': 'GPSC59', 'hash': 'another_hash'}}
 
     p_hash = 'unit_test_visualisations'
     name_mapping = {
