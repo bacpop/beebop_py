@@ -59,6 +59,8 @@ def microreact_internal(assign_result,
     :param args: [arguments for poppunk functions]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
+    :param external_to_poppunk_clusters: [dict of external to poppunk
+        clusters, used to identify the include file to pass to poppunk]
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     queries_clusters = []
