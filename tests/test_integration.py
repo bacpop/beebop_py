@@ -135,7 +135,7 @@ def test_results_zip(client):
 
 def test_download_graphml(client):
     p_hash = 'unit_test_graphml'
-    cluster = 'GPSC3'
+    cluster = 'GPSC16'
     response = client.post("/results/graphml", json={
         'projectHash': p_hash,
         'cluster': cluster})
