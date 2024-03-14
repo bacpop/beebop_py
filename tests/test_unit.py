@@ -124,11 +124,10 @@ def test_assign_clusters():
             2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
     assert list(result.values()) == unordered(list(expected_assign_result.values()))
 
-c1 = ''''
+
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 'GPSC5', 'hash': '7038_8#43'},
-                         1: {'cluster': 'GPSC60', 'hash': '6753_1#5'}}
+        assign_result = expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -143,22 +142,19 @@ def test_microreact(mocker):
         new=mock_get_current_job
     )
     p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "7038_8#43": "name1.fa",
-        "6753_1#5": "name2.fa"
-        }
+    do_assign_clusters(p_hash)
 
-    with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
-       pickle.dump(external_to_poppunk_clusters, f)
+    #with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
+    #   pickle.dump(external_to_poppunk_clusters, f)
 
-    query_external_clusters_file = fs.previous_query_clustering(p_hash)
-    db_external_clusters_file = fs.external_clustering
-    shutil.copyfile(db_external_clusters_file, query_external_clusters_file)
+    #query_external_clusters_file = fs.previous_query_clustering(p_hash)
+    #db_external_clusters_file = fs.external_clustering
+    #shutil.copyfile(db_external_clusters_file, query_external_clusters_file)
 
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
-                          "/microreact_5_core_NJ.nwk")
-''''
+                          "/microreact_16_core_NJ.nwk")
+
 
 def test_microreact_internal():
     p_hash = 'unit_test_visualisations'
