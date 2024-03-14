@@ -32,7 +32,7 @@ import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 
 
-
+fs = setup.fs
 schemas = beebop.schemas.Schema()
 schema_path = Path(os.getcwd() + "/spec")
 resolver = jsonschema.validators.RefResolver(
