@@ -4,6 +4,7 @@ from PopPUNK import __version__ as poppunk_version
 from redis import Redis
 from rq import SimpleWorker, Queue
 from rq.job import Job
+from rq.job import Job
 import time
 import pytest
 from pytest_unordered import unordered
@@ -104,6 +105,27 @@ def do_assign_clusters(p_hash: str):
         db_paths,
         args)
 
+def do_network(p_hash: str):
+     def mock_get_current_job(Redis):
+            assign_result = expected_assign_result
+
+            class mock_dependency:
+                def __init__(self, result):
+                    self.result = result
+
+            class mock_job:
+                def __init__(self, result):
+                    self.dependency = mock_dependency(result)
+            return mock_job(assign_result)
+        mocker.patch(
+            'beebop.visualise.get_current_job',
+            new=mock_get_current_job
+        )
+        from beebop import visualise
+
+    do_assign_clusters(p_hash)
+    visualise.network(p_hash, fs, db_paths, args, name_mapping)
+
 def test_get_version():
     assert versions.get_version() == [
         {"name": "beebop", "version": beebop_version},
@@ -138,7 +160,7 @@ def test_microreact(mocker):
         new=mock_get_current_job
     )
     p_hash = 'unit_test_microreact'
-    do_assign_clusters(p_hash)
+    do_network(p_hash)
 
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
@@ -147,7 +169,7 @@ def test_microreact(mocker):
 
 def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
-    do_assign_clusters(p_hash)
+    do_network(p_hash)
     visualise.microreact_internal(expected_assign_result, p_hash,
                                   fs, db_paths, args, name_mapping,
                                   external_to_poppunk_clusters)
@@ -157,25 +179,8 @@ def test_microreact_internal():
 
 
 def test_network(mocker):
-    def mock_get_current_job(Redis):
-        assign_result = expected_assign_result
-
-        class mock_dependency:
-            def __init__(self, result):
-                self.result = result
-
-        class mock_job:
-            def __init__(self, result):
-                self.dependency = mock_dependency(result)
-        return mock_job(assign_result)
-    mocker.patch(
-        'beebop.visualise.get_current_job',
-        new=mock_get_current_job
-    )
-    from beebop import visualise
     p_hash = 'unit_test_network'
-    do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, db_paths, args, name_mapping)
+    do_network(p_hash)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -183,7 +188,7 @@ def test_network(mocker):
 def test_network_internal():
     assign_result = expected_assign_result
     p_hash = 'unit_test_network_internal'
-    do_assign_clusters('unit_test_visualisations')
+    do_assign_clusters(p_hash)
     visualise.network_internal(assign_result,
                                p_hash,
                                fs,

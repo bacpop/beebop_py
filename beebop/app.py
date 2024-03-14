@@ -11,7 +11,6 @@ import zipfile
 import json
 import requests
 import pickle
-import sys
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -66,15 +65,6 @@ def check_connection(redis) -> None:
         abort(500, description="Redis not found")
 
 
-#def poppunk_cluster_from_external_cluster(fs: PoppunkFileStore,
-#                                          p_hash: str,
-#                                          external_cluster: str) -> str:
-#    path = fs.external_to_poppunk_clusters(p_hash)
-#    with open(path, 'rb') as dict:
-#        external_to_poppunk_clusters = pickle.load(dict)
-#    return external_to_poppunk_clusters[external_cluster]
-
-
 def generate_zip(fs: PoppunkFileStore,
                  p_hash: str,
                  type: str,
@@ -92,19 +82,14 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    #internal_cluster = \
-    #    poppunk_cluster_from_external_cluster(fs, p_hash, str(cluster))
     cluster_no = cluster_no_from_label(cluster)
     if type == 'microreact':
-        #path_folder = fs.output_microreact(p_hash, internal_cluster)
         path_folder = fs.output_microreact(p_hash, cluster_no)
-        sys.stderr.write("Attempting to output microreact zip for " + path_folder + "\n")
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        #component = cluster_component_mapping[internal_cluster]
         component = cluster_component_mapping[cluster_no]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
@@ -502,12 +487,7 @@ def download_graphml_internal(p_hash: str,
     try:
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        #internal_cluster = \
-        #    poppunk_cluster_from_external_cluster(fs, p_hash, cluster)
-        #component = cluster_component_mapping[internal_cluster]
         component = cluster_component_mapping[cluster_no_from_label(cluster)]
-
-        sys.stderr.write("Returning component {} for cluster {}".format(component, cluster_no_from_label(cluster)))
 
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:
