@@ -59,6 +59,11 @@ expected_assign_result = {
      2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}
 }
 
+name_mapping = {
+    "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
+    "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
+}
+
 # Used by microreact
 def save_external_to_poppunk_clusters(p_hash: str):
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
@@ -172,11 +177,9 @@ def test_microreact_internal():
 
 '''
 
-c2 = '''
 def test_network(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                         1: {'cluster': 'GPSC60', 'hash': 'another_hash'}}
+        assign_result = expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -192,22 +195,15 @@ def test_network(mocker):
     )
     from beebop import visualise
     p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
+    do_assign_clusters(p_hash)
     visualise.network(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
-'''
+
 
 def test_network_internal():
     assign_result = expected_assign_result
     p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
-        "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
-    }
     do_assign_clusters('unit_test_visualisations')
     visualise.network_internal(assign_result,
                                p_hash,
