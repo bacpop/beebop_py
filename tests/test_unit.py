@@ -508,7 +508,7 @@ def test_send_zip_internal(client):
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
-        cluster = 1
+        cluster = "GPSC1"
         type = 'network'
         response = app.send_zip_internal(project_hash,
                                          type,
@@ -522,7 +522,7 @@ def test_send_zip_internal(client):
 
 def test_download_graphml_internal():
     project_hash = 'unit_test_graphml'
-    cluster = 5
+    cluster = "GPSC5"
     response = app.download_graphml_internal(project_hash,
                                              cluster,
                                              storage_location)
@@ -615,7 +615,8 @@ def test_add_files():
 
 
 def test_generate_mapping():
-    result = utils.generate_mapping('results_modifications', fs)
+    cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
+    result = utils.generate_mapping('results_modifications', cluster_nos_to_map, fs)
     print(result)
     exp_cluster_component_dict = {
         '13': '2',
