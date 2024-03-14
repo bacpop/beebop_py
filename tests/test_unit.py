@@ -117,11 +117,11 @@ def do_network(p_hash: str):
                 def __init__(self, result):
                     self.dependency = mock_dependency(result)
             return mock_job(assign_result)
-        mocker.patch(
-            'beebop.visualise.get_current_job',
-            new=mock_get_current_job
-        )
-        from beebop import visualise
+    mocker.patch(
+        'beebop.visualise.get_current_job',
+        new=mock_get_current_job
+    )
+    from beebop import visualise
 
     do_assign_clusters(p_hash)
     visualise.network(p_hash, fs, db_paths, args, name_mapping)

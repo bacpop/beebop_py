@@ -4,8 +4,7 @@ from beebop.utils import get_external_clusters_from_file
 import re
 import os
 import pickle
-import csv
-import sys
+
 
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -92,8 +91,6 @@ def get_clusters(hashes_list: list,
         external_to_poppunk_clusters[str(external_clusters[name])] = \
             str(queries_clusters[i])
 
-    #sys.stderr.write("EXTERNAL TO POPPUNK CLUSTERS:\n")
-    #sys.stderr.write(str(external_to_poppunk_clusters) + "\n")
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
         pickle.dump(external_to_poppunk_clusters, f)
 
