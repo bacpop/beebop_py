@@ -478,7 +478,7 @@ def download_graphml_internal(p_hash: str,
     number from cluster number to locate and send the right .graphml file.]
 
     :param p_hash: [project hash]
-    :param cluster: [cluster number]
+    :param cluster: [cluster labelr]
     :param storage_location: [storage location]
     :return json: [response object with graphml content stored as string in
         'data']
