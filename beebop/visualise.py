@@ -4,7 +4,6 @@ from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status, cluster_no_from_label, cluster_nos_from_assign_result
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-import sys
 import pickle
 
 
@@ -97,8 +96,6 @@ def network(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    #with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-    #    external_to_poppunk_clusters = pickle.load(dict)
     network_internal(assign_result,
                      p_hash,
                      fs,
