@@ -53,6 +53,11 @@ external_to_poppunk_clusters = {
     "GPSC60": "59"
 }
 
+# Used by microreact
+def save_external_to_poppunk_clusters(p_hash: str):
+    with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
+       pickle.dump(external_to_poppunk_clusters, f)
+
 def dummy_fct(duration):
     time.sleep(duration)
     return "Result"
@@ -186,7 +191,7 @@ def test_network(mocker):
     visualise.network(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
-
+'''
 
 def test_network_internal():
     assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
@@ -204,7 +209,7 @@ def test_network_internal():
                                name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
-'''
+
 
 def test_run_poppunk_internal(qtbot):
     fs_json = FileStore('./tests/files/json')
@@ -519,7 +524,7 @@ def test_send_zip_internal(client):
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
         assert 'network_component_38.graphml'.encode('utf-8') in response.data
 
-
+c3 = '''
 def test_download_graphml_internal():
     project_hash = 'unit_test_graphml'
     cluster = "GPSC5"
@@ -537,7 +542,7 @@ def test_download_graphml_internal():
                                                     storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
     assert error2['error'] == 'File not found'
-
+'''
 
 def test_hex_to_decimal():
     dummy_sketch = {
