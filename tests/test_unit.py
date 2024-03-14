@@ -16,6 +16,7 @@ from flask import Flask
 from unittest.mock import Mock, patch
 from io import BytesIO
 from pathlib import Path
+from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
 import shutil
@@ -26,9 +27,10 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop import utils
-from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-from beebop.utils import get_args
+
 import beebop.schemas
+from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
+
 
 
 schemas = beebop.schemas.Schema()
@@ -37,10 +39,6 @@ resolver = jsonschema.validators.RefResolver(
     base_uri=f"{schema_path.as_uri()}/",
     referrer=True,
 )
-storage_location = './tests/results'
-fs = PoppunkFileStore(storage_location)
-db_paths = DatabaseFileStore('./storage/GPS_v6_references')
-args = get_args()
 
 status_options = ['queued',
                   'started',

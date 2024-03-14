@@ -4,6 +4,8 @@ from beebop import assignClusters
 from beebop import visualise
 from tests import hdf5_to_json
 import json
+from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
+from beebop.utils import get_args
 
 schemas = beebop.schemas.Schema()
 
@@ -22,6 +24,9 @@ def generate_json():
 
     return json.dumps(sketches_json)
 
+storage_location = './tests/results'
+fs = PoppunkFileStore(storage_location)
+
 expected_assign_result = {
      0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
      1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
@@ -32,6 +37,9 @@ name_mapping = {
     "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
+
+db_paths = DatabaseFileStore('./storage/GPS_v6_references')
+args = get_args()
 
 def do_assign_clusters(p_hash: str):
     hashes_list = [
