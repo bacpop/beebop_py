@@ -34,6 +34,7 @@ from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 
 fs = setup.fs
 args = setup.args
+storage_location = setup.storage_location
 
 schemas = beebop.schemas.Schema()
 schema_path = Path(os.getcwd() + "/spec")
