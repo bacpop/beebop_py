@@ -91,7 +91,7 @@ def test_get_version():
 
 
 def test_assign_clusters():
-    result = do_assign_clusters('unit_test_poppunk_assign')
+    result = setup.do_assign_clusters('unit_test_poppunk_assign')
     expected = {
             0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
@@ -116,7 +116,7 @@ def test_microreact(mocker):
         new=mock_get_current_job
     )
     p_hash = 'unit_test_microreact'
-    do_network_internal(p_hash)
+    setup.do_network_internal(p_hash)
 
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
@@ -125,7 +125,7 @@ def test_microreact(mocker):
 
 def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
-    do_network_internal(p_hash)
+    setup.do_network_internal(p_hash)
     visualise.microreact_internal(expected_assign_result, p_hash,
                                   fs, db_paths, args, name_mapping,
                                   external_to_poppunk_clusters)
@@ -153,7 +153,7 @@ def test_network(mocker):
     )
     from beebop import visualise
 
-    do_assign_clusters(p_hash)
+    setup.do_assign_clusters(p_hash)
     visualise.network(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
@@ -162,7 +162,7 @@ def test_network(mocker):
 def test_network_internal():
     assign_result = expected_assign_result
     p_hash = 'unit_test_network_internal'
-    do_network_internal(p_hash)
+    setup.do_network_internal(p_hash)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 

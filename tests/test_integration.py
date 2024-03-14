@@ -134,7 +134,7 @@ def test_results_zip(client):
 
 def test_download_graphml(client):
     p_hash = 'integration_test_download_graphml'
-    do_network_internal(p_hash)
+    setup.do_network_internal(p_hash)
     cluster = 'GPSC16'
     response = client.post("/results/graphml", json={
         'projectHash': p_hash,
