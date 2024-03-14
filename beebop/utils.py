@@ -41,6 +41,7 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
     and their corresponding clusters.]
 
     :param p_hash: [project hash]
+    :param cluster_nos_to_map: [clusters of interest for this project - skip all other clusters]
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
@@ -91,10 +92,22 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
         pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
 
-def cluster_no_from_label(cluster_label: str) -> int:
+def cluster_no_from_label(cluster_label: str) -> str:
+    """
+    [Strip GPSC prefix from cluster label, as the internals of PopPUNK use the numeric part only.]
+
+    :param cluster_label: [external cluster label with GPSC prefix]
+    :return str: [cluster string with prefix removed]
+    """
     return cluster_label.replace("GPSC", "")
 
 def cluster_nos_from_assign_result(assign_result: dict) -> list:
+   """
+   [Get all cluster numbers from a cluster assign result.]
+
+   :param assign_result: [cluster assign result, as returned through the API]
+   :return: [list of all external cluster numbers in the result]
+   """
    result = set()
    for item in assign_result.values():
        result.add(cluster_no_from_label(item['cluster']))
@@ -122,7 +135,6 @@ def delete_component_files(cluster_component_dict: dict,
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
                               components))
-
     keep_filenames.append('network_cytoscape.csv')
     keep_filenames.append('network_cytoscape.graphml')
     keep_filenames.append('cluster_component_dict.pickle')
