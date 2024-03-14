@@ -485,7 +485,7 @@ def test_send_zip_internal(client):
 def test_download_graphml_internal():
     project_hash = 'unit_test_graphml'
     cluster = "GPSC16"
-    do_network_internal(project_hash)
+    setup.do_network_internal(project_hash)
     response = app.download_graphml_internal(project_hash,
                                              cluster,
                                              storage_location)
