@@ -148,7 +148,7 @@ def test_microreact(mocker):
 def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
     do_assign_clusters(p_hash)
-    visualise.microreact_internal(assign_result, p_hash,
+    visualise.microreact_internal(expected_assign_result, p_hash,
                                   fs, db_paths, args, name_mapping,
                                   external_to_poppunk_clusters)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
@@ -507,10 +507,11 @@ def test_send_zip_internal(client):
         assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
         assert 'network_component_38.graphml'.encode('utf-8') in response.data
 
-c3 = '''
+
 def test_download_graphml_internal():
     project_hash = 'unit_test_graphml'
-    cluster = "GPSC5"
+    cluster = "GPSC16"
+    do_assign_clusters(project_hash)
     response = app.download_graphml_internal(project_hash,
                                              cluster,
                                              storage_location)
@@ -519,13 +520,13 @@ def test_download_graphml_internal():
                                            '</graphml>',
                                            '</node>',
                                            '</edge>'])
-    cluster_no_network_file = 59
+    cluster_no_network_file = "not a cluster"
     response_error2 = app.download_graphml_internal(project_hash,
                                                     cluster_no_network_file,
                                                     storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
     assert error2['error'] == 'File not found'
-'''
+
 
 def test_hex_to_decimal():
     dummy_sketch = {
