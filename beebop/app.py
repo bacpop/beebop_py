@@ -313,6 +313,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     except AttributeError:
         return {"error": "Unknown project hash"}
 
+
 @app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
 def get_network_graph(p_hash) -> json:
     """
@@ -340,6 +341,7 @@ def get_network_graph(p_hash) -> json:
             "error": "File not found",
             "detail": "GraphML files not found"
         })), 404
+
 
 # get job result
 @app.route("/results/<result_type>", methods=['POST'])
