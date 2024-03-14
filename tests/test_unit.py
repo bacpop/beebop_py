@@ -34,6 +34,7 @@ from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 
 fs = setup.fs
 args = setup.args
+
 schemas = beebop.schemas.Schema()
 schema_path = Path(os.getcwd() + "/spec")
 resolver = jsonschema.validators.RefResolver(
@@ -153,7 +154,7 @@ def test_network(mocker):
     from beebop import visualise
 
     setup.do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, setup.db_paths, args, name_mapping)
+    visualise.network(p_hash, fs, setup.db_paths, args, setup.name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
