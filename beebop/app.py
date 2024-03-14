@@ -495,6 +495,11 @@ def download_graphml_internal(p_hash: str,
         f = jsonify(response_success({
             "cluster": cluster,
             "graph": graph}))
+    except (KeyError):
+        f = jsonify(error=response_failure({
+                "error": "Cluster not found",
+                "detail": "Cluster not found"
+                })), 500
     except (FileNotFoundError):
         f = jsonify(error=response_failure({
                 "error": "File not found",

@@ -530,7 +530,7 @@ def test_download_graphml_internal():
                                                     cluster_no_network_file,
                                                     storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
-    assert error2['error'] == 'File not found'
+    assert error2['error'] == 'Cluster not found'
 
 
 def test_hex_to_decimal():
