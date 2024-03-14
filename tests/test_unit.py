@@ -53,6 +53,12 @@ external_to_poppunk_clusters = {
     "GPSC60": "59"
 }
 
+expected_assign_result = {
+     0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
+     1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
+     2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
+}
+
 # Used by microreact
 def save_external_to_poppunk_clusters(p_hash: str):
     with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
@@ -84,6 +90,18 @@ def run_test_job(p_hash):
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
 
+def do_assign_clusters(p_hash: str):
+    hashes_list = [
+            '02ff334f17f17d775b9ecd69046ed296',
+            '9c00583e2f24fed5e3c6baa87a4bfa4c',
+            '99965c83b1839b25c3c27bd2910da00a']
+
+    result = assignClusters.get_clusters(
+        hashes_list,
+        p_hash,
+        fs,
+        db_paths,
+        args)
 
 def test_get_version():
     assert versions.get_version() == [
@@ -94,22 +112,12 @@ def test_get_version():
 
 
 def test_assign_clusters():
-    hashes_list = [
-            '02ff334f17f17d775b9ecd69046ed296',
-            '9c00583e2f24fed5e3c6baa87a4bfa4c',
-            '99965c83b1839b25c3c27bd2910da00a']
-
-    result = assignClusters.get_clusters(
-        hashes_list,
-        'unit_test_poppunk_assign',
-        fs,
-        db_paths,
-        args)
+    do_assign_clusters('unit_test_poppunk_assign')
     expected = {
             0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
             2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
-    assert list(result.values()) == unordered(list(expected.values()))
+    assert list(result.values()) == unordered(list(expected_assign_result.values()))
 
 c1 = ''''
 def test_microreact(mocker):
@@ -194,13 +202,13 @@ def test_network(mocker):
 '''
 
 def test_network_internal():
-    assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
-                     1: {'cluster': 'GPSC59', 'hash': 'another_hash'}}
+    assign_result = expected_assign_result
     p_hash = 'unit_test_visualisations'
     name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
+        "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
+        "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
+    }
+    do_assign_clusters('unit_test_visualisations')
     visualise.network_internal(assign_result,
                                p_hash,
                                fs,
