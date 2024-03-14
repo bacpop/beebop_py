@@ -49,8 +49,9 @@ status_options = ['queued',
                   'deferred']
 
 external_to_poppunk_clusters = {
-    "GPSC5": "3",
-    "GPSC60": "59"
+    "GPSC16": "9",
+    "GPSC29": "41",
+    "GPSC8": "10"
 }
 
 expected_assign_result = {
@@ -63,11 +64,6 @@ name_mapping = {
     "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
-
-# Used by microreact
-def save_external_to_poppunk_clusters(p_hash: str):
-    with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
-       pickle.dump(external_to_poppunk_clusters, f)
 
 def dummy_fct(duration):
     time.sleep(duration)
@@ -141,28 +137,21 @@ def test_microreact(mocker):
         'beebop.visualise.get_current_job',
         new=mock_get_current_job
     )
-    p_hash = 'unit_test_visualisations'
+    p_hash = 'unit_test_microreact'
     do_assign_clusters(p_hash)
 
-    #with open(fs.external_to_poppunk_clusters(p_hash), 'wb') as f:
-    #   pickle.dump(external_to_poppunk_clusters, f)
-
-    #query_external_clusters_file = fs.previous_query_clustering(p_hash)
-    #db_external_clusters_file = fs.external_clustering
-    #shutil.copyfile(db_external_clusters_file, query_external_clusters_file)
-
     visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
-    assert os.path.exists(fs.output_microreact(p_hash, 5) +
+    assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
 
 def test_microreact_internal():
-    p_hash = 'unit_test_visualisations'
+    p_hash = 'unit_test_microreact_internal'
     do_assign_clusters(p_hash)
     visualise.microreact_internal(assign_result, p_hash,
                                   fs, db_paths, args, name_mapping,
                                   external_to_poppunk_clusters)
-    assert os.path.exists(fs.output_microreact(p_hash, 5) +
+    assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
 
@@ -184,7 +173,7 @@ def test_network(mocker):
         new=mock_get_current_job
     )
     from beebop import visualise
-    p_hash = 'unit_test_visualisations'
+    p_hash = 'unit_test_network'
     do_assign_clusters(p_hash)
     visualise.network(p_hash, fs, db_paths, args, name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
@@ -193,7 +182,7 @@ def test_network(mocker):
 
 def test_network_internal():
     assign_result = expected_assign_result
-    p_hash = 'unit_test_visualisations'
+    p_hash = 'unit_test_network_internal'
     do_assign_clusters('unit_test_visualisations')
     visualise.network_internal(assign_result,
                                p_hash,
