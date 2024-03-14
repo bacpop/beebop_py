@@ -107,7 +107,7 @@ def do_assign_clusters(p_hash: str):
 
 def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
-    visualise.network_internal(assign_result,
+    visualise.network_internal(expected_assign_result,
                                p_hash,
                                fs,
                                db_paths,

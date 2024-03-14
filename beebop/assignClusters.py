@@ -5,7 +5,6 @@ import re
 import os
 import pickle
 
-
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 

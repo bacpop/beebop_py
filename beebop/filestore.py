@@ -90,6 +90,10 @@ class PoppunkFileStore:
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
 
     def external_to_poppunk_clusters(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to mapping between external and poppunk clusters]
+        """
         return str(PurePath(self.output(p_hash),
                             "external_to_poppunk_clusters.pickle"))
 
@@ -134,7 +138,7 @@ class PoppunkFileStore:
     def previous_query_external_clustering(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
-        :return str: [path to previous clustering file]
+        :return str: [path to previous external clustering file]
         """
         return str(PurePath(self.output(p_hash),
                             f"{p_hash}_external_clusters.csv"))

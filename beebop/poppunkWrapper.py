@@ -63,7 +63,8 @@ class PoppunkWrapper:
         assign_clusters() output.]
 
         Args:
-        :param cluster: [cluster number]
+        :param cluster: [external cluster]
+        :param poppunk_cluster: [corresponding poppunk cluster, used to indicate clusters to include]
         """
         print(shutil.which('rapidnj'))
         generate_visualisations(
