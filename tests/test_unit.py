@@ -154,6 +154,7 @@ def test_microreact(mocker):
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
+'''
 
 def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
@@ -164,7 +165,7 @@ def test_microreact_internal():
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
-'''
+
 
 def test_network(mocker):
     p_hash = 'unit_test_network'
