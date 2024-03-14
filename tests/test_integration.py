@@ -3,7 +3,8 @@ import jsonschema
 import os
 import beebop.schemas
 from tests import setup
-import re
+from test_unit import
+import do_network_internal
 
 
 schemas = beebop.schemas.Schema()
@@ -134,7 +135,8 @@ def test_results_zip(client):
 
 
 def test_download_graphml(client):
-    p_hash = 'unit_test_network'
+    p_hash = 'integration_test_download_graphml'
+    do_network_internal(p_hash)
     cluster = 'GPSC16'
     response = client.post("/results/graphml", json={
         'projectHash': p_hash,
