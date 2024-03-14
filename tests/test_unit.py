@@ -157,9 +157,9 @@ def test_microreact_internal():
     assert os.path.exists(fs.output_microreact(p_hash, 5) +
                           "/microreact_5_core_NJ.nwk")
 
-''''
+'''
 
-c2 = ''''
+c2 = '''
 def test_network(mocker):
     def mock_get_current_job(Redis):
         assign_result = {0: {'cluster': 'GPSC5', 'hash': 'some_hash'},
@@ -204,7 +204,7 @@ def test_network_internal():
                                name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
-''''
+'''
 
 def test_run_poppunk_internal(qtbot):
     fs_json = FileStore('./tests/files/json')
