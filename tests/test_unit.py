@@ -96,7 +96,7 @@ def do_assign_clusters(p_hash: str):
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
             '99965c83b1839b25c3c27bd2910da00a']
 
-    result = assignClusters.get_clusters(
+    return assignClusters.get_clusters(
         hashes_list,
         p_hash,
         fs,
@@ -112,7 +112,7 @@ def test_get_version():
 
 
 def test_assign_clusters():
-    do_assign_clusters('unit_test_poppunk_assign')
+    result = do_assign_clusters('unit_test_poppunk_assign')
     expected = {
             0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
