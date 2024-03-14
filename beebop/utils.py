@@ -28,7 +28,9 @@ def get_args() -> dict:
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
 
-def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore) -> dict:
+def generate_mapping(p_hash: str,
+                     cluster_nos_to_map: list,
+                     fs: PoppunkFileStore) -> dict:
     """
     [PopPUNKs network visualisation generates one overall .graphml file
     covering all clusters/ components. Furthermore, it generates one .graphml
@@ -41,7 +43,8 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
     and their corresponding clusters.]
 
     :param p_hash: [project hash]
-    :param cluster_nos_to_map: [clusters of interest for this project - skip all other clusters]
+    :param cluster_nos_to_map: [clusters of interest for this project -
+        skip all other clusters]
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
@@ -62,28 +65,29 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
 
     # generate dict that maps cluster number to component number
     cluster_component_dict = {}
-    # Match each cluster with the component with which it shares the most samples -
-    # keep a tally on how many matches the current winner has
+    # Match each cluster with the component with which it shares the most
+    # samples - keep a tally on how many matches the current winner has
     cluster_sample_counts = {}
+    node_schema = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 
     for component_filename in file_list:
         component_number = re.findall(R'\d+', component_filename)[0]
         component_xml = ET.parse(fs.network_output_component(
             p_hash,
             component_number)).getroot()
-        sample_nodes = component_xml.findall(
-                              ".//{http://graphml.graphdrawing.org/xmlns}node/")
+        sample_nodes = component_xml.findall(node_schema)
         component_cluster_counts = {}
         for sample_node in sample_nodes:
             sample_id = sample_node.text
             if sample_id in samples_to_clusters.keys():
-               cluster = samples_to_clusters[sample_id]
-               if cluster not in component_cluster_counts.keys():
-                  component_cluster_counts[cluster] = 0
-               component_cluster_counts[cluster] = component_cluster_counts[cluster] + 1
+                cluster = samples_to_clusters[sample_id]
+                if cluster not in component_cluster_counts.keys():
+                    component_cluster_counts[cluster] = 0
+                component_cluster_counts[cluster] += 1
 
         for cluster, count in component_cluster_counts.items():
-            if cluster not in cluster_sample_counts.keys() or count > cluster_sample_counts[cluster]:
+            if cluster not in cluster_sample_counts.keys() \
+                    or count > cluster_sample_counts[cluster]:
                 cluster_component_dict[cluster] = component_number
                 cluster_sample_counts[cluster] = count
 
@@ -92,26 +96,30 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
         pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
 
+
 def cluster_no_from_label(cluster_label: str) -> str:
     """
-    [Strip GPSC prefix from cluster label, as the internals of PopPUNK use the numeric part only.]
+    [Strip GPSC prefix from cluster label, as the internals of PopPUNK
+    use the numeric part only.]
 
     :param cluster_label: [external cluster label with GPSC prefix]
     :return str: [cluster string with prefix removed]
     """
     return cluster_label.replace("GPSC", "")
 
-def cluster_nos_from_assign_result(assign_result: dict) -> list:
-   """
-   [Get all cluster numbers from a cluster assign result.]
 
-   :param assign_result: [cluster assign result, as returned through the API]
-   :return: [list of all external cluster numbers in the result]
-   """
-   result = set()
-   for item in assign_result.values():
-       result.add(cluster_no_from_label(item['cluster']))
-   return list(result)
+def cluster_nos_from_assign_result(assign_result: dict) -> list:
+    """
+    [Get all cluster numbers from a cluster assign result.]
+
+    :param assign_result: [cluster assign result, as returned through the API]
+    :return: [list of all external cluster numbers in the result]
+    """
+    result = set()
+    for item in assign_result.values():
+        result.add(cluster_no_from_label(item['cluster']))
+    return list(result)
+
 
 def delete_component_files(cluster_component_dict: dict,
                            fs: PoppunkFileStore,
@@ -211,12 +219,21 @@ def add_query_ref_status(fs: PoppunkFileStore,
         with open(path, 'wb') as f:
             xml_tree.write(f, encoding='utf-8')
 
-# map external cluster rows to the lowest number cluster for that sample
+
 def get_lowest_cluster(clusters_str: str) -> int:
+    """
+    [Get numerically lowest cluster number from semicolon-separated clusters
+    string.]
+
+    :param clusters_str: [string of all clusters for a sample, separated by
+        semicolons]
+    :return int: [lowest cluster number from the string]
+    """
     clusters = clusters_str.split(";")
     numeric_clusters = [int(x) for x in clusters]
     numeric_clusters.sort()
     return numeric_clusters[0]
+
 
 def get_external_clusters_from_file(external_clusters_file: str,
                                     hashes_list: list) -> dict:
@@ -244,11 +261,10 @@ def get_external_clusters_from_file(external_clusters_file: str,
             # by semicolons
             sample_id = row[0]
             if sample_id in remaining_hashes:
-                print("Found hash: " + sample_id)
-                print(', '.join(row))
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
-                    result[sample_id] = "GPSC{}".format(get_lowest_cluster(row[1]))
+                    cluster_no = get_lowest_cluster(row[1])
+                    result[sample_id] = "GPSC{}".format(cluster_no)
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)

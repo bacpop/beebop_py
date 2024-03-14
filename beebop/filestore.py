@@ -65,7 +65,8 @@ class PoppunkFileStore:
         self.input = FileStore(f"{storage_location}/json")
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
-        self.external_clustering = "./beebop/resources/GPS_v6_external_clusters.csv"
+        self.external_clustering = \
+            "./beebop/resources/GPS_v6_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
@@ -133,7 +134,8 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv"))
+        return str(PurePath(self.output(p_hash),
+                            f"{p_hash}_external_clusters.csv"))
 
     def previous_query_external_clustering(self, p_hash) -> str:
         """

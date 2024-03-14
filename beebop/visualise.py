@@ -2,7 +2,8 @@ from rq import get_current_job
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
-from beebop.utils import replace_filehashes, add_query_ref_status, cluster_no_from_label, cluster_nos_from_assign_result
+from beebop.utils import replace_filehashes, add_query_ref_status
+from beebop.utils import cluster_no_from_label, cluster_nos_from_assign_result
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 

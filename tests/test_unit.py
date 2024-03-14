@@ -56,6 +56,7 @@ external_to_poppunk_clusters = {
     "GPSC8": "10"
 }
 
+
 def dummy_fct(duration):
     time.sleep(duration)
     return "Result"
@@ -93,11 +94,8 @@ def test_get_version():
 
 def test_assign_clusters():
     result = setup.do_assign_clusters('unit_test_poppunk_assign')
-    expected = {
-            0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-            1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-            2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
-    assert list(result.values()) == unordered(list(setup.expected_assign_result.values()))
+    expected = unordered(list(setup.expected_assign_result.values()))
+    assert list(result.values()) == expected
 
 
 def test_microreact(mocker):
@@ -134,9 +132,9 @@ def test_microreact_internal():
                           "/microreact_16_core_NJ.nwk")
 
 
-
 def test_network(mocker):
     p_hash = 'unit_test_network'
+
     def mock_get_current_job(Redis):
         assign_result = setup.expected_assign_result
 
@@ -579,7 +577,8 @@ def test_add_files():
 
 def test_generate_mapping():
     cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
-    result = utils.generate_mapping('results_modifications', cluster_nos_to_map, fs)
+    result = utils.generate_mapping('results_modifications',
+                                    cluster_nos_to_map, fs)
     print(result)
     exp_cluster_component_dict = {
         '13': '2',

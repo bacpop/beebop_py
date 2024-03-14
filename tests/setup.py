@@ -24,6 +24,7 @@ def generate_json():
 
     return json.dumps(sketches_json)
 
+
 storage_location = './tests/results'
 fs = PoppunkFileStore(storage_location)
 
@@ -41,6 +42,7 @@ name_mapping = {
 db_paths = DatabaseFileStore('./storage/GPS_v6_references')
 args = get_args()
 
+
 def do_assign_clusters(p_hash: str):
     hashes_list = [
             '02ff334f17f17d775b9ecd69046ed296',
@@ -53,6 +55,7 @@ def do_assign_clusters(p_hash: str):
         fs,
         db_paths,
         args)
+
 
 def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
