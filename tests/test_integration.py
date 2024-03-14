@@ -3,8 +3,7 @@ import jsonschema
 import os
 import beebop.schemas
 from tests import setup
-from test_unit import
-import do_network_internal
+from test_unit import do_network_internal
 
 
 schemas = beebop.schemas.Schema()
