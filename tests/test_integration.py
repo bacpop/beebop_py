@@ -1,6 +1,7 @@
 import json
 import jsonschema
 import os
+import re
 import beebop.schemas
 from tests import setup
 

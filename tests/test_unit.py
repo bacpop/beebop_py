@@ -94,12 +94,12 @@ def test_assign_clusters():
             0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
             1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
             2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
-    assert list(result.values()) == unordered(list(expected_assign_result.values()))
+    assert list(result.values()) == unordered(list(setup.expected_assign_result.values()))
 
 
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
-        assign_result = expected_assign_result
+        assign_result = setup.expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -116,7 +116,7 @@ def test_microreact(mocker):
     p_hash = 'unit_test_microreact'
     setup.do_network_internal(p_hash)
 
-    visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
+    visualise.microreact(p_hash, fs, setup.db_paths, args, setup.name_mapping)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
@@ -124,8 +124,8 @@ def test_microreact(mocker):
 def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
     setup.do_network_internal(p_hash)
-    visualise.microreact_internal(expected_assign_result, p_hash,
-                                  fs, db_paths, args, name_mapping,
+    visualise.microreact_internal(setup.expected_assign_result, p_hash,
+                                  fs, setup.db_paths, args, setup.name_mapping,
                                   external_to_poppunk_clusters)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
@@ -135,7 +135,7 @@ def test_microreact_internal():
 def test_network(mocker):
     p_hash = 'unit_test_network'
     def mock_get_current_job(Redis):
-        assign_result = expected_assign_result
+        assign_result = setup.expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -152,13 +152,13 @@ def test_network(mocker):
     from beebop import visualise
 
     setup.do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, db_paths, args, name_mapping)
+    visualise.network(p_hash, fs, setup.db_paths, args, name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
 
 def test_network_internal():
-    assign_result = expected_assign_result
+    assign_result = setup.expected_assign_result
     p_hash = 'unit_test_network_internal'
     setup.do_network_internal(p_hash)
     assert os.path.exists(fs.output_network(p_hash) +
