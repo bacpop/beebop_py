@@ -55,17 +55,6 @@ external_to_poppunk_clusters = {
     "GPSC8": "10"
 }
 
-expected_assign_result = {
-     0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-     1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-     2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}
-}
-
-name_mapping = {
-    "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
-    "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
-}
-
 def dummy_fct(duration):
     time.sleep(duration)
     return "Result"
@@ -92,27 +81,6 @@ def run_test_job(p_hash):
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
 
-def do_assign_clusters(p_hash: str):
-    hashes_list = [
-            '02ff334f17f17d775b9ecd69046ed296',
-            '9c00583e2f24fed5e3c6baa87a4bfa4c',
-            '99965c83b1839b25c3c27bd2910da00a']
-
-    return assignClusters.get_clusters(
-        hashes_list,
-        p_hash,
-        fs,
-        db_paths,
-        args)
-
-def do_network_internal(p_hash: str):
-    do_assign_clusters(p_hash)
-    visualise.network_internal(expected_assign_result,
-                               p_hash,
-                               fs,
-                               db_paths,
-                               args,
-                               name_mapping)
 
 def test_get_version():
     assert versions.get_version() == [
