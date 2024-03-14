@@ -56,7 +56,7 @@ external_to_poppunk_clusters = {
 expected_assign_result = {
      0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
      1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-     2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
+     2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}
 }
 
 # Used by microreact
