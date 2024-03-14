@@ -171,6 +171,7 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             for f_key, f_value in filename_dict.items():
                 if f_key in line:
                     line = line.replace(f_key, f_value)
+            print(line)
 
 
 def add_query_ref_status(fs: PoppunkFileStore,
