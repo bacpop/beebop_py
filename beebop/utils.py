@@ -8,7 +8,6 @@ import re
 import pickle
 import fileinput
 import glob
-import sys
 
 from beebop.filestore import PoppunkFileStore
 
@@ -45,7 +44,6 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
-    sys.stderr.write("generating mapping for clusters: {}\n".format(str(cluster_nos_to_map)))
     samples_to_clusters = {}
     with open(fs.network_output_csv(p_hash)) as f:
         next(f)  # Skip the header
@@ -67,9 +65,6 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
     # keep a tally on how many matches the current winner has
     cluster_sample_counts = {}
 
-    # TODO: remove this, just a diagnostic check for Nick
-    single_isolate_components = []
-
     for component_filename in file_list:
         component_number = re.findall(R'\d+', component_filename)[0]
         component_xml = ET.parse(fs.network_output_component(
@@ -78,8 +73,6 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
         sample_nodes = component_xml.findall(
                               ".//{http://graphml.graphdrawing.org/xmlns}node/")
         component_cluster_counts = {}
-        # TODO: remove this
-        last_sample = {}
         for sample_node in sample_nodes:
             sample_id = sample_node.text
             if sample_id in samples_to_clusters.keys():
@@ -87,18 +80,11 @@ def generate_mapping(p_hash: str, cluster_nos_to_map: list, fs: PoppunkFileStore
                if cluster not in component_cluster_counts.keys():
                   component_cluster_counts[cluster] = 0
                component_cluster_counts[cluster] = component_cluster_counts[cluster] + 1
-               last_sample[cluster] = sample_id
 
         for cluster, count in component_cluster_counts.items():
-            if count == 1 and len(sample_nodes) == 1:
-               single_isolate_components.append("{},{},{}\n".format(cluster, component_number, last_sample[cluster]))
             if cluster not in cluster_sample_counts.keys() or count > cluster_sample_counts[cluster]:
                 cluster_component_dict[cluster] = component_number
                 cluster_sample_counts[cluster] = count
-
-    sys.stderr.write("SINGLE ISOLATE COMPONENTS:\n")
-    sys.stderr.write("external_cluster,component,sample\n")
-    sys.stderr.write(str(single_isolate_components))
 
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
@@ -130,18 +116,13 @@ def delete_component_files(cluster_component_dict: dict,
     :param p_hash: [project hash]
     """
     components = []
-    #for item in assign_result.values():
-    #    cluster_no = cluster_no_from_label(item['cluster'])
     for cluster_no in cluster_nos_from_assign_result(assign_result):
         components.append(cluster_component_dict[cluster_no])
-
-    #components = set(queries_components)
 
     # delete redundant component files
     keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
                               components))
 
-    sys.stderr.write("Keeping network files: " + str(keep_filenames) + "\n")
     keep_filenames.append('network_cytoscape.csv')
     keep_filenames.append('network_cytoscape.graphml')
     keep_filenames.append('cluster_component_dict.pickle')
@@ -178,7 +159,6 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             for f_key, f_value in filename_dict.items():
                 if f_key in line:
                     line = line.replace(f_key, f_value)
-            print(line)
 
 
 def add_query_ref_status(fs: PoppunkFileStore,
@@ -256,8 +236,6 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
                     result[sample_id] = "GPSC{}".format(get_lowest_cluster(row[1]))
-                    sys.stderr.write("Setting cluster {} for sample {}\n"
-                                     .format(result[sample_id], sample_id))
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)

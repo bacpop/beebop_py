@@ -106,17 +106,17 @@ def do_assign_clusters(p_hash: str):
         args)
 
 def do_network(p_hash: str):
-     def mock_get_current_job(Redis):
-            assign_result = expected_assign_result
+    def mock_get_current_job(Redis):
+        assign_result = expected_assign_result
 
-            class mock_dependency:
-                def __init__(self, result):
-                    self.result = result
+        class mock_dependency:
+            def __init__(self, result):
+                self.result = result
 
-            class mock_job:
-                def __init__(self, result):
-                    self.dependency = mock_dependency(result)
-            return mock_job(assign_result)
+        class mock_job:
+            def __init__(self, result):
+                self.dependency = mock_dependency(result)
+        return mock_job(assign_result)
     mocker.patch(
         'beebop.visualise.get_current_job',
         new=mock_get_current_job
