@@ -229,10 +229,8 @@ def get_lowest_cluster(clusters_str: str) -> int:
         semicolons]
     :return int: [lowest cluster number from the string]
     """
-    clusters = clusters_str.split(";")
-    numeric_clusters = [int(x) for x in clusters]
-    numeric_clusters.sort()
-    return numeric_clusters[0]
+     clusters = map(int, clusters_str.split(";"))
+     return min(clusters)
 
 
 def get_external_clusters_from_file(external_clusters_file: str,
