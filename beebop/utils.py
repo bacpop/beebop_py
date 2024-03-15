@@ -27,7 +27,10 @@ def get_args() -> dict:
         args_json = a.read()
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
+
 NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
+
+
 def generate_mapping(p_hash: str,
                      cluster_nums_to_map: list,
                      fs: PoppunkFileStore) -> dict:
@@ -65,12 +68,16 @@ def generate_mapping(p_hash: str,
             file_list.append(file)
 
     # generate dict that maps cluster number to component number
-    cluster_component_dict = match_clusters_to_components(p_hash, fs, file_list, samples_to_clusters)
+    cluster_component_dict = match_clusters_to_components(p_hash,
+                                                          fs,
+                                                          file_list,
+                                                          samples_to_clusters)
 
     # save as pickle
     with open(fs.network_mapping(p_hash), 'wb') as mapping:
         pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
+
 
 def match_clusters_to_components(p_hash: str,
                                  fs: PoppunkFileStore,
@@ -273,7 +280,8 @@ def get_external_clusters_from_file(external_clusters_file: str,
     :return dict: [dict of sample hash to lowest numbered-cluster for that
         sample]
     """
-    # copy hashes list to keep track of hashes we still need to find samples for
+    # copy hashes list to keep track of hashes we still need to find samples
+    # for
     remaining_hashes = hashes_list[:]
     result = {}
     with open(external_clusters_file) as f:

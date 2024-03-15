@@ -433,7 +433,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     """
     fs = PoppunkFileStore(storage_location)
 
-    cluster_num= cluster_num_from_label(cluster)
+    cluster_num = cluster_num_from_label(cluster)
     path_json = fs.microreact_json(p_hash, cluster_num)
 
     with open(path_json, 'rb') as microreact_file:

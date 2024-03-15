@@ -93,6 +93,7 @@ def get_clusters(hashes_list: list,
 
     return result
 
+
 def save_external_to_poppunk_clusters(queries_names: list,
                                       queries_clusters: list,
                                       external_clusters: dict,
@@ -106,7 +107,8 @@ def save_external_to_poppunk_clusters(queries_names: list,
     :param queries_names: [list of sample hashes, output by summarise_clusters]
     :param queries_clusters: [list of sample PopPUNK clusters, also output by
     summarise_clusters, and with corresponding indices to queries_names]
-    :param external_clusters: [dict of sample hashes to external cluster labels]
+    :param external_clusters: [dict of sample hashes to external cluster
+        labels]
     :param p_hash: [project hash]
     :param fs: [project filestore]
     """
