@@ -137,13 +137,6 @@ class PoppunkFileStore:
         return str(PurePath(self.output(p_hash),
                             f"{p_hash}_external_clusters.csv"))
 
-    def previous_query_external_clustering(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to previous external clustering file]
-        """
-        return str(PurePath(self.output(p_hash),
-                            f"{p_hash}_external_clusters.csv"))
 
     def distances(self, p_hash) -> str:
         """

@@ -71,7 +71,7 @@ def get_clusters(hashes_list: list,
     queries_names, queries_clusters, _, _, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
 
-    external_clusters_file = fs.previous_query_external_clustering(p_hash)
+    external_clusters_file = fs.previous_query_clustering(p_hash)
 
     external_clusters = \
         get_external_clusters_from_file(external_clusters_file, hashes_list)
