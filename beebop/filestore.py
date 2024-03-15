@@ -65,6 +65,8 @@ class PoppunkFileStore:
         self.input = FileStore(f"{storage_location}/json")
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
+        self.external_clustering = \
+            "./beebop/resources/GPS_v6_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
@@ -87,6 +89,14 @@ class PoppunkFileStore:
         :return str: [path to cluster results file]
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
+
+    def external_to_poppunk_clusters(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to mapping between external and poppunk clusters]
+        """
+        return str(PurePath(self.output(p_hash),
+                            "external_to_poppunk_clusters.pickle"))
 
     def output_microreact(self, p_hash, cluster) -> str:
         """
@@ -124,7 +134,8 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
+        return str(PurePath(self.output(p_hash),
+                            f"{p_hash}_external_clusters.csv"))
 
     def distances(self, p_hash) -> str:
         """

@@ -1,9 +1,9 @@
 import json
 import jsonschema
 import os
+import re
 import beebop.schemas
 from tests import setup
-import re
 
 
 schemas = beebop.schemas.Schema()
@@ -64,7 +64,7 @@ def test_run_poppunk(client, qtbot):
 
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
-                          "/microreact_5/microreact_5_core_NJ.nwk")
+                          "/microreact_3/microreact_3_core_NJ.nwk")
 
     def network_status_finished():
         status = client.get("/status/" + p_hash)
@@ -83,9 +83,9 @@ def test_run_poppunk(client, qtbot):
     assert len(project_data["samples"]) == 2
     # check response data matches the generated data
     assert project_data["samples"][0]["sketch"] == sketches["7622_5_91"]
-    assert project_data["samples"][0]["cluster"] == 5
+    assert project_data["samples"][0]["cluster"] == 'GPSC3'
     assert project_data["samples"][1]["sketch"] == sketches["6930_8_9"]
-    assert project_data["samples"][1]["cluster"] == 59
+    assert project_data["samples"][1]["cluster"] == 'GPSC60'
     assert project_data["status"]["assign"] == "finished"
     assert project_data["status"]["microreact"] == "finished"
     assert project_data["status"]["network"] == "finished"
@@ -126,7 +126,7 @@ def test_results_zip(client):
     type = 'network'
     response = client.post("/results/zip", json={
         'projectHash': p_hash,
-        'cluster': 1,
+        'cluster': 'GPSC1',
         'type': type})
     assert 'network_component_38.graphml'.encode('utf-8') in response.data
     assert 'network_cytoscape.csv'.encode('utf-8') in response.data
@@ -134,8 +134,9 @@ def test_results_zip(client):
 
 
 def test_download_graphml(client):
-    p_hash = 'unit_test_graphml'
-    cluster = 5
+    p_hash = 'integration_test_download_graphml'
+    setup.do_network_internal(p_hash)
+    cluster = 'GPSC16'
     response = client.post("/results/graphml", json={
         'projectHash': p_hash,
         'cluster': cluster})
