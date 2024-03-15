@@ -332,7 +332,6 @@ def get_network_graph(p_hash) -> json:
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
             component = cluster_component_mapping[cluster_num_from_label(cluster)]
-            
             path = fs.network_output_component(p_hash, component)
             with open(path, 'r') as graphml_file:
                 graph = graphml_file.read()
