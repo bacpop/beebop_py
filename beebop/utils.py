@@ -27,9 +27,9 @@ def get_args() -> dict:
         args_json = a.read()
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
-
+NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 def generate_mapping(p_hash: str,
-                     cluster_nos_to_map: list,
+                     cluster_nums_to_map: list,
                      fs: PoppunkFileStore) -> dict:
     """
     [PopPUNKs network visualisation generates one overall .graphml file
@@ -43,7 +43,7 @@ def generate_mapping(p_hash: str,
     and their corresponding clusters.]
 
     :param p_hash: [project hash]
-    :param cluster_nos_to_map: [clusters of interest for this project -
+    :param cluster_nums_to_map: [clusters of interest for this project -
         skip all other clusters]
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
@@ -53,9 +53,10 @@ def generate_mapping(p_hash: str,
         next(f)  # Skip the header
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
-            cluster = str(get_lowest_cluster(row[1]))
-            if cluster in cluster_nos_to_map:
-                samples_to_clusters[row[0]] = cluster
+            sample_id, sample_clusters = row
+            cluster = str(get_lowest_cluster(sample_clusters))
+            if cluster in cluster_nums_to_map:
+                samples_to_clusters[sample_id] = cluster
 
     # list of all component graph filenames
     file_list = []
@@ -64,19 +65,43 @@ def generate_mapping(p_hash: str,
             file_list.append(file)
 
     # generate dict that maps cluster number to component number
+    cluster_component_dict = match_clusters_to_components(p_hash, fs, file_list, samples_to_clusters)
+
+    # save as pickle
+    with open(fs.network_mapping(p_hash), 'wb') as mapping:
+        pickle.dump(cluster_component_dict, mapping)
+    return cluster_component_dict
+
+def match_clusters_to_components(p_hash: str,
+                                 fs: PoppunkFileStore,
+                                 file_list: list,
+                                 samples_to_clusters: dict) -> dict:
+    """
+    [Generate a dictionary mapping clusters to network components based on
+    matching their shared samples]
+    :param p_hash: [project hash]
+    :param fs: [project filestore]
+    :param file_list: [list of network component files]
+    :param samples_to_clusters: [dict of sample ids to cluster labels]
+    :return dict: [dict of cluster labels to network component numbers]
+    """
     cluster_component_dict = {}
     # Match each cluster with the component with which it shares the most
     # samples - keep a tally on how many matches the current winner has
+    # TODO: Really, PopPUNK should only return one component per sample,
+    # which should match the corresponding cluster - this appears to be
+    # an issue with PopPUNK. Simplify this logic when this is fixed
+    # in PopPUNK.
     cluster_sample_counts = {}
-    node_schema = ".//{http://graphml.graphdrawing.org/xmlns}node/"
-
     for component_filename in file_list:
         component_number = re.findall(R'\d+', component_filename)[0]
         component_xml = ET.parse(fs.network_output_component(
             p_hash,
             component_number)).getroot()
-        sample_nodes = component_xml.findall(node_schema)
+        sample_nodes = component_xml.findall(NODE_SCHEMA)
         component_cluster_counts = {}
+        # for every sample in the component, increment its cluster's
+        # count in component_cluster_counts
         for sample_node in sample_nodes:
             sample_id = sample_node.text
             if sample_id in samples_to_clusters.keys():
@@ -85,19 +110,20 @@ def generate_mapping(p_hash: str,
                     component_cluster_counts[cluster] = 0
                 component_cluster_counts[cluster] += 1
 
+        # For every cluster we have samples for in this component
+        # update the cluster component mapping, if this component
+        # has more matching samples than the current value (or
+        # if this is the first matching component)
         for cluster, count in component_cluster_counts.items():
             if cluster not in cluster_sample_counts.keys() \
                     or count > cluster_sample_counts[cluster]:
                 cluster_component_dict[cluster] = component_number
                 cluster_sample_counts[cluster] = count
 
-    # save as pickle
-    with open(fs.network_mapping(p_hash), 'wb') as mapping:
-        pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
 
 
-def cluster_no_from_label(cluster_label: str) -> str:
+def cluster_num_from_label(cluster_label: str) -> str:
     """
     [Strip GPSC prefix from cluster label, as the internals of PopPUNK
     use the numeric part only.]
@@ -108,7 +134,7 @@ def cluster_no_from_label(cluster_label: str) -> str:
     return cluster_label.replace("GPSC", "")
 
 
-def cluster_nos_from_assign_result(assign_result: dict) -> list:
+def cluster_nums_from_assign_result(assign_result: dict) -> list:
     """
     [Get all cluster numbers from a cluster assign result.]
 
@@ -117,7 +143,7 @@ def cluster_nos_from_assign_result(assign_result: dict) -> list:
     """
     result = set()
     for item in assign_result.values():
-        result.add(cluster_no_from_label(item['cluster']))
+        result.add(cluster_num_from_label(item['cluster']))
     return list(result)
 
 
@@ -137,7 +163,7 @@ def delete_component_files(cluster_component_dict: dict,
     :param p_hash: [project hash]
     """
     components = []
-    for cluster_no in cluster_nos_from_assign_result(assign_result):
+    for cluster_no in cluster_nums_from_assign_result(assign_result):
         components.append(cluster_component_dict[cluster_no])
 
     # delete redundant component files
@@ -229,8 +255,8 @@ def get_lowest_cluster(clusters_str: str) -> int:
         semicolons]
     :return int: [lowest cluster number from the string]
     """
-     clusters = map(int, clusters_str.split(";"))
-     return min(clusters)
+    clusters = map(int, clusters_str.split(";"))
+    return min(clusters)
 
 
 def get_external_clusters_from_file(external_clusters_file: str,
@@ -247,6 +273,7 @@ def get_external_clusters_from_file(external_clusters_file: str,
     :return dict: [dict of sample hash to lowest numbered-cluster for that
         sample]
     """
+    # copy hashes list to keep track of hashes we still need to find samples for
     remaining_hashes = hashes_list[:]
     result = {}
     with open(external_clusters_file) as f:

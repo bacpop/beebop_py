@@ -14,7 +14,7 @@ import pickle
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args, cluster_no_from_label
+from beebop.utils import get_args, cluster_num_from_label
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -82,15 +82,15 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    cluster_no = cluster_no_from_label(cluster)
+    cluster_num = cluster_num_from_label(cluster)
     if type == 'microreact':
-        path_folder = fs.output_microreact(p_hash, cluster_no)
+        path_folder = fs.output_microreact(p_hash, cluster_num)
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_no]
+        component = cluster_component_mapping[cluster_num]
         file_list = (f'network_component_{component}.graphml',
                      'network_cytoscape.csv',
                      'network_cytoscape.graphml')
@@ -433,8 +433,8 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     """
     fs = PoppunkFileStore(storage_location)
 
-    cluster_no = cluster_no_from_label(cluster)
-    path_json = fs.microreact_json(p_hash, cluster_no)
+    cluster_num= cluster_num_from_label(cluster)
+    path_json = fs.microreact_json(p_hash, cluster_num)
 
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
@@ -487,7 +487,7 @@ def download_graphml_internal(p_hash: str,
     try:
         with open(fs.network_mapping(p_hash), 'rb') as dict:
             cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_no_from_label(cluster)]
+        component = cluster_component_mapping[cluster_num_from_label(cluster)]
 
         path = fs.network_output_component(p_hash, component)
         with open(path, 'r') as graphml_file:

@@ -3,7 +3,7 @@ from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status
-from beebop.utils import cluster_no_from_label, cluster_nos_from_assign_result
+from beebop.utils import cluster_num_from_label, cluster_nums_from_assign_result
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 
@@ -67,7 +67,7 @@ def microreact_internal(assign_result,
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
     for cluster in set(queries_clusters):
-        cluster_no = cluster_no_from_label(cluster)
+        cluster_no = cluster_num_from_label(cluster)
         poppunk_cluster = external_to_poppunk_clusters[cluster]
         wrapper.create_microreact(cluster_no, poppunk_cluster)
         replace_filehashes(fs.output_microreact(p_hash, cluster_no),
@@ -127,8 +127,8 @@ def network_internal(assign_result,
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
-    cluster_nos_to_map = cluster_nos_from_assign_result(assign_result)
-    cluster_component_dict = generate_mapping(p_hash, cluster_nos_to_map, fs)
+    cluster_nums_to_map = cluster_nums_from_assign_result(assign_result)
+    cluster_component_dict = generate_mapping(p_hash, cluster_nums_to_map, fs)
     delete_component_files(cluster_component_dict,
                            fs,
                            assign_result,
