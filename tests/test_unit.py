@@ -4,6 +4,7 @@ from PopPUNK import __version__ as poppunk_version
 from redis import Redis
 from rq import SimpleWorker, Queue
 from rq.job import Job
+from rq.job import Job
 import time
 import pytest
 from pytest_unordered import unordered
@@ -15,8 +16,10 @@ from flask import Flask
 from unittest.mock import Mock, patch
 from io import BytesIO
 from pathlib import Path
+from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
+import shutil
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -24,10 +27,14 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop import utils
-from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-from beebop.utils import get_args
-import beebop.schemas
 
+import beebop.schemas
+from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
+
+
+fs = setup.fs
+args = setup.args
+storage_location = setup.storage_location
 
 schemas = beebop.schemas.Schema()
 schema_path = Path(os.getcwd() + "/spec")
@@ -35,10 +42,6 @@ resolver = jsonschema.validators.RefResolver(
     base_uri=f"{schema_path.as_uri()}/",
     referrer=True,
 )
-storage_location = './tests/results'
-fs = PoppunkFileStore(storage_location)
-db_paths = DatabaseFileStore('./storage/GPS_v6_references')
-args = get_args()
 
 status_options = ['queued',
                   'started',
@@ -46,6 +49,12 @@ status_options = ['queued',
                   'scheduled',
                   'waiting',
                   'deferred']
+
+external_to_poppunk_clusters = {
+    "GPSC16": "9",
+    "GPSC29": "41",
+    "GPSC8": "10"
+}
 
 
 def dummy_fct(duration):
@@ -84,28 +93,14 @@ def test_get_version():
 
 
 def test_assign_clusters():
-    hashes_list = [
-            '02ff334f17f17d775b9ecd69046ed296',
-            '9c00583e2f24fed5e3c6baa87a4bfa4c',
-            '99965c83b1839b25c3c27bd2910da00a']
-
-    result = assignClusters.get_clusters(
-        hashes_list,
-        'unit_test_poppunk_assign',
-        fs,
-        db_paths,
-        args)
-    expected = {
-            0: {'cluster': 9, 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-            1: {'cluster': 41, 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-            2: {'cluster': 10, 'hash': '99965c83b1839b25c3c27bd2910da00a'}}
-    assert list(result.values()) == unordered(list(expected.values()))
+    result = setup.do_assign_clusters('unit_test_poppunk_assign')
+    expected = unordered(list(setup.expected_assign_result.values()))
+    assert list(result.values()) == expected
 
 
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                         1: {'cluster': 59, 'hash': 'another_hash'}}
+        assign_result = setup.expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -119,34 +114,29 @@ def test_microreact(mocker):
         'beebop.visualise.get_current_job',
         new=mock_get_current_job
     )
-    p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
-    visualise.microreact(p_hash, fs, db_paths, args, name_mapping)
-    assert os.path.exists(fs.output_microreact(p_hash, 5) +
-                          "/microreact_5_core_NJ.nwk")
+    p_hash = 'unit_test_microreact'
+    setup.do_network_internal(p_hash)
+
+    visualise.microreact(p_hash, fs, setup.db_paths, args, setup.name_mapping)
+    assert os.path.exists(fs.output_microreact(p_hash, 16) +
+                          "/microreact_16_core_NJ.nwk")
 
 
 def test_microreact_internal():
-    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                     1: {'cluster': 59, 'hash': 'another_hash'}}
-    p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
-    visualise.microreact_internal(assign_result, p_hash,
-                                  fs, db_paths, args, name_mapping)
-    assert os.path.exists(fs.output_microreact(p_hash, 5) +
-                          "/microreact_5_core_NJ.nwk")
+    p_hash = 'unit_test_microreact_internal'
+    setup.do_network_internal(p_hash)
+    visualise.microreact_internal(setup.expected_assign_result, p_hash,
+                                  fs, setup.db_paths, args, setup.name_mapping,
+                                  external_to_poppunk_clusters)
+    assert os.path.exists(fs.output_microreact(p_hash, 16) +
+                          "/microreact_16_core_NJ.nwk")
 
 
 def test_network(mocker):
+    p_hash = 'unit_test_network'
+
     def mock_get_current_job(Redis):
-        assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                         1: {'cluster': 59, 'hash': 'another_hash'}}
+        assign_result = setup.expected_assign_result
 
         class mock_dependency:
             def __init__(self, result):
@@ -161,30 +151,17 @@ def test_network(mocker):
         new=mock_get_current_job
     )
     from beebop import visualise
-    p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
-    visualise.network(p_hash, fs, db_paths, args, name_mapping)
+
+    setup.do_assign_clusters(p_hash)
+    visualise.network(p_hash, fs, setup.db_paths, args, setup.name_mapping)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
 
 def test_network_internal():
-    assign_result = {0: {'cluster': 5, 'hash': 'some_hash'},
-                     1: {'cluster': 59, 'hash': 'another_hash'}}
-    p_hash = 'unit_test_visualisations'
-    name_mapping = {
-        "hash1": "name1.fa",
-        "hash2": "name2.fa"
-        }
-    visualise.network_internal(assign_result,
-                               p_hash,
-                               fs,
-                               db_paths,
-                               args,
-                               name_mapping)
+    assign_result = setup.expected_assign_result
+    p_hash = 'unit_test_network_internal'
+    setup.do_network_internal(p_hash)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -491,7 +468,7 @@ def test_send_zip_internal(client):
         assert filename1.encode('utf-8') in response.data
         assert filename2.encode('utf-8') in response.data
         project_hash = 'test_network_zip'
-        cluster = 1
+        cluster = "GPSC1"
         type = 'network'
         response = app.send_zip_internal(project_hash,
                                          type,
@@ -505,7 +482,8 @@ def test_send_zip_internal(client):
 
 def test_download_graphml_internal():
     project_hash = 'unit_test_graphml'
-    cluster = 5
+    cluster = "GPSC16"
+    setup.do_network_internal(project_hash)
     response = app.download_graphml_internal(project_hash,
                                              cluster,
                                              storage_location)
@@ -514,12 +492,12 @@ def test_download_graphml_internal():
                                            '</graphml>',
                                            '</node>',
                                            '</edge>'])
-    cluster_no_network_file = 59
+    cluster_no_network_file = "not a cluster"
     response_error2 = app.download_graphml_internal(project_hash,
                                                     cluster_no_network_file,
                                                     storage_location)
     error2 = read_data(response_error2[0])['error']['errors'][0]
-    assert error2['error'] == 'File not found'
+    assert error2['error'] == 'Cluster not found'
 
 
 def test_hex_to_decimal():
@@ -598,7 +576,9 @@ def test_add_files():
 
 
 def test_generate_mapping():
-    result = utils.generate_mapping('results_modifications', fs)
+    cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
+    result = utils.generate_mapping('results_modifications',
+                                    cluster_nos_to_map, fs)
     print(result)
     exp_cluster_component_dict = {
         '13': '2',

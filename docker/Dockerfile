@@ -4,7 +4,7 @@ RUN conda config --append channels conda-forge
 RUN conda config --append channels bioconda
 
 RUN conda install python=3.10
-RUN conda install poppunk
+RUN conda install -c bioconda poppunk
 
 RUN pip install poetry
 COPY  *.toml *.lock /
