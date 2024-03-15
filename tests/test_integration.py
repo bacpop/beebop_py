@@ -153,7 +153,8 @@ def test_get_network_graphs(client):
     setup.do_network_internal(p_hash)
     response = client.get(f"/results/networkGraphs/{p_hash}")
     graph_string =\
-        json.loads(response.data.decode("utf-8"))['data']['GSPC16']['graph']
+        json.loads(response.data.decode("utf-8"))['data']
+    print(graph_string)
     assert response.status_code == 200
     assert all(x in graph_string for x in ['</graph>',
                                            '</graphml>',
