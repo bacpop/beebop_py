@@ -331,12 +331,18 @@ def get_network_graph(p_hash) -> json:
         graphmls = {}
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
-            component = cluster_component_mapping[str(cluster)]
+            component = cluster_component_mapping[cluster_num_from_label(cluster)]
+            
             path = fs.network_output_component(p_hash, component)
             with open(path, 'r') as graphml_file:
                 graph = graphml_file.read()
             graphmls[cluster] = graph
         return jsonify(response_success(graphmls))
+    except (KeyError):
+        f = jsonify(error=response_failure({
+                "error": "Cluster not found",
+                "detail": "Cluster not found"
+                })), 500
     except FileNotFoundError:
         return jsonify(error=response_failure({
             "error": "File not found",
