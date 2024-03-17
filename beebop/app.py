@@ -314,15 +314,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
     except AttributeError:
         return {"error": "Unknown project hash"}
 
-
-@app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
-def get_network_graph(p_hash) -> json:
-    """
-    [returns all network graphml files for a given project hash]
-
-    :param p_hash: [project hash]
-    :return json: [response object with all graphml files stored in 'data']
-    """
+def get_graphs_internal(p_hash: str, storage_location: str) -> dict: 
     fs = PoppunkFileStore(storage_location)
     try:
         cluster_result = get_clusters_internal(p_hash, storage_location)
@@ -348,6 +340,18 @@ def get_network_graph(p_hash) -> json:
             "error": "File not found",
             "detail": "GraphML files not found"
         })), 404
+        
+        
+@app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
+def get_network_graph(p_hash) -> json:
+    """
+    [returns all network graphml files for a given project hash]
+
+    :param p_hash: [project hash]
+    :return json: [response object with all graphml files stored in 'data']
+    """
+    return get_graphs_internal(p_hash, storage_location)
+    
 
 
 # get job result
