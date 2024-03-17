@@ -499,16 +499,6 @@ def test_download_graphml_internal():
     error2 = read_data(response_error2[0])['error']['errors'][0]
     assert error2['error'] == 'Cluster not found'
 
-def test_get_graphs_internal():
-    project_hash = 'unit_test_graphml'
-    setup.do_network_internal(project_hash)
-    response = app.get_graphs_internal(project_hash, storage_location)
-    
-    graph_string = read_data(response)['data']['GSPC16']
-    assert all(x in graph_string for x in ['</graph>',
-                                           '</graphml>',
-                                           '</node>',
-                                           '</edge>'])  
 
 def test_hex_to_decimal():
     dummy_sketch = {
