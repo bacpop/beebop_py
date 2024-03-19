@@ -503,6 +503,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
                 Response text: {r.text}."""
             })), 500
 
+
 # TODO: remove after new UI merged
 def download_graphml_internal(p_hash: str,
                               cluster: str,
