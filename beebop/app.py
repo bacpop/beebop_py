@@ -315,6 +315,41 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         return {"error": "Unknown project hash"}
 
 
+@app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
+def get_network_graph(p_hash) -> json:
+    """
+    [returns all network graphml files for a given project hash]
+
+    :param p_hash: [project hash]
+    :return json: [response object with all graphml files stored in 'data']
+    """
+    fs = PoppunkFileStore(storage_location)
+    try:
+        cluster_result = get_clusters_internal(p_hash, storage_location)
+        with open(fs.network_mapping(p_hash), 'rb') as dict:
+            cluster_component_mapping = pickle.load(dict)
+        graphmls = {}
+        for cluster_info in cluster_result.values():
+            cluster = cluster_info["cluster"]
+            component = \
+                cluster_component_mapping[cluster_num_from_label(cluster)]
+            path = fs.network_output_component(p_hash, component)
+            with open(path, 'r') as graphml_file:
+                graph = graphml_file.read()
+            graphmls[cluster] = graph
+        return jsonify(response_success(graphmls))
+    except (KeyError):
+        f = jsonify(error=response_failure({
+                "error": "Cluster not found",
+                "detail": "Cluster not found"
+                })), 500
+    except FileNotFoundError:
+        return jsonify(error=response_failure({
+            "error": "File not found",
+            "detail": "GraphML files not found"
+        })), 404
+
+
 # get job result
 @app.route("/results/<result_type>", methods=['POST'])
 def get_results(result_type) -> json:
@@ -358,6 +393,7 @@ def get_results(result_type) -> json:
                                                 cluster,
                                                 api_token,
                                                 storage_location)
+    # TODO: remove after new UI merged
     elif result_type == 'graphml':
         p_hash = request.json['projectHash']
         cluster = str(request.json['cluster'])
@@ -468,6 +504,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
             })), 500
 
 
+# TODO: remove after new UI merged
 def download_graphml_internal(p_hash: str,
                               cluster: str,
                               storage_location: str) -> json:
