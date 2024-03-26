@@ -66,7 +66,7 @@ class PoppunkFileStore:
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
         self.external_clustering = \
-            "./beebop/resources/GPS_v6_external_clusters.csv"
+            "./beebop/resources/GPS_v8_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
