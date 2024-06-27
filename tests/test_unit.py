@@ -674,6 +674,7 @@ def test_add_query_ref_status():
     assert get_node_status(22) == 'query'
     assert get_node_status(20) == 'ref'
 
+
 @patch('beebop.poppunkWrapper.assign_query_hdf5')
 def test_poppunk_wrapper_assign_cluster(mock_assign):
 
