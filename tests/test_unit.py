@@ -20,6 +20,7 @@ from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
 import shutil
+import PopPUNK.assign
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -27,6 +28,7 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop import utils
+from beebop.poppunkWrapper import PoppunkWrapper
 
 import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
@@ -671,3 +673,36 @@ def test_add_query_ref_status():
     assert get_node_status(21) == 'query'
     assert get_node_status(22) == 'query'
     assert get_node_status(20) == 'ref'
+
+@patch('beebop.poppunkWrapper.assign_query_hdf5')
+def test_poppunk_wrapper_assign_cluster(mock_assign):
+
+    db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+    wrapper = PoppunkWrapper(fs, db_paths, args, "random hash")
+
+    wrapper.assign_clusters(db_paths, ["ms1", "ms2"])
+
+    mock_assign.assert_called_with(
+        dbFuncs=db_paths,
+        ref_db=db_paths.db,
+        qNames=["ms1", "ms2"],
+        output=fs.output(wrapper.p_hash),
+        qc_dict=vars(args.assign.qc_dict),
+        update_db=args.assign.update_db,
+        write_references=args.assign.write_references,
+        distances=db_paths.distances,
+        serial=args.assign.serial,
+        threads=args.assign.threads,
+        overwrite=args.assign.overwrite,
+        plot_fit=args.assign.plot_fit,
+        graph_weights=args.assign.graph_weights,
+        model_dir=db_paths.db,
+        strand_preserved=args.assign.strand_preserved,
+        previous_clustering=db_paths.db,
+        external_clustering=fs.external_clustering,
+        core=args.assign.core_only,
+        accessory=args.assign.accessory_only,
+        gpu_dist=args.assign.gpu_dist,
+        gpu_graph=args.assign.gpu_graph,
+        save_partial_query_graph=args.assign.save_partial_query_graph
+    )
