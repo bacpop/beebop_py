@@ -28,7 +28,6 @@ class PoppunkWrapper:
         """
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
-        :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
         """
         assign_query_hdf5(
