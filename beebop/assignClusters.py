@@ -47,9 +47,6 @@ def get_clusters(hashes_list: list,
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    # create qc_dict
-    qc_dict = {'run_qc': False}
-
     # create dbFuncs
     dbFuncs = setupDBFuncs(args=args.assign)
 
@@ -66,7 +63,7 @@ def get_clusters(hashes_list: list,
 
     # run query assignment
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
-    wrapper.assign_clusters(dbFuncs, qc_dict, qNames)
+    wrapper.assign_clusters(dbFuncs, qNames)
 
     queries_names, queries_clusters, _, _, _, _, _ = \
         summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)

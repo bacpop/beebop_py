@@ -24,12 +24,10 @@ class PoppunkWrapper:
 
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
-                        qc_dict: dict,
                         qNames: list) -> None:
         """
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
-        :param qc_dict: [dict whether qc should run or not]
         :param qNames: [hd5 database with all sketches]
         """
         assign_query_hdf5(
@@ -37,7 +35,7 @@ class PoppunkWrapper:
             ref_db=self.db_paths.db,
             qNames=qNames,
             output=self.fs.output(self.p_hash),
-            qc_dict=qc_dict,
+            qc_dict=vars(self.args.assign.qc_dict),
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
