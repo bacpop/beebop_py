@@ -31,7 +31,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 To install PopPUNK v2.5, follow these steps:
 
 
-First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `onda activate beebop_pyonda activate beebop_py`
+First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
 
 
 Then install PopPUNK to your computer: 
