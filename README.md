@@ -3,6 +3,9 @@
 # beebop_py
 ## Python API for beebop
 
+#### A note on Assign Cluster Quality Control
+The app assigns clusters with quality control (qc) on. This is to enable the `--run-qc` flag as per [here](https://poppunk.bacpop.org/qc.html).
+The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. The values are [defaults](https://github.com/bacpop/PopPUNK/blob/master/PopPUNK/__main__.py) from PopPunk and are associated with the V8 database.
 ### Usage
 
 #### Clone the repository
@@ -28,7 +31,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 To install PopPUNK v2.5, follow these steps:
 
 
-First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_py`
+First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
 
 
 Then install PopPUNK to your computer: 
