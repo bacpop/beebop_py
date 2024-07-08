@@ -28,7 +28,8 @@
             "max_merge": -1,
             "betweenness": true,
             "retain_failures": false,
-            "no_remove": false
+            "no_remove": false,
+            "length_range": [1500000, 3500000]
         }
     },
     "visualise":{
