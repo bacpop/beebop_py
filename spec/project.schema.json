@@ -17,9 +17,12 @@
             "cluster": {
               "type": ["integer", "string"]
             },
-            "sketch": { "$ref": "sketch.schema.json" }
+            "sketch": { "$ref": "sketch.schema.json" },
+            "failedReasons": {
+              "type": "string"
+            }
           },
-          "required": ["hash", "cluster", "sketch"],
+          "required": ["hash"],
           "additionalProperties": false
         }
       }

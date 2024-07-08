@@ -344,10 +344,10 @@ def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     assert len(samples) == 2
     sample_1 = samples["24280624a730ada7b5bccea16306765c"]
     assert sample_1["hash"] == sample_hash_1
-    assert sample_1["cluster"] == None
+    assert sample_1["cluster"] is None
     sample_2 = samples["7e5ddeb048075ac23ab3672769bda17d"]
     assert sample_2["hash"] == sample_hash_2
-    assert sample_2["cluster"] == None
+    assert sample_2["cluster"] is None
 
 
 def test_get_status_internal(client):
