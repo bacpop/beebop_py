@@ -591,7 +591,7 @@ def get_project(p_hash) -> json:
         }))
 
 
-def get_failed_samples_internal(p_hash: str, 
+def get_failed_samples_internal(p_hash: str,
                                 storage_location: str
                                 ) -> dict[str, dict]:
     """
@@ -612,6 +612,7 @@ def get_failed_samples_internal(p_hash: str,
                 hash, reasons = line.strip().split("\t")
                 failed_samples[hash] = {"failReasons": reasons, "hash": hash}
     return failed_samples
+
 
 if __name__ == "__main__":
     serve(app)  # pragma: no cover

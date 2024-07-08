@@ -230,14 +230,12 @@ def test_run_poppunk_internal(qtbot):
 def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
-    expected_result = {'24280624a730ada7b5bccea16306765c':
-                        {'hash': '24280624a730ada7b5bccea16306765c',
+    expected_result = {
+        '24280624a730ada7b5bccea16306765c':{'hash': '24280624a730ada7b5bccea16306765c',
                             'cluster': 3},
-                       '7e5ddeb048075ac23ab3672769bda17d':
-                        {'hash': '7e5ddeb048075ac23ab3672769bda17d',
+        '7e5ddeb048075ac23ab3672769bda17d':{'hash': '7e5ddeb048075ac23ab3672769bda17d',
                             'cluster': 53},
-                       'f3d9b387e311d5ab59a8c08eb3545dbb':
-                           {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
+        'f3d9b387e311d5ab59a8c08eb3545dbb':{'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
                              'cluster': 24}}
     assert read_data(result) == {
         "status": "success",
