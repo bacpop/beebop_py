@@ -708,18 +708,16 @@ def test_poppunk_wrapper_assign_cluster(mock_assign):
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
 
+ 
 def test_get_failed_samples_internal_no_file():
     p_hash = 'unit_test_get_clusters_internal'
-    
     result = app.get_failed_samples_internal(p_hash, storage_location)
-  
     assert result == {}
+
 
 def test_get_failed_samples_internal_file_exists():
     p_hash = 'unit_test_get_failed_samples_internal'
-    
     result = app.get_failed_samples_internal(p_hash, storage_location)
-    
     assert result == {
         "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
             "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
@@ -727,21 +725,25 @@ def test_get_failed_samples_internal_file_exists():
         }
     }
 
+ 
 def test_get_clusters_json_with_failed_samples(client): 
     p_hash = 'unit_test_get_failed_samples_internal'
     
     result = app.get_clusters_json(p_hash, storage_location)
     
-    expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9': {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9',
-                            'failReasons': "Failed distance QC (too high),Failed distance QC (too many zeros)"},
-                    'c448c13f7efd6a5e7e520a7495f3f40f': {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f',
-                            'cluster': "GPSC3"}}
+    expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9': 
+        {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9', 
+         'failReasons': "Failed distance QC (too high),Failed distance QC (too many zeros)"
+         },
+        'c448c13f7efd6a5e7e520a7495f3f40f': 
+            {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f','cluster': "GPSC3"}}
     assert read_data(result) == {
         "status": "success",
         "errors": [],
         "data": expected_result
     }
-
+    
+    
 def test_get_project_with_failed_samples(client):
     p_hash = 'unit_test_get_failed_samples_internal'
     run_test_job(p_hash)
@@ -755,3 +757,4 @@ def test_get_project_with_failed_samples(client):
     assert samples[0]["failReasons"] == "Failed distance QC (too high),Failed distance QC (too many zeros)"
     assert samples[1]["hash"] == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples[1]["cluster"] == "GPSC3"
+    

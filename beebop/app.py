@@ -427,10 +427,8 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     cluster_result = get_clusters_internal(p_hash, storage_location)
     cluster_dict = {value['hash']: value for value in cluster_result.values()}
     failed_samples = get_failed_samples_internal(p_hash, storage_location)
-    
-    
+        
     return jsonify(response_success({**cluster_dict, **failed_samples}))
-
 
 def send_zip_internal(p_hash: str,
                       type: str,
@@ -593,12 +591,13 @@ def get_project(p_hash) -> json:
         
 def get_failed_samples_internal(p_hash: str, storage_location: str) -> dict[str, dict]:
     """
-    [Retrieves the failed samples for a given hash from the specified storage location.]
+    [Returns a dictionary of failed samples for a given project hash]
 
     :param p_hash (str): The hash of the samples to retrieve.
     :param storage_location (str): The location of the storage.
 
-    :return dict[str, dict]: failed samples containing hash and reasons for failure.
+    :return dict[str, dict]: failed samples 
+    containing hash and reasons for failure.
     """
     fs = PoppunkFileStore(storage_location)
     qc_report_file_path = fs.output_qc_report(p_hash)
@@ -607,7 +606,7 @@ def get_failed_samples_internal(p_hash: str, storage_location: str) -> dict[str,
         with open(fs.output_qc_report(p_hash), "r") as f:
             for line in f:
                 hash, reasons = line.strip().split("\t")
-                failed_samples[hash] = { "failReasons": reasons, "hash": hash }
+                failed_samples[hash] = {"failReasons": reasons, "hash": hash}
     return failed_samples
 
 if __name__ == "__main__":
