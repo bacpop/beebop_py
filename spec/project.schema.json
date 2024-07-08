@@ -6,20 +6,22 @@
       "type": "string"
     },
     "samples": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "hash": {
-            "type": "string"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9]*$": {
+          "type": "object",
+          "properties": {
+            "hash": {
+              "type": "string"
+            },
+            "cluster": {
+              "type": ["integer", "string"]
+            },
+            "sketch": { "$ref": "sketch.schema.json" }
           },
-          "cluster": {
-            "type": "integer"
-          },
-          "sketch": { "$ref": "sketch.schema.json" }
-        },
-        "required": ["hash", "sketch", "cluster"],
-        "additionalProperties": false
+          "required": ["hash", "cluster", "sketch"],
+          "additionalProperties": false
+        }
       }
     },
     "status": { "$ref": "status.schema.json" }

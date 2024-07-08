@@ -569,20 +569,20 @@ def get_project(p_hash) -> json:
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
-        sketch_clusters = get_clusters_internal(p_hash, storage_location)
+        clusters_result = get_clusters_internal(p_hash, storage_location)
         failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
         fs = PoppunkFileStore(storage_location)
         passed_samples = {}
-        for value in sketch_clusters.values():
-            sketch_hash = value["hash"]
-            sketch = fs.input.get(sketch_hash)
-            passed_samples[sketch_hash] = {
-                       "hash": sketch_hash,
+        for value in clusters_result.values():
+            sample_hash = value["hash"]
+            sketch = fs.input.get(sample_hash)
+            passed_samples[sample_hash] = {
+                       "hash": sample_hash,
                        "sketch": sketch
                      }
             # Cluster may not have been assigned yet
-            passed_samples[sketch_hash]["cluster"] = value.get("cluster")
+            passed_samples[sample_hash]["cluster"] = value.get("cluster")
 
         return jsonify(response_success({
             "hash": p_hash,

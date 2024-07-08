@@ -231,12 +231,19 @@ def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
     expected_result = {
-        '24280624a730ada7b5bccea16306765c':{'hash': '24280624a730ada7b5bccea16306765c',
-                            'cluster': 3},
-        '7e5ddeb048075ac23ab3672769bda17d':{'hash': '7e5ddeb048075ac23ab3672769bda17d',
-                            'cluster': 53},
-        'f3d9b387e311d5ab59a8c08eb3545dbb':{'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
-                             'cluster': 24}}
+        "24280624a730ada7b5bccea16306765c": {
+            "hash": "24280624a730ada7b5bccea16306765c",
+            "cluster": 3,
+        },
+        "7e5ddeb048075ac23ab3672769bda17d": {
+            "hash": "7e5ddeb048075ac23ab3672769bda17d",
+            "cluster": 53,
+        },
+        "f3d9b387e311d5ab59a8c08eb3545dbb": {
+            "hash": "f3d9b387e311d5ab59a8c08eb3545dbb",
+            "cluster": 24,
+        },
+    }
     assert read_data(result) == {
         "status": "success",
         "errors": [],
@@ -337,10 +344,10 @@ def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     assert len(samples) == 2
     sample_1 = samples["24280624a730ada7b5bccea16306765c"]
     assert sample_1["hash"] == sample_hash_1
-    assert "cluster" not in sample_1
+    assert sample_1["cluster"] == None
     sample_2 = samples["7e5ddeb048075ac23ab3672769bda17d"]
     assert sample_2["hash"] == sample_hash_2
-    assert "cluster" not in sample_2
+    assert sample_2["cluster"] == None
 
 
 def test_get_status_internal(client):
@@ -743,14 +750,17 @@ def test_get_clusters_json_with_failed_samples(client):
 
     result = app.get_clusters_json(p_hash, storage_location)
 
-    expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9':
-        {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9',
-         'failReasons':
-            "Failed distance QC (too high),Failed distance QC (too many zeros)"
-         },
-        'c448c13f7efd6a5e7e520a7495f3f40f':
-            {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f',
-             'cluster': "GPSC3"}}
+    expected_result = {
+      "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
+          "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
+          "failReasons":
+          "Failed distance QC (too high),Failed distance QC (too many zeros)",
+      },
+      "c448c13f7efd6a5e7e520a7495f3f40f": {
+          "hash": "c448c13f7efd6a5e7e520a7495f3f40f",
+          "cluster": "GPSC3",
+      },
+    }
     assert read_data(result) == {
         "status": "success",
         "errors": [],
