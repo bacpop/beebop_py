@@ -781,7 +781,7 @@ def test_get_project_with_failed_samples(client):
         == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
     assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"] \
         == "Failed distance QC (too high),Failed distance QC (too many zeros)"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] \
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"] \
         == "c448c13f7efd6a5e7e520a7495f3f40f"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["cluster"] \
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
         == "GPSC3"
