@@ -427,7 +427,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     cluster_result = get_clusters_internal(p_hash, storage_location)
     cluster_dict = {value['hash']: value for value in cluster_result.values()}
     failed_samples = get_failed_samples_internal(p_hash, storage_location)
-            
+
     return jsonify(response_success({**cluster_dict, **failed_samples}))
 
 
@@ -571,7 +571,7 @@ def get_project(p_hash) -> json:
     else:
         sketch_clusters = get_clusters_internal(p_hash, storage_location)
         failed_samples = get_failed_samples_internal(p_hash, storage_location)
-                
+
         fs = PoppunkFileStore(storage_location)
         passed_samples = {}
         for value in sketch_clusters.values():
@@ -589,16 +589,18 @@ def get_project(p_hash) -> json:
             "samples": {**passed_samples, **failed_samples},
             "status": status
         }))
-        
-        
-def get_failed_samples_internal(p_hash: str, storage_location: str) -> dict[str, dict]:
+
+
+def get_failed_samples_internal(p_hash: str, 
+                                storage_location: str
+                                ) -> dict[str, dict]:
     """
     [Returns a dictionary of failed samples for a given project hash]
 
     :param p_hash (str): The hash of the samples to retrieve.
     :param storage_location (str): The location of the storage.
 
-    :return dict[str, dict]: failed samples 
+    :return dict[str, dict]: failed samples
     containing hash and reasons for failure.
     """
     fs = PoppunkFileStore(storage_location)

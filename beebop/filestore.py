@@ -82,7 +82,7 @@ class PoppunkFileStore:
         outdir = self.output(p_hash)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
-       
+
     def output_qc_report(self, p_hash) -> str:
         """
         :param p_hash: [project hash]

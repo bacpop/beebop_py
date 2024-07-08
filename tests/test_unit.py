@@ -231,11 +231,11 @@ def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
     expected_result = {'24280624a730ada7b5bccea16306765c':
-                           {'hash': '24280624a730ada7b5bccea16306765c',
-                             'cluster': 3},
+                        {'hash': '24280624a730ada7b5bccea16306765c',
+                            'cluster': 3},
                        '7e5ddeb048075ac23ab3672769bda17d':
-                           {'hash': '7e5ddeb048075ac23ab3672769bda17d',
-                             'cluster': 53},
+                        {'hash': '7e5ddeb048075ac23ab3672769bda17d',
+                            'cluster': 53},
                        'f3d9b387e311d5ab59a8c08eb3545dbb':
                            {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
                              'cluster': 24}}
@@ -735,7 +735,7 @@ def test_get_failed_samples_internal_file_exists():
         "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
             "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
             "failReasons":
-                "Failed distance QC (too high),Failed distance QC (too many zeros)"
+            "Failed distance QC (too high),Failed distance QC (too many zeros)"
         }
     }
 
@@ -748,7 +748,7 @@ def test_get_clusters_json_with_failed_samples(client):
     expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9':
         {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9',
          'failReasons':
-             "Failed distance QC (too high),Failed distance QC (too many zeros)"
+            "Failed distance QC (too high),Failed distance QC (too many zeros)"
          },
         'c448c13f7efd6a5e7e520a7495f3f40f':
             {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f',
