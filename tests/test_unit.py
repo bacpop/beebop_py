@@ -230,11 +230,14 @@ def test_run_poppunk_internal(qtbot):
 def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
-    expected_result = {'24280624a730ada7b5bccea16306765c': {'hash': '24280624a730ada7b5bccea16306765c',
+    expected_result = {'24280624a730ada7b5bccea16306765c':
+                           {'hash': '24280624a730ada7b5bccea16306765c',
                              'cluster': 3},
-                       '7e5ddeb048075ac23ab3672769bda17d': {'hash': '7e5ddeb048075ac23ab3672769bda17d',
+                       '7e5ddeb048075ac23ab3672769bda17d':
+                           {'hash': '7e5ddeb048075ac23ab3672769bda17d',
                              'cluster': 53},
-                       'f3d9b387e311d5ab59a8c08eb3545dbb': {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
+                       'f3d9b387e311d5ab59a8c08eb3545dbb':
+                           {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
                              'cluster': 24}}
     assert read_data(result) == {
         "status": "success",
@@ -249,18 +252,28 @@ def test_get_project(client):
     result = app.get_project("unit_test_get_clusters_internal")
     assert result.status == "200 OK"
     data = read_data(result)["data"]
-    assert data["hash"] == "unit_test_get_clusters_internal"
+    assert data["hash"] \
+        == "unit_test_get_clusters_internal"
     samples = data["samples"]
     assert len(samples) == 3
-    assert samples["24280624a730ada7b5bccea16306765c"]["hash"] == "24280624a730ada7b5bccea16306765c"
-    assert samples["24280624a730ada7b5bccea16306765c"]["cluster"] == 3
-    assert samples["24280624a730ada7b5bccea16306765c"]["sketch"]["bbits"] == 3
-    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["hash"] == "7e5ddeb048075ac23ab3672769bda17d"
-    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["cluster"] == 53
-    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["sketch"]["bbits"] == 53
-    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
-    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["cluster"] == 24
-    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["sketch"]["bbits"] == 14
+    assert samples["24280624a730ada7b5bccea16306765c"]["hash"] \
+        == "24280624a730ada7b5bccea16306765c"
+    assert samples["24280624a730ada7b5bccea16306765c"]["cluster"] \
+        == 3
+    assert samples["24280624a730ada7b5bccea16306765c"]["sketch"]["bbits"] \
+        == 3
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["hash"] \
+        == "7e5ddeb048075ac23ab3672769bda17d"
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["cluster"] \
+        == 53
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["sketch"]["bbits"] \
+        == 53
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["hash"] \
+        == "f3d9b387e311d5ab59a8c08eb3545dbb"
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["cluster"] \
+        == 24
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["sketch"]["bbits"] \
+        == 14
     assert data["status"]["assign"] in status_options
     assert data["status"]["microreact"] in status_options
     assert data["status"]["network"] in status_options
@@ -708,7 +721,7 @@ def test_poppunk_wrapper_assign_cluster(mock_assign):
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
 
- 
+
 def test_get_failed_samples_internal_no_file():
     p_hash = 'unit_test_get_clusters_internal'
     result = app.get_failed_samples_internal(p_hash, storage_location)
@@ -721,40 +734,46 @@ def test_get_failed_samples_internal_file_exists():
     assert result == {
         "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
             "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
-            "failReasons": "Failed distance QC (too high),Failed distance QC (too many zeros)"
+            "failReasons":
+                "Failed distance QC (too high),Failed distance QC (too many zeros)"
         }
     }
 
- 
-def test_get_clusters_json_with_failed_samples(client): 
+
+def test_get_clusters_json_with_failed_samples(client):
     p_hash = 'unit_test_get_failed_samples_internal'
-    
+
     result = app.get_clusters_json(p_hash, storage_location)
-    
-    expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9': 
-        {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9', 
-         'failReasons': "Failed distance QC (too high),Failed distance QC (too many zeros)"
+
+    expected_result = {'3eaf3ff220d15f8b7ce9ee47aaa9b4a9':
+        {'hash': '3eaf3ff220d15f8b7ce9ee47aaa9b4a9',
+         'failReasons':
+             "Failed distance QC (too high),Failed distance QC (too many zeros)"
          },
-        'c448c13f7efd6a5e7e520a7495f3f40f': 
-            {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f','cluster': "GPSC3"}}
+        'c448c13f7efd6a5e7e520a7495f3f40f':
+            {'hash': 'c448c13f7efd6a5e7e520a7495f3f40f',
+             'cluster': "GPSC3"}}
     assert read_data(result) == {
         "status": "success",
         "errors": [],
         "data": expected_result
     }
-    
-    
+
+
 def test_get_project_with_failed_samples(client):
     p_hash = 'unit_test_get_failed_samples_internal'
     run_test_job(p_hash)
-    
+
     result = app.get_project(p_hash)
-    
+
     assert result.status == "200 OK"
     samples = read_data(result)["data"]["samples"]
     assert len(samples) == 2
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"] == "Failed distance QC (too high),Failed distance QC (too many zeros)"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] == "c448c13f7efd6a5e7e520a7495f3f40f"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["cluster"] == "GPSC3"
-    
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] \
+        == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"] \
+        == "Failed distance QC (too high),Failed distance QC (too many zeros)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] \
+        == "c448c13f7efd6a5e7e520a7495f3f40f"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["cluster"] \
+        == "GPSC3"
