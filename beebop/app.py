@@ -425,7 +425,11 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     :return json: [response object with cluster results stored in 'data']
     """
     cluster_result = get_clusters_internal(p_hash, storage_location)
-    return jsonify(response_success(cluster_result))
+    cluster_dict = {value['hash']: value for value in cluster_result.values()}
+    failed_samples = get_failed_samples_internal(p_hash, storage_location)
+    
+    
+    return jsonify(response_success({**cluster_dict, **failed_samples}))
 
 
 def send_zip_internal(p_hash: str,
@@ -567,27 +571,44 @@ def get_project(p_hash) -> json:
         return jsonify(error=response_failure(status)), 500
     else:
         sketch_clusters = get_clusters_internal(p_hash, storage_location)
-
+        failed_samples = get_failed_samples_internal(p_hash, storage_location)
+        
         fs = PoppunkFileStore(storage_location)
-        samples = []
+        passed_samples = {}
         for value in sketch_clusters.values():
             sketch_hash = value["hash"]
             sketch = fs.input.get(sketch_hash)
-            sample = {
+            passed_samples[sketch_hash] = {
                        "hash": sketch_hash,
                        "sketch": sketch
                      }
             # Cluster may not have been assigned yet
-            if "cluster" in value:
-                sample["cluster"] = value["cluster"]
-            samples.append(sample)
+            passed_samples[sketch_hash]["cluster"] = value.get("cluster")
 
         return jsonify(response_success({
             "hash": p_hash,
-            "samples": samples,
+            "samples": {**passed_samples, **failed_samples},
             "status": status
         }))
+        
+def get_failed_samples_internal(p_hash: str, storage_location: str) -> dict[str, dict]:
+    """
+    [Retrieves the failed samples for a given hash from the specified storage location.]
 
+    :param p_hash (str): The hash of the samples to retrieve.
+    :param storage_location (str): The location of the storage.
+
+    :return dict[str, dict]: failed samples containing hash and reasons for failure.
+    """
+    fs = PoppunkFileStore(storage_location)
+    qc_report_file_path = fs.output_qc_report(p_hash)
+    failed_samples = {}
+    if os.path.exists(qc_report_file_path):
+        with open(fs.output_qc_report(p_hash), "r") as f:
+            for line in f:
+                hash, reasons = line.strip().split("\t")
+                failed_samples[hash] = { "failReasons": reasons, "hash": hash }
+    return failed_samples
 
 if __name__ == "__main__":
     serve(app)  # pragma: no cover

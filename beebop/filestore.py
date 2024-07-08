@@ -82,6 +82,13 @@ class PoppunkFileStore:
         outdir = self.output(p_hash)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
+            
+    def output_qc_report(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to qcreport containing failed samples]
+        """
+        return str(PurePath(self.output(p_hash), f"{p_hash}_qcreport.txt"))
 
     def output_cluster(self, p_hash) -> str:
         """
