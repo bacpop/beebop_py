@@ -15,7 +15,7 @@
               "type": "string"
             },
             "cluster": {
-              "type": ["string"]
+              "type": ["string", "integer"]
             },
             "sketch": { "$ref": "sketch.schema.json" },
             "failedReasons": {

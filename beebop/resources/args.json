@@ -29,7 +29,8 @@
             "betweenness": true,
             "retain_failures": false,
             "no_remove": false,
-            "length_range": [1500000, 3500000]
+            "length_range": [1500000, 3500000],
+            "upper_n": null
         }
     },
     "visualise":{
