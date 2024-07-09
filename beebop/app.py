@@ -610,7 +610,8 @@ def get_failed_samples_internal(p_hash: str,
         with open(fs.output_qc_report(p_hash), "r") as f:
             for line in f:
                 hash, reasons = line.strip().split("\t")
-                failed_samples[hash] = {"failReasons": reasons.split(","), "hash": hash}
+                failed_samples[hash] \
+                    = {"failReasons": reasons.split(","), "hash": hash}
     return failed_samples
 
 
