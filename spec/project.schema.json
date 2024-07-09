@@ -15,11 +15,14 @@
               "type": "string"
             },
             "cluster": {
-              "type": ["integer", "string"]
+              "type": ["string"]
             },
             "sketch": { "$ref": "sketch.schema.json" },
             "failedReasons": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           "required": ["hash"],

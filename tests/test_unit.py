@@ -739,8 +739,10 @@ def test_get_failed_samples_internal_file_exists():
     assert result == {
         "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
             "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
-            "failReasons":
-            "Failed distance QC (too high),Failed distance QC (too many zeros)"
+            "failReasons": [
+                "Failed distance QC (too high)",
+                "Failed distance QC (too many zeros)",
+            ],
         }
     }
 
@@ -753,8 +755,10 @@ def test_get_clusters_json_with_failed_samples(client):
     expected_result = {
       "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
           "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
-          "failReasons":
-          "Failed distance QC (too high),Failed distance QC (too many zeros)",
+          "failReasons": [
+                "Failed distance QC (too high)",
+                "Failed distance QC (too many zeros)",
+            ],
       },
       "c448c13f7efd6a5e7e520a7495f3f40f": {
           "hash": "c448c13f7efd6a5e7e520a7495f3f40f",
@@ -779,8 +783,10 @@ def test_get_project_with_failed_samples(client):
     assert len(samples) == 2
     assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] \
         == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
-    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"] \
-        == "Failed distance QC (too high),Failed distance QC (too many zeros)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0] \
+        == "Failed distance QC (too high)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1] \
+        == "Failed distance QC (too many zeros)"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"] \
         == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
