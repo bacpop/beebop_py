@@ -230,12 +230,20 @@ def test_run_poppunk_internal(qtbot):
 def test_get_clusters_json(client):
     hash = "unit_test_get_clusters_internal"
     result = app.get_clusters_json(hash, storage_location)
-    expected_result = {'0': {'hash': '24280624a730ada7b5bccea16306765c',
-                             'cluster': 3},
-                       '1': {'hash': '7e5ddeb048075ac23ab3672769bda17d',
-                             'cluster': 53},
-                       '2': {'hash': 'f3d9b387e311d5ab59a8c08eb3545dbb',
-                             'cluster': 24}}
+    expected_result = {
+        "24280624a730ada7b5bccea16306765c": {
+            "hash": "24280624a730ada7b5bccea16306765c",
+            "cluster": 3,
+        },
+        "7e5ddeb048075ac23ab3672769bda17d": {
+            "hash": "7e5ddeb048075ac23ab3672769bda17d",
+            "cluster": 53,
+        },
+        "f3d9b387e311d5ab59a8c08eb3545dbb": {
+            "hash": "f3d9b387e311d5ab59a8c08eb3545dbb",
+            "cluster": 24,
+        },
+    }
     assert read_data(result) == {
         "status": "success",
         "errors": [],
@@ -249,18 +257,28 @@ def test_get_project(client):
     result = app.get_project("unit_test_get_clusters_internal")
     assert result.status == "200 OK"
     data = read_data(result)["data"]
-    assert data["hash"] == "unit_test_get_clusters_internal"
+    assert data["hash"] \
+        == "unit_test_get_clusters_internal"
     samples = data["samples"]
     assert len(samples) == 3
-    assert samples[0]["hash"] == "24280624a730ada7b5bccea16306765c"
-    assert samples[0]["cluster"] == 3
-    assert samples[0]["sketch"]["bbits"] == 3
-    assert samples[1]["hash"] == "7e5ddeb048075ac23ab3672769bda17d"
-    assert samples[1]["cluster"] == 53
-    assert samples[1]["sketch"]["bbits"] == 53
-    assert samples[2]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
-    assert samples[2]["cluster"] == 24
-    assert samples[2]["sketch"]["bbits"] == 14
+    assert samples["24280624a730ada7b5bccea16306765c"]["hash"] \
+        == "24280624a730ada7b5bccea16306765c"
+    assert samples["24280624a730ada7b5bccea16306765c"]["cluster"] \
+        == 3
+    assert samples["24280624a730ada7b5bccea16306765c"]["sketch"]["bbits"] \
+        == 3
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["hash"] \
+        == "7e5ddeb048075ac23ab3672769bda17d"
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["cluster"] \
+        == 53
+    assert samples["7e5ddeb048075ac23ab3672769bda17d"]["sketch"]["bbits"] \
+        == 53
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["hash"] \
+        == "f3d9b387e311d5ab59a8c08eb3545dbb"
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["cluster"] \
+        == 24
+    assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["sketch"]["bbits"] \
+        == 14
     assert data["status"]["assign"] in status_options
     assert data["status"]["microreact"] in status_options
     assert data["status"]["network"] in status_options
@@ -313,8 +331,8 @@ def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     sample_hash_1 = "24280624a730ada7b5bccea16306765c"
     sample_hash_2 = "7e5ddeb048075ac23ab3672769bda17d"
     initial_output = {
-        0: {"hash": sample_hash_1},
-        1: {"hash": sample_hash_2}
+        sample_hash_1: {"hash": sample_hash_1},
+        sample_hash_2: {"hash": sample_hash_2}
     }
     with open(fs.output_cluster(hash), 'wb') as f:
         pickle.dump(initial_output, f)
@@ -324,12 +342,12 @@ def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     assert data["hash"] == hash
     samples = data["samples"]
     assert len(samples) == 2
-    sample_1 = samples[0]
+    sample_1 = samples["24280624a730ada7b5bccea16306765c"]
     assert sample_1["hash"] == sample_hash_1
-    assert "cluster" not in sample_1
-    sample_2 = samples[1]
+    assert sample_1["cluster"] is None
+    sample_2 = samples["7e5ddeb048075ac23ab3672769bda17d"]
     assert sample_2["hash"] == sample_hash_2
-    assert "cluster" not in sample_2
+    assert sample_2["cluster"] is None
 
 
 def test_get_status_internal(client):
@@ -707,3 +725,69 @@ def test_poppunk_wrapper_assign_cluster(mock_assign):
         gpu_graph=args.assign.gpu_graph,
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
+
+
+def test_get_failed_samples_internal_no_file():
+    p_hash = 'unit_test_get_clusters_internal'
+    result = app.get_failed_samples_internal(p_hash, storage_location)
+    assert result == {}
+
+
+def test_get_failed_samples_internal_file_exists():
+    p_hash = 'unit_test_get_failed_samples_internal'
+    result = app.get_failed_samples_internal(p_hash, storage_location)
+    assert result == {
+        "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
+            "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
+            "failReasons": [
+                "Failed distance QC (too high)",
+                "Failed distance QC (too many zeros)",
+            ],
+        }
+    }
+
+
+def test_get_clusters_json_with_failed_samples(client):
+    p_hash = 'unit_test_get_failed_samples_internal'
+
+    result = app.get_clusters_json(p_hash, storage_location)
+
+    expected_result = {
+      "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
+          "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
+          "failReasons": [
+                "Failed distance QC (too high)",
+                "Failed distance QC (too many zeros)",
+            ],
+      },
+      "c448c13f7efd6a5e7e520a7495f3f40f": {
+          "hash": "c448c13f7efd6a5e7e520a7495f3f40f",
+          "cluster": "GPSC3",
+      },
+    }
+    assert read_data(result) == {
+        "status": "success",
+        "errors": [],
+        "data": expected_result
+    }
+
+
+def test_get_project_with_failed_samples(client):
+    p_hash = 'unit_test_get_failed_samples_internal'
+    run_test_job(p_hash)
+
+    result = app.get_project(p_hash)
+
+    assert result.status == "200 OK"
+    samples = read_data(result)["data"]["samples"]
+    assert len(samples) == 2
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] \
+        == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0] \
+        == "Failed distance QC (too high)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1] \
+        == "Failed distance QC (too many zeros)"
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"] \
+        == "c448c13f7efd6a5e7e520a7495f3f40f"
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
+        == "GPSC3"

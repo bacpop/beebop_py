@@ -81,11 +81,24 @@ def test_run_poppunk(client, qtbot):
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert len(project_data["samples"]) == 2
+    print(project_data["samples"])
     # check response data matches the generated data
-    assert project_data["samples"][0]["sketch"] == sketches["7622_5_91"]
-    assert project_data["samples"][0]["cluster"] == 'GPSC3'
-    assert project_data["samples"][1]["sketch"] == sketches["6930_8_9"]
-    assert project_data["samples"][1]["cluster"] == 'GPSC60'
+    assert (
+        project_data["samples"]["7622_5_91"]["sketch"]
+        == sketches["7622_5_91"]
+    )
+    assert (
+        project_data["samples"]["7622_5_91"]["cluster"]
+        == "GPSC3"
+    )
+    assert (
+        project_data["samples"]["6930_8_9"]["sketch"]
+        == sketches["6930_8_9"]
+    )
+    assert (
+        project_data["samples"]["6930_8_9"]["cluster"]
+        == "GPSC60"
+    )
     assert project_data["status"]["assign"] == "finished"
     assert project_data["status"]["microreact"] == "finished"
     assert project_data["status"]["network"] == "finished"
