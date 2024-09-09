@@ -17,7 +17,7 @@
         "min_kmer_count": 0,
         "exact_count": false,
         "species": "Streptococcus pneumoniae",
-        "stable": "false",
+        "stable": "core",
         "serial": false,
         "qc_dict": {
             "run_qc": true,
