@@ -696,7 +696,7 @@ def test_add_query_ref_status():
 @patch('beebop.poppunkWrapper.assign_query_hdf5')
 def test_poppunk_wrapper_assign_cluster(mock_assign):
 
-    db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+    db_paths = DatabaseFileStore('./storage/GPS_v9')
     wrapper = PoppunkWrapper(fs, db_paths, args, "random hash")
 
     wrapper.assign_clusters(db_paths, ["ms1", "ms2"])

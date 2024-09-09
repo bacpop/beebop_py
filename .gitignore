@@ -15,5 +15,7 @@ storage/GPS_v6*
 storage/._GPS_v6*
 storage/GPS_v8*
 storage/._GPS_v8*
+storage/GPS_v9*
+storage/._GPS_v9*
 storage/strain_*_lineage_db
 .idea

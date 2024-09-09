@@ -5,7 +5,7 @@
 
 #### A note on Assign Cluster Quality Control
 The app assigns clusters with quality control (qc) on. This is to enable the `--run-qc` flag as per [here](https://poppunk.bacpop.org/qc.html).
-The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. The values are [defaults](https://github.com/bacpop/PopPUNK/blob/master/PopPUNK/__main__.py) from PopPunk and are associated with the V8 database.
+The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. The values are [defaults](https://github.com/bacpop/PopPUNK/blob/master/PopPUNK/__main__.py) from PopPunk and are associated with the v9 database.
 ### Usage
 
 #### Clone the repository
@@ -14,7 +14,7 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
 
-You will need the GPS_v8 database, please download and extract it into `/storage`:
+You will need the GPS_v9 database, please download and extract it into `/storage`:
 
 ```
 ./scripts/download_db
