@@ -34,10 +34,13 @@ To install PopPUNK, follow these steps:
 First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
 
 
-Then install PopPUNK to your computer. First line for latest version and second line for a specific version: 
+Then install PopPUNK to your computer - either the latest version:
 ```
 pip3 install git+https://github.com/bacpop/PopPUNK#egg=PopPUNK
+```
 
+..or a specific version:
+```
 pip3 install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK  # for PopPUNK v2.6.7. replace with desired version
 ```
 
