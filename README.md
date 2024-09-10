@@ -28,15 +28,17 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 ##### PopPUNK
-To install PopPUNK v2.5, follow these steps:
+To install PopPUNK, follow these steps:
 
 
 First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
 
 
-Then install PopPUNK to your computer: 
+Then install PopPUNK to your computer. First line for latest version and second line for a specific version: 
 ```
 pip3 install git+https://github.com/bacpop/PopPUNK#egg=PopPUNK
+
+pip3 install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK  # for PopPUNK v2.6.7. replace with desired version
 ```
 
 If there are problems installing PopPUNK, you may need to install one or more of the following packages with `sudo apt get install`:
