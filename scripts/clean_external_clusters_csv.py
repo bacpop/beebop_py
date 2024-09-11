@@ -1,5 +1,6 @@
 """
-This python script takes in the original external_clusters.csv file and cleans it. 
+This python script takes in the original external_clusters.csv from Sanger,
+cleans it to be of needed format.
 It removes the GPSC column and rename merge_history column to Cluster.
 
 To run script type the following: `python3 clean_external_clusters_csv`
