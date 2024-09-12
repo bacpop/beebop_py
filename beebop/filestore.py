@@ -204,6 +204,6 @@ class DatabaseFileStore:
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists.pkl'))
+                                      self.name).with_suffix('.dists'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))

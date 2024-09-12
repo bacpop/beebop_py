@@ -723,7 +723,8 @@ def test_poppunk_wrapper_assign_cluster(mock_assign):
         accessory=args.assign.accessory_only,
         gpu_dist=args.assign.gpu_dist,
         gpu_graph=args.assign.gpu_graph,
-        save_partial_query_graph=args.assign.save_partial_query_graph
+        save_partial_query_graph=args.assign.save_partial_query_graph,
+        stable=args.assign.stable
     )
 
 
