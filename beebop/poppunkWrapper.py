@@ -52,7 +52,8 @@ class PoppunkWrapper:
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
             gpu_graph=self.args.assign.gpu_graph,
-            save_partial_query_graph=self.args.assign.save_partial_query_graph
+            save_partial_query_graph=self.args.assign.save_partial_query_graph,
+            stable=self.args.assign.stable
         )
 
     def create_microreact(self, cluster: str, poppunk_cluster: str) -> None:

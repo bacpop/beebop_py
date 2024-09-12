@@ -23,7 +23,7 @@ p_hash = 'unit_test_visualisations'
 fs = PoppunkFileStore(storageLocation)
 fs.ensure_output_dir_exists(p_hash)
 outdir = fs.output(p_hash)
-db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+db_paths = DatabaseFileStore('./storage/GPS_v9')
 args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign)

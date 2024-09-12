@@ -22,7 +22,7 @@ docker run -d --rm --name $NAME_WORKER --network=$NETWORK \
 docker run -d --rm --name $NAME_API --network=$NETWORK \
        --env=REDIS_HOST="$NAME_REDIS" \
        --env=STORAGE_LOCATION="./storage" \
-       --env=DB_LOCATION="./storage/GPS_v8_ref" \
+       --env=DB_LOCATION="./storage/GPS_v9" \
        -v $VOLUME:/beebop/storage \
        -p 5000:5000 \
        $TAG_SHA

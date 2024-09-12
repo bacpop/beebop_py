@@ -66,7 +66,7 @@ class PoppunkFileStore:
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
         self.external_clustering = \
-            "./beebop/resources/GPS_v8_external_clusters.csv"
+            "./beebop/resources/GPS_v9_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
@@ -204,6 +204,6 @@ class DatabaseFileStore:
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists.pkl'))
+                                      self.name).with_suffix('.dists'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))

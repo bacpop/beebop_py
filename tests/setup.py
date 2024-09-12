@@ -39,7 +39,7 @@ name_mapping = {
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
 
-db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+db_paths = DatabaseFileStore('./storage/GPS_v9')
 args = get_args()
 
 
