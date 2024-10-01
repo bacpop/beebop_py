@@ -136,13 +136,23 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), f"{p_hash}_graph.gt"))
 
+    def external_previous_query_clustering_path(self, p_hash) -> str:
+        return str(PurePath(self.output(p_hash),
+                            f"{p_hash}_external_clusters.csv"))
+
     def previous_query_clustering(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"{p_hash}_external_clusters.csv"))
+        return (
+            self.external_previous_query_clustering_path(p_hash)
+            if self.has_external_previous_query_clustering(p_hash)
+            else str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
+        )
+
+    def has_external_previous_query_clustering(self, p_hash) -> bool:
+        return os.path.exists(self.external_previous_query_clustering_path(p_hash))
 
     def distances(self, p_hash) -> str:
         """
@@ -196,7 +206,7 @@ class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
-    def __init__(self, full_path):
+    def __init__(self, full_path, species):
         """
         :param full_path: [path to database]
         """
@@ -204,6 +214,11 @@ class DatabaseFileStore:
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists.pkl'))
+                                      self.name).with_suffix('.dists.pkl')) # TODO: remove .pkl
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
+        self.external_clustering = f"./beebop/resources/{self.name}_external_clusters.csv"
+        self.species = species
+        
+    def has_external_clusters(self):
+        return os.path.exists(self.external_clustering)

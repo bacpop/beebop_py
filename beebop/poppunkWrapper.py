@@ -1,6 +1,6 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
-from beebop.filestore import DatabaseFileStore
+from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
 
 
@@ -9,7 +9,7 @@ class PoppunkWrapper:
     [Wrapper to separate the poppunk function calls that require an enormous
     amount of arguments from the main scripts.]
     """
-    def __init__(self, fs, db_paths, args, p_hash):
+    def __init__(self, fs: PoppunkFileStore, db_paths: DatabaseFileStore, args, p_hash: str):
         """
         :param fs: [PoppunkFileStore with paths to in-/outputs]
         :param db_paths: [DatabaseFileStore with paths to db files]
@@ -21,7 +21,6 @@ class PoppunkWrapper:
         self.db_paths = db_paths
         self.args = args
         self.p_hash = p_hash
-
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
                         qNames: list) -> None:
@@ -35,7 +34,7 @@ class PoppunkWrapper:
             ref_db=self.db_paths.db,
             qNames=qNames,
             output=self.fs.output(self.p_hash),
-            qc_dict=vars(self.args.assign.qc_dict),
+            qc_dict=vars(getattr(self.args, self.db_paths.species).qc_dict), # TODO: get QC for diff species
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
@@ -47,7 +46,7 @@ class PoppunkWrapper:
             model_dir=self.db_paths.db,
             strand_preserved=self.args.assign.strand_preserved,
             previous_clustering=self.db_paths.db,
-            external_clustering=self.fs.external_clustering,
+            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
             core=self.args.assign.core_only,
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
@@ -55,14 +54,14 @@ class PoppunkWrapper:
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
 
-    def create_microreact(self, cluster: str, poppunk_cluster: str) -> None:
+    def create_microreact(self, cluster: str, internal_cluster: str) -> None:
         """
         [Generates microreact visualisation output based on previous
         assign_clusters() output.]
 
         Args:
         :param cluster: [external cluster]
-        :param poppunk_cluster: [corresponding poppunk cluster, used to
+        :param internal_cluster: [corresponding poppunk cluster, used to
             indicate clusters to include]
         """
         print(shutil.which('rapidnj'))
@@ -75,7 +74,7 @@ class PoppunkWrapper:
             output=self.fs.output_microreact(self.p_hash, cluster),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.fs.external_clustering,
+            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
             microreact=True,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
@@ -83,7 +82,7 @@ class PoppunkWrapper:
             perplexity=self.args.visualise.perplexity,
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
-            include_files=self.fs.include_files(self.p_hash, poppunk_cluster),
+            include_files=self.fs.include_files(self.p_hash, internal_cluster),
             model_dir=self.db_paths.db,
             previous_clustering=self.db_paths.previous_clustering,
             previous_query_clustering=(
@@ -115,7 +114,7 @@ class PoppunkWrapper:
             output=self.fs.output_network(self.p_hash),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.fs.external_clustering,
+            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
             microreact=self.args.visualise.microreact,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,

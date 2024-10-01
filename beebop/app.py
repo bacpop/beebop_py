@@ -169,9 +169,10 @@ def run_poppunk() -> json:
     sketches = request.json['sketches'].items()
     p_hash = request.json['projectHash']
     name_mapping = request.json['names']
+    species = request.json.get("species", "Streptococcus pneumoniae")
     q = Queue(connection=redis)
     return run_poppunk_internal(sketches, p_hash, name_mapping,
-                                storage_location, redis, q)
+                                storage_location, redis, q, species)
 
 
 def run_poppunk_internal(sketches: dict,
@@ -179,7 +180,7 @@ def run_poppunk_internal(sketches: dict,
                          name_mapping: dict,
                          storage_location: str,
                          redis: Redis,
-                         q: Queue) -> json:
+                         q: Queue, species) -> json:
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
@@ -200,7 +201,16 @@ def run_poppunk_internal(sketches: dict,
     # read arguments
     args = get_args()
     # set database paths
-    db_paths = DatabaseFileStore(database_location)
+
+    
+    species_args = getattr(args, species, None)
+    if not species_args:
+        return jsonify(error=response_failure({
+            "error": "Species not found",
+            "detail": f"No database found for species: {species}"
+        })), 400
+
+    db_paths = DatabaseFileStore(f"{storage_location}/{species_args.dbname}", species) # TODO rename to db_fs
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
     hashes_list = []

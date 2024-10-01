@@ -15,7 +15,7 @@ ET.register_namespace('', "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
 
 
-def get_args() -> dict:
+def get_args() -> SimpleNamespace:
     """
     [Read in fixed arguments to poppunk that are always set, or used as
     defaults. This is needed because of the large number of arguments that
@@ -33,7 +33,8 @@ NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 
 def generate_mapping(p_hash: str,
                      cluster_nums_to_map: list,
-                     fs: PoppunkFileStore) -> dict:
+                     fs: PoppunkFileStore,
+                     is_external_clusters: bool) -> dict:
     """
     [PopPUNKs network visualisation generates one overall .graphml file
     covering all clusters/ components. Furthermore, it generates one .graphml
@@ -57,7 +58,7 @@ def generate_mapping(p_hash: str,
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
             sample_id, sample_clusters = row
-            cluster = str(get_lowest_cluster(sample_clusters))
+            cluster = str(get_lowest_cluster(sample_clusters)) if is_external_clusters else str(sample_clusters)
             if cluster in cluster_nums_to_map:
                 samples_to_clusters[sample_id] = cluster
 
@@ -129,16 +130,16 @@ def match_clusters_to_components(p_hash: str,
 
     return cluster_component_dict
 
-
+# TODO: rename? because can just be cluster num
 def cluster_num_from_label(cluster_label: str) -> str:
     """
-    [Strip GPSC prefix from cluster label, as the internals of PopPUNK
-    use the numeric part only.]
+    [Extract the numeric part from a cluster label, regardless of the prefix.]
 
-    :param cluster_label: [external cluster label with GPSC prefix]
-    :return str: [cluster string with prefix removed]
+    :param cluster_label: [external cluster label with any prefix]
+    :return str: [numeric part of the cluster label]
     """
-    return cluster_label.replace("GPSC", "")
+    match = re.search(r'\d+', str(cluster_label))
+    return match.group(0) if match else str(cluster_label)  
 
 
 def cluster_nums_from_assign_result(assign_result: dict) -> list:

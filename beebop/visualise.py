@@ -32,8 +32,14 @@ def microreact(p_hash: str,
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
-        external_to_poppunk_clusters = pickle.load(dict)
+    external_to_poppunk_clusters = None
+    
+    try:
+        with open(fs.external_to_poppunk_clusters(p_hash), 'rb') as dict:
+            external_to_poppunk_clusters = pickle.load(dict)
+    except FileNotFoundError:
+        print("no external cluster info found")
+        
     microreact_internal(assign_result,
                         p_hash,
                         fs,
@@ -49,7 +55,7 @@ def microreact_internal(assign_result,
                         db_paths,
                         args,
                         name_mapping,
-                        external_to_poppunk_clusters) -> None:
+                        external_to_poppunk_clusters: dict = None) -> None:
     """
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
@@ -68,9 +74,12 @@ def microreact_internal(assign_result,
     for item in assign_result.values():
         queries_clusters.append(item['cluster'])
     for cluster in set(queries_clusters):
-        cluster_no = cluster_num_from_label(cluster)
-        poppunk_cluster = external_to_poppunk_clusters[cluster]
-        wrapper.create_microreact(cluster_no, poppunk_cluster)
+        cluster_no = internal_cluster = cluster
+        if external_to_poppunk_clusters:
+            cluster_no = cluster_num_from_label(cluster)
+            internal_cluster = external_to_poppunk_clusters[cluster]
+            
+        wrapper.create_microreact(cluster_no, internal_cluster)
         replace_filehashes(fs.output_microreact(p_hash, cluster_no),
                            name_mapping)
 
@@ -112,7 +121,7 @@ def network(p_hash: str,
 def network_internal(assign_result,
                      p_hash,
                      fs,
-                     db_paths,
+                     db_paths: DatabaseFileStore,
                      args,
                      name_mapping) -> None:
     """
@@ -128,11 +137,11 @@ def network_internal(assign_result,
     """
     wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
     wrapper.create_network()
+    
+    is_external_clusters = db_paths.has_external_clusters()
     cluster_nums_to_map = cluster_nums_from_assign_result(assign_result)
-    cluster_component_dict = generate_mapping(p_hash, cluster_nums_to_map, fs)
-    delete_component_files(cluster_component_dict,
-                           fs,
-                           assign_result,
-                           p_hash)
+    cluster_component_dict = generate_mapping(p_hash, cluster_nums_to_map, fs, is_external_clusters)
+    
+    delete_component_files(cluster_component_dict, fs, assign_result, p_hash)     
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)
