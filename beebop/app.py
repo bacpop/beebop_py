@@ -15,6 +15,7 @@ import pickle
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_args, cluster_num_from_label
+from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -155,6 +156,33 @@ def report_version() -> json:
     vers = versions.get_version()
     return jsonify(response_success(vers))
 
+
+@app.route("/db_kmers", methods=['POST'])
+@expects_json(schemas.db_kmers)
+def get_sketch_kmer_lists() -> json:
+    """
+    Retrieves k-mer lists for a given list of species from a reference database.
+    This function expects a JSON payload with a list of species names. For each species,
+    it fetches the corresponding k-mers from a reference database and returns them in a JSON response.
+    If a species is not found in the arguments, it returns an error message.
+
+    returns json: A JSON response containing the k-mer lists for the specified species or an error message if a species is not found.
+    raises: KeyError: If the 'species' key is not present in args.json.
+    """
+    speciesList = request.json['species']
+    args = get_args()
+    species_kmers = {}
+    for species in speciesList:
+        species_args = getattr(args, species, None)
+        if not species_args:
+            return jsonify(error=response_failure({
+                "error": "Species not found",
+                "detail": f"No database found for species: {species}"
+            })), 400
+        kmers = getKmersFromReferenceDatabase(f"{storage_location}/{species_args.dbname}")
+        species_kmers[species] = [int(x) for x in kmers.tolist()]
+        
+    return jsonify(response_success(species_kmers))
 
 @app.route('/poppunk', methods=['POST'])
 @expects_json(schemas.sketches)
