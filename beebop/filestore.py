@@ -47,10 +47,9 @@ class FileStore:
         :param sketch: [sketch to be stored]
         """
         dst = self.filename(hash)
-        if not os.path.exists(dst):
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            with open(dst, 'w') as fp:
-                json.dump(sketch, fp)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(dst, 'w') as fp:
+            json.dump(sketch, fp)
 
 
 class PoppunkFileStore:
