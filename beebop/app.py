@@ -27,7 +27,6 @@ redis = Redis(host=redis_host)
 job_timeout = 600
 
 storage_location = os.environ.get('STORAGE_LOCATION')
-database_location = os.environ.get('DB_LOCATION')
 
 
 def response_success(data) -> dict:
