@@ -157,32 +157,32 @@ def report_version() -> json:
     return jsonify(response_success(vers))
 
 
-@app.route("/db_kmers", methods=['POST'])
-@expects_json(schemas.db_kmers)
+@app.route("/speciesConfig", methods=['GET'])
 def get_sketch_kmer_lists() -> json:
     """
-    Retrieves k-mer lists for a given list of species from a reference database.
-    This function expects a JSON payload with a list of species names. For each species,
-    it fetches the corresponding k-mers from a reference database and returns them in a JSON response.
-    If a species is not found in the arguments, it returns an error message.
-
-    returns json: A JSON response containing the k-mer lists for the specified species or an error message if a species is not found.
-    raises: KeyError: If the 'species' key is not present in args.json.
+    Retrieves k-mer lists for all species specified in the arguments.
+    This function extracts species arguments, fetches k-mers from the reference database for each species,
+    and constructs a configuration dictionary containing the k-mers for each species. The result is then
+    returned as a JSON response.
+    Returns:
+        json: A JSON response containing a dictionary where each key is a species and the value is another
+              dictionary with a list of k-mers for that species.
     """
-    speciesList = request.json['species']
-    args = get_args()
-    species_kmers = {}
-    for species in speciesList:
-        species_args = getattr(args, species, None)
-        if not species_args:
-            return jsonify(error=response_failure({
-                "error": "Species not found",
-                "detail": f"No database found for species: {species}"
-            })), 400
-        kmers = getKmersFromReferenceDatabase(f"{storage_location}/{species_args.dbname}")
-        species_kmers[species] = [int(x) for x in kmers.tolist()]
-        
-    return jsonify(response_success(species_kmers))
+    all_species_args = vars(get_args().species)
+    species_config = {
+        species: get_species_kmers(args.dbname)
+        for species, args in all_species_args.items()
+    }
+    return jsonify(response_success(species_config))
+
+
+def get_species_kmers(species_db_name: str) -> dict:    
+    kmers = getKmersFromReferenceDatabase(f"{storage_location}/{species_db_name}")
+    return {
+        "kmerMax": int(kmers[-1]),
+        "kmerMin": int(kmers[0]),
+        "kmerStep": int(kmers[1] - kmers[0]),
+    }
 
 @app.route('/poppunk', methods=['POST'])
 @expects_json(schemas.sketches)
@@ -231,7 +231,7 @@ def run_poppunk_internal(sketches: dict,
     # set database paths
 
     
-    species_args = getattr(args, species, None)
+    species_args = getattr(args.species, species, None)
     if not species_args:
         return jsonify(error=response_failure({
             "error": "Species not found",

@@ -34,7 +34,7 @@ class PoppunkWrapper:
             ref_db=self.db_paths.db,
             qNames=qNames,
             output=self.fs.output(self.p_hash),
-            qc_dict=vars(getattr(self.args, self.db_paths.species).qc_dict), # TODO: get QC for diff species
+            qc_dict=vars(getattr(self.args.species, self.db_paths.species).qc_dict), # TODO: get QC for diff species
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
             distances=self.db_paths.distances,
