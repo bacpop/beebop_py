@@ -2,24 +2,37 @@
 set -e
 
 DEST=storage
-BASE_URL=https://gps-project.cog.sanger.ac.uk
-FILENAME=GPS_v8_ref.tar.gz
-DEST_DIR=$DEST/GPS_v8_ref
+BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
 SUFFIX=tar.gz
 
+# Define color codes
+GREEN='\e[32m'
+YELLOW='\e[33m'
+RED='\e[31m'
+NC='\e[0m' # No Color
 
-if [ -d "$DEST_DIR" ]; then
-    echo "Database already exists at $DEST"
-    echo "To redownload, please remove $DEST_DIR and run $0 again"
-    exit 0
-fi
-
-echo "Downloading $FILENAME"
-
-URL=$BASE_URL/$FILENAME
-DBBZ2=$(mktemp).${SUFFIX}
-wget  --progress=dot:giga $URL -O $DBBZ2
-echo "Unpacking to $DEST"
-mkdir -p $DEST
-
-(cd $DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
+# Fetch the HTML content of the URL
+wget -q -O - "$BASE_URL" | \
+# Extract file URLs using grep and sed
+grep -oP '(?<=href=")[^"]*' | \
+# Filter out only the files (assuming they have extensions)
+grep -E '\.tar\.gz$' | \
+# Loop over each file URL and download it
+while read -r FILE; do
+    DEST_DIR=$DEST/$(basename $FILE .tar.gz)
+    if [ -d "$DEST_DIR" ]; then
+        echo -e "${YELLOW}Database already exists at $DEST_DIR${NC}"
+        echo -e "${YELLOW}To redownload, please remove $DEST_DIR and run $0 again${NC}"
+        continue
+    fi
+    # Download the file
+    echo -e "${GREEN}Downloading $FILE${NC}"
+    URL=$BASE_URL/$FILE
+    DBBZ2=$(mktemp).${SUFFIX}
+    wget --progress=dot:giga $URL -O $DBBZ2
+    # Unpack the file and place it in the storage directory
+    echo -e "${GREEN}Unpacking $FILE to $DEST${NC}"
+    mkdir -p $DEST
+    (cd $DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
+    echo -e "${GREEN}Download and unpacking of $FILE completed successfully.${NC}"
+done
