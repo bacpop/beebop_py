@@ -119,7 +119,7 @@ def test_microreact(mocker):
     p_hash = 'unit_test_microreact'
     setup.do_network_internal(p_hash)
 
-    visualise.microreact(p_hash, fs, setup.db_paths, args, setup.name_mapping)
+    visualise.microreact(p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
@@ -128,7 +128,7 @@ def test_microreact_internal():
     p_hash = 'unit_test_microreact_internal'
     setup.do_network_internal(p_hash)
     visualise.microreact_internal(setup.expected_assign_result, p_hash,
-                                  fs, setup.db_paths, args, setup.name_mapping,
+                                  fs, setup.db_fs, args, setup.name_mapping,setup.species,
                                   external_to_poppunk_clusters)
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
@@ -155,7 +155,7 @@ def test_network(mocker):
     from beebop import visualise
 
     setup.do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, setup.db_paths, args, setup.name_mapping)
+    visualise.network(p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species)
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -189,7 +189,8 @@ def test_run_poppunk_internal(qtbot):
                                         name_mapping,
                                         results_storage_location,
                                         redis,
-                                        queue)
+                                        queue,
+                                        setup.species)
     job_ids = read_data(response)['data']
     # stores sketches in storage
     assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
@@ -578,7 +579,7 @@ def test_add_files():
 def test_generate_mapping():
     cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
     result = utils.generate_mapping('results_modifications',
-                                    cluster_nos_to_map, fs)
+                                    cluster_nos_to_map, fs, True)
     print(result)
     exp_cluster_component_dict = {
         '13': '2',
@@ -676,29 +677,29 @@ def test_add_query_ref_status():
 @patch('beebop.poppunkWrapper.assign_query_hdf5')
 def test_poppunk_wrapper_assign_cluster(mock_assign):
 
-    db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
-    wrapper = PoppunkWrapper(fs, db_paths, args, "random hash")
+    db_fs = DatabaseFileStore('./storage/GPS_v8_ref', "GPS_v8_external_clusters.csv")
+    wrapper = PoppunkWrapper(fs, db_fs, args, "random hash", setup.species)
 
-    wrapper.assign_clusters(db_paths, ["ms1", "ms2"])
+    wrapper.assign_clusters(db_fs, ["ms1", "ms2"])
 
     mock_assign.assert_called_with(
-        dbFuncs=db_paths,
-        ref_db=db_paths.db,
+        dbFuncs=db_fs,
+        ref_db=db_fs.db,
         qNames=["ms1", "ms2"],
         output=fs.output(wrapper.p_hash),
-        qc_dict=vars(args.assign.qc_dict),
+        qc_dict=vars(getattr(args.species, setup.species).qc_dict),
         update_db=args.assign.update_db,
         write_references=args.assign.write_references,
-        distances=db_paths.distances,
+        distances=db_fs.distances,
         serial=args.assign.serial,
         threads=args.assign.threads,
         overwrite=args.assign.overwrite,
         plot_fit=args.assign.plot_fit,
         graph_weights=args.assign.graph_weights,
-        model_dir=db_paths.db,
+        model_dir=db_fs.db,
         strand_preserved=args.assign.strand_preserved,
-        previous_clustering=db_paths.db,
-        external_clustering=fs.external_clustering,
+        previous_clustering=db_fs.db,
+        external_clustering=db_fs.external_clustering,
         core=args.assign.core_only,
         accessory=args.assign.accessory_only,
         gpu_dist=args.assign.gpu_dist,

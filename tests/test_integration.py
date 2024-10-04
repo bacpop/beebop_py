@@ -35,7 +35,8 @@ def test_run_poppunk(client, qtbot):
     response = client.post("/poppunk", json={
         'projectHash': p_hash,
         'sketches': sketches,
-        'names': name_mapping
+        'names': name_mapping,
+        'species': setup.species
         })
     assert response.status_code == 200
     # retrieve job status
