@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# TODO: need to host all dbs in 1 place (https://mrcdata.dide.ic.ac.uk/beebop  maybe?)
 DEST=storage
 BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
 SUFFIX=tar.gz

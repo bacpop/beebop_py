@@ -25,14 +25,14 @@ jobs:
     - name: Restore GPS database from cache
       uses: actions/cache@v2
       with:
-        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v8_ref # todo update/ leavee? only test on 1 db?
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v8_ref
         key: cache-gps-v8-db
       id: cache-db
-
+      
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
-        ./scripts/download_db --small storage
+        ./scripts/download_db
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2

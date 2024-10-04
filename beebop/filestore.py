@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import PurePath
+from typing import Optional
 
 
 class FileStore:
@@ -64,8 +65,6 @@ class PoppunkFileStore:
         self.input = FileStore(f"{storage_location}/json")
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
-        self.external_clustering = \
-            "./beebop/resources/GPS_v8_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
@@ -205,7 +204,7 @@ class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
-    def __init__(self, full_path, species):
+    def __init__(self, full_path: str, external_clusters_file: Optional[str] = None):
         """
         :param full_path: [path to database]
         """
@@ -213,11 +212,8 @@ class DatabaseFileStore:
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists.pkl')) # TODO: remove .pkl
+                                      self.name).with_suffix('.dists'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
-        self.external_clustering = f"./beebop/resources/{self.name}_external_clusters.csv"
-        self.species = species
+        self.external_clustering = str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         
-    def has_external_clusters(self):
-        return os.path.exists(self.external_clustering)

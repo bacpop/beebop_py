@@ -9,18 +9,20 @@ class PoppunkWrapper:
     [Wrapper to separate the poppunk function calls that require an enormous
     amount of arguments from the main scripts.]
     """
-    def __init__(self, fs: PoppunkFileStore, db_paths: DatabaseFileStore, args, p_hash: str):
+    def __init__(self, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args, p_hash: str, species: str):
         """
         :param fs: [PoppunkFileStore with paths to in-/outputs]
-        :param db_paths: [DatabaseFileStore with paths to db files]
+        :param db_fs: [DatabaseFileStore with paths to db files and species name]
         :param args: [arguments for Poppunk's assign function, stored in
             resources/args.json]
         :param p_hash: [project hash]
         """
         self.fs = fs
-        self.db_paths = db_paths
+        self.db_fs = db_fs
         self.args = args
         self.p_hash = p_hash
+        self.species = species
+        
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
                         qNames: list) -> None:
@@ -31,22 +33,22 @@ class PoppunkWrapper:
         """
         assign_query_hdf5(
             dbFuncs=dbFuncs,
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             qNames=qNames,
             output=self.fs.output(self.p_hash),
-            qc_dict=vars(getattr(self.args.species, self.db_paths.species).qc_dict), # TODO: get QC for diff species
+            qc_dict=vars(getattr(self.args.species, self.species).qc_dict),
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
-            distances=self.db_paths.distances,
+            distances=self.db_fs.distances,
             serial=self.args.assign.serial,
             threads=self.args.assign.threads,
             overwrite=self.args.assign.overwrite,
             plot_fit=self.args.assign.plot_fit,
             graph_weights=self.args.assign.graph_weights,
-            model_dir=self.db_paths.db,
+            model_dir=self.db_fs.db,
             strand_preserved=self.args.assign.strand_preserved,
-            previous_clustering=self.db_paths.db,
-            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
+            previous_clustering=self.db_fs.db,
+            external_clustering=self.db_fs.external_clustering,
             core=self.args.assign.core_only,
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
@@ -67,14 +69,14 @@ class PoppunkWrapper:
         print(shutil.which('rapidnj'))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             distances=self.fs.distances(self.p_hash),
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_microreact(self.p_hash, cluster),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
+            external_clustering=self.db_fs.external_clustering,
             microreact=True,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
@@ -83,8 +85,8 @@ class PoppunkWrapper:
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=self.fs.include_files(self.p_hash, internal_cluster),
-            model_dir=self.db_paths.db,
-            previous_clustering=self.db_paths.previous_clustering,
+            model_dir=self.db_fs.db,
+            previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
@@ -107,14 +109,14 @@ class PoppunkWrapper:
         """
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             distances=self.fs.distances(self.p_hash),
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_network(self.p_hash),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.db_paths.external_clustering if self.db_paths.has_external_clusters() else None,
+            external_clustering=self.db_fs.external_clustering,
             microreact=self.args.visualise.microreact,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
@@ -123,8 +125,8 @@ class PoppunkWrapper:
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=None,
-            model_dir=self.db_paths.db,
-            previous_clustering=self.db_paths.previous_clustering,
+            model_dir=self.db_fs.db,
+            previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,

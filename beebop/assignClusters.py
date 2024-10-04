@@ -26,15 +26,16 @@ def hex_to_decimal(sketches_dict) -> None:
 def get_clusters(hashes_list: list,
                  p_hash: str,
                  fs: PoppunkFileStore,
-                 db_paths: DatabaseFileStore,
-                 args: dict) -> dict:
+                 db_fs: DatabaseFileStore,
+                 args: dict,
+                 species: str) -> dict:
     """
     Assign cluster numbers to samples using PopPUNK.
 
     :param hashes_list: [list of file hashes from all query samples]
     :param p_hash: [project_hash]
     :param fs: [PoppunkFileStore with paths to input files]
-    :param db_paths: [DatabaseFileStore which provides paths
+    :param db_fs: [DatabaseFileStore which provides paths
         to database files]
     :param args: [arguments for Poppunk's assign function, stored in
         resources/args.json]
@@ -60,18 +61,19 @@ def get_clusters(hashes_list: list,
     qNames = sketch_to_hdf5(sketches_dict, outdir)
 
     # run query assignment
-    wrapper = PoppunkWrapper(fs, db_paths, args, p_hash)
+    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.assign_clusters(dbFuncs, qNames)
 
     queries_names, queries_clusters, _, _, _, _, _ = \
-        summarise_clusters(outdir, db_paths.species, db_paths.db, qNames) # TODO: update species
+        summarise_clusters(outdir, species, db_fs.db, qNames) 
     
     result = {}
-    if (db_paths.has_external_clusters()):
-        external_clusters_file = fs.previous_query_clustering(p_hash)
+    external_clusters_prefix = getattr(args.species, species).external_cluster_prefix
+    if (external_clusters_prefix):
+        previous_query_clustering_file = fs.previous_query_clustering(p_hash)
 
         external_clusters = \
-            get_external_clusters_from_file(external_clusters_file, hashes_list)
+            get_external_clusters_from_file(previous_query_clustering_file, hashes_list, external_clusters_prefix)
         for i, (name, cluster) in enumerate(external_clusters.items()):
             result[i] = {
                 "hash": name,
