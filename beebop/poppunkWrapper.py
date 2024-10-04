@@ -9,10 +9,18 @@ class PoppunkWrapper:
     [Wrapper to separate the poppunk function calls that require an enormous
     amount of arguments from the main scripts.]
     """
-    def __init__(self, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args, p_hash: str, species: str):
+    def __init__(
+        self,
+        fs: PoppunkFileStore,
+        db_fs: DatabaseFileStore,
+        args,
+        p_hash: str,
+        species: str,
+    ):
         """
         :param fs: [PoppunkFileStore with paths to in-/outputs]
-        :param db_fs: [DatabaseFileStore with paths to db files and species name]
+        :param db_fs:
+            [DatabaseFileStore with paths to db files and species name]
         :param args: [arguments for Poppunk's assign function, stored in
             resources/args.json]
         :param p_hash: [project hash]
@@ -22,7 +30,7 @@ class PoppunkWrapper:
         self.args = args
         self.p_hash = p_hash
         self.species = species
-        
+
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
                         qNames: list) -> None:

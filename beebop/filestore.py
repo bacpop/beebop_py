@@ -150,7 +150,9 @@ class PoppunkFileStore:
         )
 
     def has_external_previous_query_clustering(self, p_hash) -> bool:
-        return os.path.exists(self.external_previous_query_clustering_path(p_hash))
+        return os.path.exists(
+            self.external_previous_query_clustering_path(p_hash)
+        )
 
     def distances(self, p_hash) -> str:
         """
@@ -204,7 +206,9 @@ class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
-    def __init__(self, full_path: str, external_clusters_file: Optional[str] = None):
+    def __init__(
+        self, full_path: str, external_clusters_file: Optional[str] = None
+    ):
         """
         :param full_path: [path to database]
         """
@@ -215,5 +219,8 @@ class DatabaseFileStore:
                                       self.name).with_suffix('.dists'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
-        self.external_clustering = str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
-        
+        self.external_clustering = (
+            str(PurePath("beebop", "resources", external_clusters_file))
+            if external_clusters_file
+            else None
+        )

@@ -90,7 +90,9 @@ def microreact_internal(
             internal_cluster = assign_cluster
 
         wrapper.create_microreact(cluster_no, internal_cluster)
-        replace_filehashes(fs.output_microreact(p_hash, cluster_no), name_mapping)
+        replace_filehashes(
+            fs.output_microreact(p_hash, cluster_no), name_mapping
+        )
 
 
 def network(
@@ -121,7 +123,9 @@ def network(
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    network_internal(assign_result, p_hash, fs, db_fs, args, name_mapping, species)
+    network_internal(
+        assign_result, p_hash, fs, db_fs, args, name_mapping, species
+    )
     return assign_result
 
 

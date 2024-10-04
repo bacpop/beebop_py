@@ -160,12 +160,15 @@ def report_version() -> json:
 def get_species_config() -> json:
     """
     Retrieves k-mer lists for all species specified in the arguments.
-    This function extracts species arguments, fetches k-mers from the reference database for each species,
-    and constructs a configuration dictionary containing the k-mers for each species. The result is then
+    This function extracts species arguments,
+    fetches k-mers from the reference database for each species,
+    and constructs a configuration dictionary
+    containing the k-mers for each species.The result is then
     returned as a JSON response.
     Returns:
-        json: A JSON response containing a dictionary where each key is a species and the value is another
-              dictionary with a list of k-mers for that species.
+        json: A JSON response containing a dictionary
+        where each key is a species and the value is another
+        dictionary with a list of k-mers for that species.
     """
     all_species_args = vars(get_args().species)
     species_config = {
@@ -175,13 +178,16 @@ def get_species_config() -> json:
     return jsonify(response_success(species_config))
 
 
-def get_species_kmers(species_db_name: str) -> dict:    
-    kmers = getKmersFromReferenceDatabase(f"{storage_location}/{species_db_name}")
+def get_species_kmers(species_db_name: str) -> dict:
+    kmers = getKmersFromReferenceDatabase(
+        f"{storage_location}/{species_db_name}"
+    )
     return {
         "kmerMax": int(kmers[-1]),
         "kmerMin": int(kmers[0]),
         "kmerStep": int(kmers[1] - kmers[0]),
     }
+
 
 @app.route('/poppunk', methods=['POST'])
 @expects_json(schemas.sketches)
@@ -227,12 +233,22 @@ def run_poppunk_internal(sketches: dict,
     args = get_args()
     species_args = getattr(args.species, species, None)
     if not species_args:
-        return jsonify(error=response_failure({
-            "error": "Species not found",
-            "detail": f"No database found for species: {species}"
-        })), 400
-        
-    db_fs = DatabaseFileStore(f"{storage_location}/{species_args.dbname}", species_args.external_clusters_file)
+        return (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "Species not found",
+                        "detail": f"No database found for species: {species}",
+                    }
+                )
+            ),
+            400,
+        )
+
+    db_fs = DatabaseFileStore(
+        f"{storage_location}/{species_args.dbname}",
+        species_args.external_clusters_file,
+    )
 
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
@@ -534,6 +550,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
             "detail": f"""Microreact API returned status code {r.status_code}.
                 Response text: {r.text}."""
             })), 500
+
 
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:

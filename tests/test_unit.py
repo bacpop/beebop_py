@@ -119,17 +119,26 @@ def test_microreact(mocker):
     p_hash = 'unit_test_microreact'
     setup.do_network_internal(p_hash)
 
-    visualise.microreact(p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species)
+    visualise.microreact(
+        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
+    )
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
 
 def test_microreact_internal():
-    p_hash = 'unit_test_microreact_internal'
+    p_hash = "unit_test_microreact_internal"
     setup.do_network_internal(p_hash)
-    visualise.microreact_internal(setup.expected_assign_result, p_hash,
-                                  fs, setup.db_fs, args, setup.name_mapping,setup.species,
-                                  external_to_poppunk_clusters)
+    visualise.microreact_internal(
+        setup.expected_assign_result,
+        p_hash,
+        fs,
+        setup.db_fs,
+        args,
+        setup.name_mapping,
+        setup.species,
+        external_to_poppunk_clusters,
+    )
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
@@ -155,7 +164,9 @@ def test_network(mocker):
     from beebop import visualise
 
     setup.do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species)
+    visualise.network(
+        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
+    )
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -676,8 +687,9 @@ def test_add_query_ref_status():
 
 @patch('beebop.poppunkWrapper.assign_query_hdf5')
 def test_poppunk_wrapper_assign_cluster(mock_assign):
-
-    db_fs = DatabaseFileStore('./storage/GPS_v8_ref', "GPS_v8_external_clusters.csv")
+    db_fs = DatabaseFileStore(
+        "./storage/GPS_v8_ref", "GPS_v8_external_clusters.csv"
+    )
     wrapper = PoppunkWrapper(fs, db_fs, args, "random hash", setup.species)
 
     wrapper.assign_clusters(db_fs, ["ms1", "ms2"])
@@ -772,27 +784,36 @@ def test_get_project_with_failed_samples(client):
         == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
         == "GPSC3"
-        
+
+
 def test_get_cluster_num_with_numeric_part():
     assert utils.get_cluster_num("cluster123") == "123"
+
 
 def test_get_cluster_num_with_no_numeric_part():
     assert utils.get_cluster_num("cluster") == "cluster"
 
+
 def test_get_cluster_num_with_multiple_numeric_parts():
     assert utils.get_cluster_num("cluster123abc456") == "123"
 
+
 def test_get_cluster_num_with_empty_string():
+
     assert utils.get_cluster_num("") == ""
+
 
 def test_get_cluster_num_with_special_characters():
     assert utils.get_cluster_num("cluster@#123") == "123"
+
 
 def test_cluster_nums_from_assign_multiple_clusters():
     assign_result = {
         "sample1": {"cluster": "GPSC3"},
         "sample2": {"cluster": "GPSC60"},
-        "sample3": {"cluster": "GPSC3"}
+        "sample3": {"cluster": "GPSC3"},
     }
     expected = ["3", "60"]
-    assert sorted(utils.cluster_nums_from_assign(assign_result)) == sorted(expected)
+    assert sorted(utils.cluster_nums_from_assign(assign_result)) == sorted(
+        expected
+    )

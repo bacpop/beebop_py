@@ -86,7 +86,10 @@ def generate_mapping(
 
 
 def match_clusters_to_components(
-    p_hash: str, fs: PoppunkFileStore, file_list: list, samples_to_clusters: dict
+    p_hash: str,
+    fs: PoppunkFileStore,
+    file_list: list,
+    samples_to_clusters: dict,
 ) -> dict:
     """
     [Generate a dictionary mapping clusters to network components based on
@@ -141,7 +144,8 @@ def get_cluster_num(cluster: str) -> str:
     """
     [Extract the numeric part from a cluster label, regardless of the prefix.]
 
-    :param cluster: [cluster from assign result. Can be prefixed with external_cluster_prefix]
+    :param cluster: [cluster from assign result.
+    Can be prefixed with external_cluster_prefix]
     :return str: [numeric part of the cluster]
     """
     match = re.search(r"\d+", str(cluster))
@@ -162,7 +166,10 @@ def cluster_nums_from_assign(assign_result: dict) -> list:
 
 
 def delete_component_files(
-    cluster_component_dict: dict, fs: PoppunkFileStore, assign_result: dict, p_hash: str
+    cluster_component_dict: dict,
+    fs: PoppunkFileStore,
+    assign_result: dict,
+    p_hash: str,
 ) -> None:
     """
     [poppunk generates >1100 component graph files. We only need to store those
@@ -180,7 +187,9 @@ def delete_component_files(
         components.append(cluster_component_dict[cluster_no])
 
     # delete redundant component files
-    keep_filenames = list(map(lambda x: f"network_component_{x}.graphml", components))
+    keep_filenames = list(
+        map(lambda x: f"network_component_{x}.graphml", components)
+    )
     keep_filenames.append("network_cytoscape.csv")
     keep_filenames.append("network_cytoscape.graphml")
     keep_filenames.append("cluster_component_dict.pickle")
@@ -233,14 +242,16 @@ def add_query_ref_status(
 
     :param fs: [filestore to locate output files]
     :param p_hash: [project hash to find right project folder]
-    :param filename_dict: [dict that maps filehashes(keys) to
+    :param filename_dict: [dict that maps filehashes(keys) toclear
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
     """
     # list of query filenames
     query_names = list(filename_dict.values())
     # list of all component graph filenames
-    file_list = glob.glob(fs.output_network(p_hash) + "/network_component_*.graphml")
+    file_list = glob.glob(
+        fs.output_network(p_hash) + "/network_component_*.graphml"
+    )
     for path in file_list:
         xml_tree = ET.parse(path)
         graph = xml_tree.getroot()
@@ -303,7 +314,9 @@ def get_external_clusters_from_file(
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
                     cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = f"{external_clusters_prefix}{cluster_no}"
+                    result[sample_id] = (
+                        f"{external_clusters_prefix}{cluster_no}"
+                    )
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)

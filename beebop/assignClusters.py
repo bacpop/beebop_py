@@ -19,7 +19,11 @@ def hex_to_decimal(sketches_dict) -> None:
     """
     for sample in list(sketches_dict.values()):
         for key, value in sample.items():
-            if isinstance(value, list) and isinstance(value[0], str) and re.match('0x.*', value[0]):
+            if (
+                isinstance(value, list)
+                and isinstance(value[0], str)
+                and re.match("0x.*", value[0])
+            ):
                 sample[key] = list(map(lambda x: int(x, 16), value))
 
 
@@ -64,26 +68,32 @@ def get_clusters(hashes_list: list,
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.assign_clusters(dbFuncs, qNames)
 
-    queries_names, queries_clusters, _, _, _, _, _ = \
-        summarise_clusters(outdir, species, db_fs.db, qNames) 
-    
+    queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
+        outdir, species, db_fs.db, qNames
+    )
+
     result = {}
-    external_clusters_prefix = getattr(args.species, species).external_cluster_prefix
+    external_clusters_prefix = getattr(
+        args.species, species
+    ).external_cluster_prefix
     if (external_clusters_prefix):
         previous_query_clustering_file = fs.previous_query_clustering(p_hash)
 
-        external_clusters = \
-            get_external_clusters_from_file(previous_query_clustering_file, hashes_list, external_clusters_prefix)
+        external_clusters = get_external_clusters_from_file(
+            previous_query_clustering_file,
+            hashes_list,
+            external_clusters_prefix,
+        )
         for i, (name, cluster) in enumerate(external_clusters.items()):
-            result[i] = {
-                "hash": name,
-                "cluster": cluster
-            }
+            result[i] = {"hash": name, "cluster": cluster}
 
-        save_external_to_poppunk_clusters(queries_names, queries_clusters,
-                                        external_clusters, p_hash, fs)
+        save_external_to_poppunk_clusters(
+            queries_names, queries_clusters, external_clusters, p_hash, fs
+        )
     else:
-        for i, (name, cluster) in enumerate(zip(queries_names, queries_clusters)):
+        for i, (name, cluster) in enumerate(
+            zip(queries_names, queries_clusters)
+        ):
             result[i] = {
                 "hash": name,
                 "cluster": cluster
