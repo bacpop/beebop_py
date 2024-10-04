@@ -772,3 +772,27 @@ def test_get_project_with_failed_samples(client):
         == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
         == "GPSC3"
+        
+def test_get_cluster_num_with_numeric_part():
+    assert utils.get_cluster_num("cluster123") == "123"
+
+def test_get_cluster_num_with_no_numeric_part():
+    assert utils.get_cluster_num("cluster") == "cluster"
+
+def test_get_cluster_num_with_multiple_numeric_parts():
+    assert utils.get_cluster_num("cluster123abc456") == "123"
+
+def test_get_cluster_num_with_empty_string():
+    assert utils.get_cluster_num("") == ""
+
+def test_get_cluster_num_with_special_characters():
+    assert utils.get_cluster_num("cluster@#123") == "123"
+
+def test_cluster_nums_from_assign_multiple_clusters():
+    assign_result = {
+        "sample1": {"cluster": "GPSC3"},
+        "sample2": {"cluster": "GPSC60"},
+        "sample3": {"cluster": "GPSC3"}
+    }
+    expected = ["3", "60"]
+    assert sorted(utils.cluster_nums_from_assign(assign_result)) == sorted(expected)
