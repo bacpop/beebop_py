@@ -184,11 +184,10 @@ def get_species_kmers(species_db_name: str) -> dict:
     Retrieve k-mer information from a reference database for a given species.
 
     :param species_db_name: [The name of the species database.]
-    :return dict: [A dictionary containing the maximum, minimum, and step k-mer values.]
+    :return dict: [A dictionary containing the maximum, minimum, and step
+        k-mer values.]
     """
-    kmers = getKmersFromReferenceDatabase(
-        f"{dbs_location}/{species_db_name}"
-    )
+    kmers = getKmersFromReferenceDatabase(f"{dbs_location}/{species_db_name}")
     return {
         "kmerMax": int(kmers[-1]),
         "kmerMin": int(kmers[0]),
