@@ -165,9 +165,9 @@ def get_species_config() -> json:
     and constructs a configuration dictionary
     containing the k-mers for each species.The result is then
     returned as a JSON response.
-    :return A JSON response containing a dictionary
+    :return json: [JSON response containing a dictionary
         where each key is a species and the value is another
-        dictionary with a list of k-mers for that species.
+        dictionary with a list of k-mers for that species.]
     """
     all_species_args = vars(get_args().species)
     species_config = {
@@ -182,10 +182,7 @@ def get_species_kmers(species_db_name: str) -> dict:
     Retrieve k-mer information from a reference database for a given species.
 
     :param species_db_name: The name of the species database.
-    :return: A dictionary containing k-mer information with the following keys:
-        - "kmerMax" (int): The maximum k-mer value.
-        - "kmerMin" (int): The minimum k-mer value.
-        - "kmerStep" (int): The step size between k-mers.
+    :return dict:[A dictionary containing k-mer information]
     """
     kmers = getKmersFromReferenceDatabase(
         f"{storage_location}/{species_db_name}"
@@ -235,8 +232,8 @@ def run_poppunk_internal(sketches: dict,
     :param storage_location: [path to storage location]
     :param redis: [Redis instance]
     :param q: [redis queue]
-    :return json: [response object with all job IDs stored in 'data']
     :param species: [type of species to be analyzed]
+    :return json: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
     args = get_args()

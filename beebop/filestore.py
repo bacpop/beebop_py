@@ -141,7 +141,7 @@ class PoppunkFileStore:
 
         :param p_hash (str): The hash value representing the query.
 
-        :return The file path to the external
+        :return str: [The file path to the external]
         previous query clustering CSV file.
         """
         return str(
@@ -167,7 +167,7 @@ class PoppunkFileStore:
         query clustering file exists for the given hash.
 
         :param p_hash: The hash value representing the previous query.
-        :return: True if the file exists, False otherwise.
+        :return bool: [True if the file exists, False otherwise.]
         """
         return os.path.exists(
             self.external_previous_query_clustering_path(p_hash)
