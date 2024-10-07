@@ -166,6 +166,7 @@ def get_species_config() -> json:
     and constructs a configuration dictionary
     containing the k-mers for each species.The result is then
     returned as a JSON response.
+    
     :return json: [JSON response containing a dictionary
         where each key is a species and the value is another
         dictionary with a list of k-mers for that species.]
@@ -182,7 +183,7 @@ def get_species_kmers(species_db_name: str) -> dict:
     """
     Retrieve k-mer information from a reference database for a given species.
 
-    :param species_db_name: The name of the species database.
+    :param species_db_name: [The name of the species database.]
     :return dict:[A dictionary containing k-mer information]
     """
     kmers = getKmersFromReferenceDatabase(
