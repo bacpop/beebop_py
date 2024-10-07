@@ -166,7 +166,7 @@ def get_species_config() -> json:
     and constructs a configuration dictionary
     containing the k-mers for each species.The result is then
     returned as a JSON response.
-    
+
     :return json: [JSON response containing a dictionary
         where each key is a species and the value is another
         dictionary with a list of k-mers for that species.]
