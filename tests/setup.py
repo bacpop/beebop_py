@@ -43,6 +43,7 @@ db_fs = DatabaseFileStore('./storage/GPS_v8_ref',
                           "GPS_v8_external_clusters.csv")
 args = get_args()
 species = "Streptococcus pneumoniae"
+species_db_name = "GPS_v8_ref"
 
 
 def do_assign_clusters(p_hash: str):

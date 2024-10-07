@@ -817,3 +817,40 @@ def test_cluster_nums_from_assign_multiple_clusters():
     assert sorted(utils.cluster_nums_from_assign(assign_result)) == sorted(
         expected
     )
+
+@patch('beebop.app.getKmersFromReferenceDatabase')
+def test_get_species_kmers(mock_getKmersFromReferenceDatabase):
+    mock_getKmersFromReferenceDatabase.return_value = [14, 17, 20, 23]
+    
+    species_db_name = "valid_species_db"
+    expected_result = {
+        "kmerMax": 23,
+        "kmerMin": 14,
+        "kmerStep": 3
+    }
+    
+    result = app.get_species_kmers(species_db_name)
+    assert result == expected_result
+
+@patch('beebop.app.get_species_kmers')
+def test_get_species_config_valid(mock_get_species_kmers, client):
+    mock_get_species_kmers.return_value = {
+        "kmerMax": 31,
+        "kmerMin": 15,
+        "kmerStep": 2
+    }
+    
+    response = app.get_species_config()
+    data = response.get_json()
+    
+    assert response.status_code == 200
+    assert data['status'] == 'success'
+    assert "Streptococcus pneumoniae" in data['data']
+    assert "Streptococcus agalactiae" in data['data']
+    for species, kmers in data['data'].items():
+        assert kmers == {
+            "kmerMax": 31,
+            "kmerMin": 15,
+            "kmerStep": 2
+        }
+    
