@@ -135,11 +135,23 @@ class PoppunkFileStore:
         return str(PurePath(self.output(p_hash), f"{p_hash}_graph.gt"))
 
     def external_previous_query_clustering_path(self, p_hash) -> str:
-        return str(PurePath(self.output(p_hash),
-                            f"{p_hash}_external_clusters.csv"))
+        """
+        Generates the file path for the external
+        previous query clustering results.
+
+        :param p_hash (str): The hash value representing the query.
+
+        :return The file path to the external
+        previous query clustering CSV file.
+        """
+        return str(
+            PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv")
+        )
 
     def previous_query_clustering(self, p_hash) -> str:
         """
+        Returns previous query clustering csv file.
+
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]
         """
@@ -150,6 +162,13 @@ class PoppunkFileStore:
         )
 
     def has_external_previous_query_clustering(self, p_hash) -> bool:
+        """
+        Checks if an external previous
+        query clustering file exists for the given hash.
+
+        :param p_hash: The hash value representing the previous query.
+        :return: True if the file exists, False otherwise.
+        """
         return os.path.exists(
             self.external_previous_query_clustering_path(p_hash)
         )

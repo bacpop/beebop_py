@@ -43,6 +43,7 @@ def get_clusters(hashes_list: list,
         to database files]
     :param args: [arguments for Poppunk's assign function, stored in
         resources/args.json]
+    :param :param species: [Type of species
     :return dict: [dict with filehash (key) and cluster number (value)]
     """
     # set output directory

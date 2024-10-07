@@ -30,6 +30,7 @@ def microreact(
     :param args: [arguments for poppunk functions]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
+    :param species: [Type of species]
     """
 
     # get results from previous job
@@ -119,6 +120,7 @@ def network(
     :param args: [arguments for poppunk functions]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
+    :param species: [Type of species]
     """
     # get results from previous job
     current_job = get_current_job(Redis())
@@ -148,6 +150,7 @@ def network_internal(
     :param args: [arguments for poppunk functions]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
+    :param species: [Type of species]
     """
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()

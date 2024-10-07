@@ -51,6 +51,7 @@ def generate_mapping(
     :param p_hash: [project hash]
     :param cluster_nums_to_map: [clusters of interest for this project -
         skip all other clusters]
+    :param is_external_clusters: [The species has available external clusters]
     :param fs: [PoppunkFileStore with paths to input data]
     :return dict: [dict that maps clusters to components]
     """
@@ -294,6 +295,7 @@ def get_external_clusters_from_file(
     :param external_clusters_file: [filename of the project's external clusters
         file]
     :param hashes_list: [list of sample hashes to find samples for]
+    :param external_clusters_prefix: prefix for external cluster name
     :return dict: [dict of sample hash to lowest numbered-cluster for that
         sample]
     """
