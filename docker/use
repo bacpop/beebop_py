@@ -11,7 +11,7 @@ NAME_WORKER=beebop-py-worker
 
 docker volume create $VOLUME
 docker run --rm -v $VOLUME:/beebop/storage $TAG_SHA \
-       ./scripts/download_db --small storage
+       ./scripts/download_databases --small storage
 docker network create $NETWORK > /dev/null || /bin/true
 
 docker run -d --rm --name $NAME_REDIS --network=$NETWORK redis:5.0

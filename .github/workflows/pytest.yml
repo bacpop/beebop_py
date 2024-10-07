@@ -7,7 +7,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, "bacpop-*" ]
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
-        ./scripts/download_db
+        ./scripts/download_databases
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
