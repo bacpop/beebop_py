@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DEST=storage
+DEST=storage # Update DBS_LOCATION environment variable in docker/use if you change this
 BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
 SUFFIX=tar.gz
 

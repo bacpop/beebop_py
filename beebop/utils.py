@@ -292,8 +292,8 @@ def get_external_clusters_from_file(
     there are multiple external clusters listed for a sample, the lowest
     cluster number is returned]
 
-    :param previous_query_clustering_file: [filename of the project's external clusters
-        file]
+    :param previous_query_clustering_file: [filename
+    of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
     :return dict: [dict of sample hash to lowest numbered-cluster for that

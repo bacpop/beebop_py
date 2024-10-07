@@ -27,6 +27,7 @@ redis = Redis(host=redis_host)
 job_timeout = 600
 
 storage_location = os.environ.get('STORAGE_LOCATION')
+dbs_location = os.environ.get('DBS_LOCATION')
 
 
 def response_success(data) -> dict:
@@ -185,7 +186,7 @@ def get_species_kmers(species_db_name: str) -> dict:
     :return dict:[A dictionary containing k-mer information]
     """
     kmers = getKmersFromReferenceDatabase(
-        f"{storage_location}/{species_db_name}"
+        f"{dbs_location}/{species_db_name}"
     )
     return {
         "kmerMax": int(kmers[-1]),
@@ -252,7 +253,7 @@ def run_poppunk_internal(sketches: dict,
         )
 
     db_fs = DatabaseFileStore(
-        f"{storage_location}/{species_args.dbname}",
+        f"{dbs_location}/{species_args.dbname}",
         species_args.external_clusters_file,
     )
 
