@@ -23,11 +23,18 @@ jobs:
         path: main
 
     - name: Restore GPS database from cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v8_ref
         key: cache-gps-v8-db
-      id: cache-db
+      id: cache-gps-db
+    
+    - name: Restore GBS database from cache
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/GBS_ref
+        key: cache-gbs-db
+      id: cache-gbs-db
       
     - name: Download and extract GPS database
       working-directory: ./main
