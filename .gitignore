@@ -9,7 +9,5 @@ ignored
 tests/results
 storage/poppunk_output
 node_modules
-storage/GPS_*
-storage/._GPS_*
-storage/strain_*_lineage_db
+storage/*
 .idea

@@ -17,7 +17,7 @@ git clone git@github.com:bacpop/beebop_py.git
 You will need the GPS_v8 database, please download and extract it into `/storage`:
 
 ```
-./scripts/download_db
+./scripts/download_databases
 ```
 
 #### Install dependencies

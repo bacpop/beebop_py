@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+
+DBS_DEST=storage
+BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
+SUFFIX=tar.gz
+
+# Define color codes
+GREEN='\e[32m'
+YELLOW='\e[33m'
+NC='\e[0m' # No Color
+
+# We'll download all tar.gz files named in the directory listing page at BASE_URL
+
+# Fetch the HTML content of the URL
+wget -q -O - "$BASE_URL" | \
+# Extract file URLs using grep and sed
+grep -oP '(?<=href=")[^"]*' | \
+# Filter out only the files (assuming they have extensions)
+grep -E '\.tar\.gz$' | \
+# Loop over each file URL and download it
+while read -r FILE; do
+    DEST_DIR=$DBS_DEST/$(basename $FILE .tar.gz)
+    if [ -d "$DEST_DIR" ]; then
+        echo -e "${YELLOW}Database already exists at $DEST_DIR${NC}"
+        echo -e "${YELLOW}To redownload, please remove $DEST_DIR and run $0 again${NC}"
+        continue
+    fi
+    # Download the file
+    echo -e "${GREEN}Downloading $FILE${NC}"
+    URL=$BASE_URL/$FILE
+    DBBZ2=$(mktemp).${SUFFIX}
+    wget --progress=dot:giga $URL -O $DBBZ2
+    # Unpack the file and place it in the storage directory
+    echo -e "${GREEN}Unpacking $FILE to $DBS_DEST${NC}"
+    mkdir -p $DBS_DEST
+    (cd $DBS_DEST && tar -xf $DBBZ2 && rm -f $DBBZ2)
+    echo -e "${GREEN}Download and unpacking of $FILE completed successfully.${NC}"
+done
