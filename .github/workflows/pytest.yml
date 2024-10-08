@@ -32,7 +32,7 @@ jobs:
     - name: Restore GBS database from cache
       uses: actions/cache@v3
       with:
-        path: /home/runner/work/beebop_py/beebop_py/main/storage/GBS_ref
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/GBS_refs
         key: cache-gbs-db
       id: cache-gbs-db
       
