@@ -22,20 +22,13 @@ jobs:
       with: 
         path: main
 
-    - name: Restore GPS database from cache
+    - name: Restore databases from cache
       uses: actions/cache@v3
       with:
-        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v8_ref
-        key: cache-gps-v8-db
-      id: cache-gps-db
-    
-    - name: Restore GBS database from cache
-      uses: actions/cache@v3
-      with:
-        path: /home/runner/work/beebop_py/beebop_py/main/storage/GBS_refs
-        key: cache-gbs-db
-      id: cache-gbs-db
-      
+        path: /home/runner/work/beebop_py/beebop_py/main/storage/dbs
+        key: cache-dbs
+      id: cache-dbs
+          
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
@@ -127,7 +120,7 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         rq worker > rq_output.txt 2>&1 &
-        STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage poetry run coverage run -m pytest
+        STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage/dbs poetry run coverage run -m pytest
 
     - name: Process coverage
       working-directory: ./main

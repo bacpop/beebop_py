@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DBS_DEST=storage # Update DBS_LOCATION environment variable if you change this
+DBS_DEST=storage/dbs # Update DBS_LOCATION environment variable if you change this
 BASE_URL=https://mrcdata.dide.ic.ac.uk/beebop
 SUFFIX=tar.gz
 

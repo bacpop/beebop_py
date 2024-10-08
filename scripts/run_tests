@@ -1,1 +1,1 @@
-STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage poetry run coverage run -m pytest
+STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage/dbs poetry run coverage run -m pytest
