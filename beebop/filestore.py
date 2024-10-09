@@ -151,6 +151,7 @@ class PoppunkFileStore:
     def previous_query_clustering(self, p_hash) -> str:
         """
         Returns previous query clustering csv file.
+        This is a generated file when poppunk assigns clusters
 
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]

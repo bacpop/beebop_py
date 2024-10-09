@@ -10,7 +10,7 @@ from beebop.utils import get_args
 schemas = beebop.schemas.Schema()
 
 
-def generate_json():
+def generate_json_pneumo():
     # generate hdf5 sketch from fasta file using pp-sketchlib
     subprocess.run(
         "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
@@ -23,7 +23,6 @@ def generate_json():
     sketches_json = json.loads(hdf5_to_json.h5_to_json(filepath))
 
     return json.dumps(sketches_json)
-
 
 storage_location = './tests/results'
 fs = PoppunkFileStore(storage_location)

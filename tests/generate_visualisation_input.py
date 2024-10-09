@@ -29,7 +29,7 @@ args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign)
 
-sketches_dict = json.loads(setup.generate_json())
+sketches_dict = json.loads(setup.generate_json_pneumo())
 hex_to_decimal(sketches_dict)
 
 qNames = sketch_to_hdf5(sketches_dict, outdir)
