@@ -2,12 +2,10 @@
 *coverage*
 ignored
 *.h5
-*.json
 !tests/files/json/*
 !*.schema.json
 !args.json
 tests/results
-storage/poppunk_output
 node_modules
 storage/*
 .idea

@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import PurePath
+from typing import Optional
 
 
 class FileStore:
@@ -47,10 +48,9 @@ class FileStore:
         :param sketch: [sketch to be stored]
         """
         dst = self.filename(hash)
-        if not os.path.exists(dst):
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            with open(dst, 'w') as fp:
-                json.dump(sketch, fp)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(dst, 'w') as fp:
+            json.dump(sketch, fp)
 
 
 class PoppunkFileStore:
@@ -65,8 +65,6 @@ class PoppunkFileStore:
         self.input = FileStore(f"{storage_location}/json")
         self.output_base = PurePath(storage_location, 'poppunk_output')
         os.makedirs(self.output_base, exist_ok=True)
-        self.external_clustering = \
-            "./beebop/resources/GPS_v8_external_clusters.csv"
 
     def output(self, p_hash) -> str:
         """
@@ -136,13 +134,45 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), f"{p_hash}_graph.gt"))
 
+    def external_previous_query_clustering_path(self, p_hash) -> str:
+        """
+        Generates the file path for the external
+        previous query clustering results.
+
+        :param p_hash (str): The hash value representing the query.
+
+        :return str: [The file path to the external]
+        previous query clustering CSV file.
+        """
+        return str(
+            PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv")
+        )
+
     def previous_query_clustering(self, p_hash) -> str:
         """
+        Returns previous query clustering csv file.
+        This is a generated file when poppunk assigns clusters
+
         :param p_hash: [project hash]
         :return str: [path to previous clustering file]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"{p_hash}_external_clusters.csv"))
+        return (
+            self.external_previous_query_clustering_path(p_hash)
+            if self.has_external_previous_query_clustering(p_hash)
+            else str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
+        )
+
+    def has_external_previous_query_clustering(self, p_hash) -> bool:
+        """
+        Checks if an external previous
+        query clustering file exists for the given hash.
+
+        :param p_hash: The hash value representing the previous query.
+        :return bool: [True if the file exists, False otherwise.]
+        """
+        return os.path.exists(
+            self.external_previous_query_clustering_path(p_hash)
+        )
 
     def distances(self, p_hash) -> str:
         """
@@ -196,7 +226,9 @@ class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
-    def __init__(self, full_path):
+    def __init__(
+        self, full_path: str, external_clusters_file: Optional[str] = None
+    ):
         """
         :param full_path: [path to database]
         """
@@ -204,6 +236,11 @@ class DatabaseFileStore:
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
         self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists.pkl'))
+                                      self.name).with_suffix('.dists'))
         self.previous_clustering = str(PurePath(self.db,
                                                 f"{self.name}_clusters.csv"))
+        self.external_clustering = (
+            str(PurePath("beebop", "resources", external_clusters_file))
+            if external_clusters_file
+            else None
+        )

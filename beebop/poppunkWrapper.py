@@ -1,6 +1,6 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
-from beebop.filestore import DatabaseFileStore
+from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
 
 
@@ -9,18 +9,27 @@ class PoppunkWrapper:
     [Wrapper to separate the poppunk function calls that require an enormous
     amount of arguments from the main scripts.]
     """
-    def __init__(self, fs, db_paths, args, p_hash):
+    def __init__(
+        self,
+        fs: PoppunkFileStore,
+        db_fs: DatabaseFileStore,
+        args,
+        p_hash: str,
+        species: str,
+    ):
         """
         :param fs: [PoppunkFileStore with paths to in-/outputs]
-        :param db_paths: [DatabaseFileStore with paths to db files]
+        :param db_fs:
+            [DatabaseFileStore with paths to db files and species name]
         :param args: [arguments for Poppunk's assign function, stored in
             resources/args.json]
         :param p_hash: [project hash]
         """
         self.fs = fs
-        self.db_paths = db_paths
+        self.db_fs = db_fs
         self.args = args
         self.p_hash = p_hash
+        self.species = species
 
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
@@ -32,22 +41,22 @@ class PoppunkWrapper:
         """
         assign_query_hdf5(
             dbFuncs=dbFuncs,
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             qNames=qNames,
             output=self.fs.output(self.p_hash),
-            qc_dict=vars(self.args.assign.qc_dict),
+            qc_dict=vars(getattr(self.args.species, self.species).qc_dict),
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
-            distances=self.db_paths.distances,
+            distances=self.db_fs.distances,
             serial=self.args.assign.serial,
             threads=self.args.assign.threads,
             overwrite=self.args.assign.overwrite,
             plot_fit=self.args.assign.plot_fit,
             graph_weights=self.args.assign.graph_weights,
-            model_dir=self.db_paths.db,
+            model_dir=self.db_fs.db,
             strand_preserved=self.args.assign.strand_preserved,
-            previous_clustering=self.db_paths.db,
-            external_clustering=self.fs.external_clustering,
+            previous_clustering=self.db_fs.db,
+            external_clustering=self.db_fs.external_clustering,
             core=self.args.assign.core_only,
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
@@ -55,27 +64,27 @@ class PoppunkWrapper:
             save_partial_query_graph=self.args.assign.save_partial_query_graph
         )
 
-    def create_microreact(self, cluster: str, poppunk_cluster: str) -> None:
+    def create_microreact(self, cluster: str, internal_cluster: str) -> None:
         """
         [Generates microreact visualisation output based on previous
         assign_clusters() output.]
 
         Args:
         :param cluster: [external cluster]
-        :param poppunk_cluster: [corresponding poppunk cluster, used to
+        :param internal_cluster: [corresponding poppunk cluster, used to
             indicate clusters to include]
         """
         print(shutil.which('rapidnj'))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             distances=self.fs.distances(self.p_hash),
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_microreact(self.p_hash, cluster),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.fs.external_clustering,
+            external_clustering=self.db_fs.external_clustering,
             microreact=True,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
@@ -83,9 +92,9 @@ class PoppunkWrapper:
             perplexity=self.args.visualise.perplexity,
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
-            include_files=self.fs.include_files(self.p_hash, poppunk_cluster),
-            model_dir=self.db_paths.db,
-            previous_clustering=self.db_paths.previous_clustering,
+            include_files=self.fs.include_files(self.p_hash, internal_cluster),
+            model_dir=self.db_fs.db,
+            previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
@@ -108,14 +117,14 @@ class PoppunkWrapper:
         """
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
-            ref_db=self.db_paths.db,
+            ref_db=self.db_fs.db,
             distances=self.fs.distances(self.p_hash),
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_network(self.p_hash),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
-            external_clustering=self.fs.external_clustering,
+            external_clustering=self.db_fs.external_clustering,
             microreact=self.args.visualise.microreact,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
@@ -124,8 +133,8 @@ class PoppunkWrapper:
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
             include_files=None,
-            model_dir=self.db_paths.db,
-            previous_clustering=self.db_paths.previous_clustering,
+            model_dir=self.db_fs.db,
+            previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
                 self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,

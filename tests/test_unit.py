@@ -119,17 +119,26 @@ def test_microreact(mocker):
     p_hash = 'unit_test_microreact'
     setup.do_network_internal(p_hash)
 
-    visualise.microreact(p_hash, fs, setup.db_paths, args, setup.name_mapping)
+    visualise.microreact(
+        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
+    )
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
 
 def test_microreact_internal():
-    p_hash = 'unit_test_microreact_internal'
+    p_hash = "unit_test_microreact_internal"
     setup.do_network_internal(p_hash)
-    visualise.microreact_internal(setup.expected_assign_result, p_hash,
-                                  fs, setup.db_paths, args, setup.name_mapping,
-                                  external_to_poppunk_clusters)
+    visualise.microreact_internal(
+        setup.expected_assign_result,
+        p_hash,
+        fs,
+        setup.db_fs,
+        args,
+        setup.name_mapping,
+        setup.species,
+        external_to_poppunk_clusters,
+    )
     assert os.path.exists(fs.output_microreact(p_hash, 16) +
                           "/microreact_16_core_NJ.nwk")
 
@@ -155,7 +164,9 @@ def test_network(mocker):
     from beebop import visualise
 
     setup.do_assign_clusters(p_hash)
-    visualise.network(p_hash, fs, setup.db_paths, args, setup.name_mapping)
+    visualise.network(
+        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
+    )
     assert os.path.exists(fs.output_network(p_hash) +
                           "/network_cytoscape.graphml")
 
@@ -189,7 +200,8 @@ def test_run_poppunk_internal(qtbot):
                                         name_mapping,
                                         results_storage_location,
                                         redis,
-                                        queue)
+                                        queue,
+                                        setup.species)
     job_ids = read_data(response)['data']
     # stores sketches in storage
     assert fs.input.exists('e868c76fec83ee1f69a95bd27b8d5e76')
@@ -500,26 +512,6 @@ def test_send_zip_internal(client):
         assert 'network_component_38.graphml'.encode('utf-8') in response.data
 
 
-def test_download_graphml_internal():
-    project_hash = 'unit_test_graphml'
-    cluster = "GPSC16"
-    setup.do_network_internal(project_hash)
-    response = app.download_graphml_internal(project_hash,
-                                             cluster,
-                                             storage_location)
-    graph_string = read_data(response)['data']['graph']
-    assert all(x in graph_string for x in ['</graph>',
-                                           '</graphml>',
-                                           '</node>',
-                                           '</edge>'])
-    cluster_no_network_file = "not a cluster"
-    response_error2 = app.download_graphml_internal(project_hash,
-                                                    cluster_no_network_file,
-                                                    storage_location)
-    error2 = read_data(response_error2[0])['error']['errors'][0]
-    assert error2['error'] == 'Cluster not found'
-
-
 def test_hex_to_decimal():
     dummy_sketch = {
         "sample1": {
@@ -598,7 +590,7 @@ def test_add_files():
 def test_generate_mapping():
     cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
     result = utils.generate_mapping('results_modifications',
-                                    cluster_nos_to_map, fs)
+                                    cluster_nos_to_map, fs, True)
     print(result)
     exp_cluster_component_dict = {
         '13': '2',
@@ -695,30 +687,31 @@ def test_add_query_ref_status():
 
 @patch('beebop.poppunkWrapper.assign_query_hdf5')
 def test_poppunk_wrapper_assign_cluster(mock_assign):
+    db_fs = DatabaseFileStore(
+        "./storage/GPS_v8_ref", "GPS_v8_external_clusters.csv"
+    )
+    wrapper = PoppunkWrapper(fs, db_fs, args, "random hash", setup.species)
 
-    db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
-    wrapper = PoppunkWrapper(fs, db_paths, args, "random hash")
-
-    wrapper.assign_clusters(db_paths, ["ms1", "ms2"])
+    wrapper.assign_clusters(db_fs, ["ms1", "ms2"])
 
     mock_assign.assert_called_with(
-        dbFuncs=db_paths,
-        ref_db=db_paths.db,
+        dbFuncs=db_fs,
+        ref_db=db_fs.db,
         qNames=["ms1", "ms2"],
         output=fs.output(wrapper.p_hash),
-        qc_dict=vars(args.assign.qc_dict),
+        qc_dict=vars(getattr(args.species, setup.species).qc_dict),
         update_db=args.assign.update_db,
         write_references=args.assign.write_references,
-        distances=db_paths.distances,
+        distances=db_fs.distances,
         serial=args.assign.serial,
         threads=args.assign.threads,
         overwrite=args.assign.overwrite,
         plot_fit=args.assign.plot_fit,
         graph_weights=args.assign.graph_weights,
-        model_dir=db_paths.db,
+        model_dir=db_fs.db,
         strand_preserved=args.assign.strand_preserved,
-        previous_clustering=db_paths.db,
-        external_clustering=fs.external_clustering,
+        previous_clustering=db_fs.db,
+        external_clustering=db_fs.external_clustering,
         core=args.assign.core_only,
         accessory=args.assign.accessory_only,
         gpu_dist=args.assign.gpu_dist,
@@ -791,3 +784,66 @@ def test_get_project_with_failed_samples(client):
         == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] \
         == "GPSC3"
+
+
+def test_get_cluster_num_with_numeric_part():
+    assert utils.get_cluster_num("cluster123") == "123"
+
+
+def test_get_cluster_num_with_no_numeric_part():
+    assert utils.get_cluster_num("cluster") == "cluster"
+
+
+def test_get_cluster_num_with_multiple_numeric_parts():
+    assert utils.get_cluster_num("cluster123abc456") == "123"
+
+
+def test_get_cluster_num_with_empty_string():
+
+    assert utils.get_cluster_num("") == ""
+
+
+def test_get_cluster_num_with_special_characters():
+    assert utils.get_cluster_num("cluster@#123") == "123"
+
+
+def test_cluster_nums_from_assign_multiple_clusters():
+    assign_result = {
+        "sample1": {"cluster": "GPSC3"},
+        "sample2": {"cluster": "GPSC60"},
+        "sample3": {"cluster": "GPSC3"},
+    }
+    expected = ["3", "60"]
+    assert sorted(utils.cluster_nums_from_assign(assign_result)) == sorted(
+        expected
+    )
+
+
+@patch("beebop.app.getKmersFromReferenceDatabase")
+def test_get_species_kmers(mock_getKmersFromReferenceDatabase):
+    mock_getKmersFromReferenceDatabase.return_value = [14, 17, 20, 23]
+
+    species_db_name = "valid_species_db"
+    expected_result = {"kmerMax": 23, "kmerMin": 14, "kmerStep": 3}
+
+    result = app.get_species_kmers(species_db_name)
+    assert result == expected_result
+
+
+@patch("beebop.app.get_species_kmers")
+def test_get_species_config_valid(mock_get_species_kmers, client):
+    mock_get_species_kmers.return_value = {
+        "kmerMax": 31,
+        "kmerMin": 15,
+        "kmerStep": 2,
+    }
+
+    response = app.get_species_config()
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["status"] == "success"
+    assert "Streptococcus pneumoniae" in data["data"]
+    assert "Streptococcus agalactiae" in data["data"]
+    for species, kmers in data["data"].items():
+        assert kmers == {"kmerMax": 31, "kmerMin": 15, "kmerStep": 2}

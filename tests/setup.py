@@ -10,7 +10,7 @@ from beebop.utils import get_args
 schemas = beebop.schemas.Schema()
 
 
-def generate_json():
+def generate_json_pneumo():
     # generate hdf5 sketch from fasta file using pp-sketchlib
     subprocess.run(
         "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
@@ -25,7 +25,7 @@ def generate_json():
     return json.dumps(sketches_json)
 
 
-storage_location = './tests/results'
+storage_location = "./tests/results"
 fs = PoppunkFileStore(storage_location)
 
 expected_assign_result = {
@@ -39,8 +39,11 @@ name_mapping = {
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
 
-db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+db_fs = DatabaseFileStore('./storage/dbs/GPS_v8_ref',
+                          "GPS_v8_external_clusters.csv")
 args = get_args()
+species = "Streptococcus pneumoniae"
+species_db_name = "GPS_v8_ref"
 
 
 def do_assign_clusters(p_hash: str):
@@ -53,8 +56,9 @@ def do_assign_clusters(p_hash: str):
         hashes_list,
         p_hash,
         fs,
-        db_paths,
-        args)
+        db_fs,
+        args,
+        species)
 
 
 def do_network_internal(p_hash: str):
@@ -62,6 +66,7 @@ def do_network_internal(p_hash: str):
     visualise.network_internal(expected_assign_result,
                                p_hash,
                                fs,
-                               db_paths,
+                               db_fs,
                                args,
-                               name_mapping)
+                               name_mapping,
+                               species)
