@@ -2,7 +2,6 @@
 *coverage*
 ignored
 *.h5
-*.json
 !tests/files/json/*
 !*.schema.json
 !args.json
