@@ -24,7 +24,8 @@ def generate_json_pneumo():
 
     return json.dumps(sketches_json)
 
-storage_location = './tests/results'
+
+storage_location = "./tests/results"
 fs = PoppunkFileStore(storage_location)
 
 expected_assign_result = {
