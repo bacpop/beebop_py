@@ -14,7 +14,8 @@ import pickle
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args, cluster_num_from_label
+from beebop.utils import get_args, get_cluster_num
+from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
 schemas = beebop.schemas.Schema()
 
@@ -26,7 +27,7 @@ redis = Redis(host=redis_host)
 job_timeout = 600
 
 storage_location = os.environ.get('STORAGE_LOCATION')
-database_location = os.environ.get('DB_LOCATION')
+dbs_location = os.environ.get('DBS_LOCATION')
 
 
 def response_success(data) -> dict:
@@ -82,7 +83,7 @@ def generate_zip(fs: PoppunkFileStore,
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
-    cluster_num = cluster_num_from_label(cluster)
+    cluster_num = get_cluster_num(cluster)
     if type == 'microreact':
         path_folder = fs.output_microreact(p_hash, cluster_num)
         add_files(memory_file, path_folder)
@@ -156,6 +157,44 @@ def report_version() -> json:
     return jsonify(response_success(vers))
 
 
+@app.route("/speciesConfig", methods=['GET'])
+def get_species_config() -> json:
+    """
+    Retrieves k-mer lists for all species specified in the arguments.
+    This function extracts species arguments,
+    fetches k-mers from the reference database for each species,
+    and constructs a configuration dictionary
+    containing the k-mers for each species.The result is then
+    returned as a JSON response.
+
+    :return json: [JSON response containing a dictionary
+        where each key is a species and the value is another
+        dictionary with a list of k-mers for that species.]
+    """
+    all_species_args = vars(get_args().species)
+    species_config = {
+        species: get_species_kmers(args.dbname)
+        for species, args in all_species_args.items()
+    }
+    return jsonify(response_success(species_config))
+
+
+def get_species_kmers(species_db_name: str) -> dict:
+    """
+    Retrieve k-mer information from database for a given species.
+
+    :param species_db_name: [The name of the species database.]
+    :return dict: [A dictionary containing the maximum, minimum, and step
+        k-mer values.]
+    """
+    kmers = getKmersFromReferenceDatabase(f"{dbs_location}/{species_db_name}")
+    return {
+        "kmerMax": int(kmers[-1]),
+        "kmerMin": int(kmers[0]),
+        "kmerStep": int(kmers[1] - kmers[0]),
+    }
+
+
 @app.route('/poppunk', methods=['POST'])
 @expects_json(schemas.sketches)
 def run_poppunk() -> json:
@@ -169,9 +208,10 @@ def run_poppunk() -> json:
     sketches = request.json['sketches'].items()
     p_hash = request.json['projectHash']
     name_mapping = request.json['names']
+    species = request.json["species"]
     q = Queue(connection=redis)
     return run_poppunk_internal(sketches, p_hash, name_mapping,
-                                storage_location, redis, q)
+                                storage_location, redis, q, species)
 
 
 def run_poppunk_internal(sketches: dict,
@@ -179,7 +219,7 @@ def run_poppunk_internal(sketches: dict,
                          name_mapping: dict,
                          storage_location: str,
                          redis: Redis,
-                         q: Queue) -> json:
+                         q: Queue, species: str) -> json:
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
@@ -193,14 +233,30 @@ def run_poppunk_internal(sketches: dict,
     :param storage_location: [path to storage location]
     :param redis: [Redis instance]
     :param q: [redis queue]
+    :param species: [type of species to be analyzed]
     :return json: [response object with all job IDs stored in 'data']
     """
-    # create FS
     fs = PoppunkFileStore(storage_location)
-    # read arguments
     args = get_args()
-    # set database paths
-    db_paths = DatabaseFileStore(database_location)
+    species_args = getattr(args.species, species, None)
+    if not species_args:
+        return (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "Species not found",
+                        "detail": f"No database found for species: {species}",
+                    }
+                )
+            ),
+            400,
+        )
+
+    db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.dbname}",
+        species_args.external_clusters_file,
+    )
+
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
     hashes_list = []
@@ -227,8 +283,9 @@ def run_poppunk_internal(sketches: dict,
                            hashes_list,
                            p_hash,
                            fs,
-                           db_paths,
+                           db_fs,
                            args,
+                           species,
                            **queue_kwargs)
     # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
@@ -237,18 +294,20 @@ def run_poppunk_internal(sketches: dict,
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,
                                   fs,
-                                  db_paths,
+                                  db_fs,
                                   args,
-                                  name_mapping),
+                                  name_mapping,
+                                  species),
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
     job_microreact = q.enqueue(visualise.microreact,
                                args=(p_hash,
                                      fs,
-                                     db_paths,
+                                     db_fs,
                                      args,
-                                     name_mapping),
+                                     name_mapping,
+                                     species),
                                depends_on=job_network, **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
@@ -332,7 +391,7 @@ def get_network_graph(p_hash) -> json:
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
             component = \
-                cluster_component_mapping[cluster_num_from_label(cluster)]
+                cluster_component_mapping[get_cluster_num(cluster)]
             path = fs.network_output_component(p_hash, component)
             with open(path, 'r') as graphml_file:
                 graph = graphml_file.read()
@@ -393,13 +452,6 @@ def get_results(result_type) -> json:
                                                 cluster,
                                                 api_token,
                                                 storage_location)
-    # TODO: remove after new UI merged
-    elif result_type == 'graphml':
-        p_hash = request.json['projectHash']
-        cluster = str(request.json['cluster'])
-        return download_graphml_internal(p_hash,
-                                         cluster,
-                                         storage_location)
 
 
 def get_clusters_internal(p_hash: str, storage_location: str) -> dict:
@@ -472,7 +524,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     """
     fs = PoppunkFileStore(storage_location)
 
-    cluster_num = cluster_num_from_label(cluster)
+    cluster_num = get_cluster_num(cluster)
     path_json = fs.microreact_json(p_hash, cluster_num)
 
     with open(path_json, 'rb') as microreact_file:
@@ -505,47 +557,6 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
             "detail": f"""Microreact API returned status code {r.status_code}.
                 Response text: {r.text}."""
             })), 500
-
-
-# TODO: remove after new UI merged
-def download_graphml_internal(p_hash: str,
-                              cluster: str,
-                              storage_location: str) -> json:
-    """
-    [Sends the content of the .graphml file for a specified cluster to the
-    backend to be used to draw a network graph. Since component numbers
-    are not matching with cluster numbers, we must first infer the component
-    number from cluster number to locate and send the right .graphml file.]
-
-    :param p_hash: [project hash]
-    :param cluster: [cluster labelr]
-    :param storage_location: [storage location]
-    :return json: [response object with graphml content stored as string in
-        'data']
-    """
-    fs = PoppunkFileStore(storage_location)
-    try:
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_num_from_label(cluster)]
-
-        path = fs.network_output_component(p_hash, component)
-        with open(path, 'r') as graphml_file:
-            graph = graphml_file.read()
-        f = jsonify(response_success({
-            "cluster": cluster,
-            "graph": graph}))
-    except (KeyError):
-        f = jsonify(error=response_failure({
-                "error": "Cluster not found",
-                "detail": "Cluster not found"
-                })), 500
-    except (FileNotFoundError):
-        f = jsonify(error=response_failure({
-                "error": "File not found",
-                "detail": "GraphML file not found"
-                })), 500
-    return f
 
 
 @app.route("/project/<p_hash>", methods=['GET'])

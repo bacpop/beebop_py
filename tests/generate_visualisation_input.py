@@ -23,34 +23,35 @@ p_hash = 'unit_test_visualisations'
 fs = PoppunkFileStore(storageLocation)
 fs.ensure_output_dir_exists(p_hash)
 outdir = fs.output(p_hash)
-db_paths = DatabaseFileStore('./storage/GPS_v8_ref')
+db_fs = DatabaseFileStore("./storage/GPS_v8_ref",
+                          "GPS_v8_external_clusters.csv")
 args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign)
 
-sketches_dict = json.loads(setup.generate_json())
+sketches_dict = json.loads(setup.generate_json_pneumo())
 hex_to_decimal(sketches_dict)
 
 qNames = sketch_to_hdf5(sketches_dict, outdir)
 
 assign_query_hdf5(
         dbFuncs=dbFuncs,
-        ref_db=db_paths.db,
+        ref_db=db_fs.db,
         qNames=qNames,
         output=outdir,
         qc_dict=qc_dict,
         update_db=args.assign.update_db,
         write_references=args.assign.write_references,
-        distances=db_paths.distances,
+        distances=db_fs.distances,
         serial=False,
         threads=args.assign.threads,
         overwrite=args.assign.overwrite,
         plot_fit=args.assign.plot_fit,
         graph_weights=False,
-        model_dir=db_paths.db,
+        model_dir=db_fs.db,
         strand_preserved=args.assign.strand_preserved,
-        previous_clustering=db_paths.db,
-        external_clustering=args.assign.external_clustering,
+        previous_clustering=db_fs.db,
+        external_clustering=db_fs.external_clustering,
         core=args.assign.core_only,
         accessory=args.assign.accessory_only,
         gpu_dist=args.assign.gpu_dist,
@@ -58,4 +59,4 @@ assign_query_hdf5(
         save_partial_query_graph=args.assign.save_partial_query_graph
     )
 
-summarise_clusters(outdir, args.assign.species, db_paths.db, qNames)
+summarise_clusters(outdir, args.assign.species, db_fs.db, qNames)

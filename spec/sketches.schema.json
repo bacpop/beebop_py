@@ -14,6 +14,9 @@
     "projectHash": {
       "type": "string"
     },
+    "species": {
+      "type": "string"
+    },
     "sketches": {
       "type": "object",
       "patternProperties": {
@@ -53,23 +56,10 @@
             "version": {
               "type": "string"
             },
-            "14": {
+            "patternProperties": {
+              "^[0-9]+$": {
               "$ref": "#/definitions/int64HexArray"
-            },
-            "17": {
-              "$ref": "#/definitions/int64HexArray"
-            },
-            "20": {
-              "$ref": "#/definitions/int64HexArray"
-            },
-            "23": {
-              "$ref": "#/definitions/int64HexArray"
-            },
-            "26": {
-              "$ref": "#/definitions/int64HexArray"
-            },
-            "29": {
-              "$ref": "#/definitions/int64HexArray"
+              }
             }
           },
           "required": [
@@ -79,13 +69,7 @@
             "length",
             "missing_bases",
             "sketchsize64",
-            "version",
-            "14",
-            "17",
-            "20",
-            "23",
-            "26",
-            "29"
+            "version"
           ],
           "additionalProperties": true
         }

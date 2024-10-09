@@ -16,22 +16,7 @@
         "save_partial_query_graph": true,
         "min_kmer_count": 0,
         "exact_count": false,
-        "species": "Streptococcus pneumoniae",
-        "serial": false,
-        "qc_dict": {
-            "run_qc": true,
-            "type_isolate": null,
-            "max_a_dist": 0.5,
-            "max_pi_dist": 0.1,
-            "prop_zero": 0.05,
-            "prop_n": 0.1,
-            "max_merge": -1,
-            "betweenness": true,
-            "retain_failures": false,
-            "no_remove": false,
-            "length_range": [1500000, 3500000],
-            "upper_n": null
-        }
+        "serial": false
     },
     "visualise":{
         "threads":1,
@@ -50,5 +35,45 @@
         "overwrite":true,
         "display_cluster":null,
         "gpu_graph":false
+    },
+    "species": {
+        "Streptococcus pneumoniae": {
+            "dbname": "GPS_v8_ref",
+            "external_cluster_prefix": "GPSC",
+            "external_clusters_file": "GPS_v8_external_clusters.csv",
+            "qc_dict": { 
+                "run_qc": true,
+                "type_isolate": null,
+                "max_a_dist": 0.5,
+                "max_pi_dist": 0.1,
+                "prop_zero": 0.05,
+                "prop_n": 0.1,
+                "max_merge": -1,
+                "betweenness": true,
+                "retain_failures": false,
+                "no_remove": false,
+                "length_range": [1500000, 3500000],
+                "upper_n": null
+            }
+        },
+        "Streptococcus agalactiae": {
+            "dbname": "GBS_refs",
+            "external_cluster_prefix": null,
+            "external_clusters_file": null,
+            "qc_dict": { 
+                "run_qc": true,
+                "type_isolate": null,
+                "max_a_dist": 0.5,
+                "max_pi_dist": 0.1,
+                "prop_zero": 0.05,
+                "prop_n": 0.1,
+                "max_merge": -1,
+                "betweenness": true,
+                "retain_failures": false,
+                "no_remove": false,
+                "length_range": [1500000, 3500000],
+                "upper_n": null
+            }
+        }
     }
 }

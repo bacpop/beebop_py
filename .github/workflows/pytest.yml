@@ -7,7 +7,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, "bacpop-*" ]
 
 jobs:
   build:
@@ -22,13 +22,13 @@ jobs:
       with: 
         path: main
 
-    - name: Restore GPS database from cache
-      uses: actions/cache@v2
+    - name: Restore databases from cache
+      uses: actions/cache@v3
       with:
-        path: /home/runner/work/beebop_py/beebop_py/main/storage/GPS_v8_ref
-        key: cache-gps-v8-db
-      id: cache-db
-
+        path: ./main/storage/dbs
+        key: cache-dbs
+      id: cache-dbs
+          
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
@@ -120,7 +120,7 @@ jobs:
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
         rq worker > rq_output.txt 2>&1 &
-        STORAGE_LOCATION=./tests/results DB_LOCATION=./storage/GPS_v8_ref poetry run coverage run -m pytest
+        STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage/dbs poetry run coverage run -m pytest
 
     - name: Process coverage
       working-directory: ./main

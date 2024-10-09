@@ -3,9 +3,16 @@
 # beebop_py
 ## Python API for beebop
 
+#### Adding a new species 
+
+The current species can be seen in `args.json` in the `species` object. To add a new species do the following:
+
+1. Add new database to [mrcdata](https://mrcdata.dide.ic.ac.uk/beebop).
+2. Add new species to `args.json` in *beebop_py* with properties.
+
 #### A note on Assign Cluster Quality Control
 The app assigns clusters with quality control (qc) on. This is to enable the `--run-qc` flag as per [here](https://poppunk.bacpop.org/qc.html).
-The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. The values are [defaults](https://github.com/bacpop/PopPUNK/blob/master/PopPUNK/__main__.py) from PopPunk and are associated with the V8 database.
+The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. These are species dependent and can be changed as per the species requirements.
 ### Usage
 
 #### Clone the repository
@@ -14,7 +21,7 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
 
-You will need the GPS_v8 database, please download and extract it into `/storage`:
+You will need species databases, please download and extract it into `/storage` by running:
 
 ```
 ./scripts/download_databases

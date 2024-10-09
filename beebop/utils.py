@@ -11,11 +11,11 @@ import glob
 
 from beebop.filestore import PoppunkFileStore
 
-ET.register_namespace('', "http://graphml.graphdrawing.org/xmlns")
-ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
+ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
+ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
 
 
-def get_args() -> dict:
+def get_args() -> SimpleNamespace:
     """
     [Read in fixed arguments to poppunk that are always set, or used as
     defaults. This is needed because of the large number of arguments that
@@ -31,9 +31,12 @@ def get_args() -> dict:
 NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 
 
-def generate_mapping(p_hash: str,
-                     cluster_nums_to_map: list,
-                     fs: PoppunkFileStore) -> dict:
+def generate_mapping(
+    p_hash: str,
+    cluster_nums_to_map: list,
+    fs: PoppunkFileStore,
+    is_external_clusters: bool,
+) -> dict:
     """
     [PopPUNKs network visualisation generates one overall .graphml file
     covering all clusters/ components. Furthermore, it generates one .graphml
@@ -49,6 +52,7 @@ def generate_mapping(p_hash: str,
     :param cluster_nums_to_map: [clusters of interest for this project -
         skip all other clusters]
     :param fs: [PoppunkFileStore with paths to input data]
+    :param is_external_clusters: [The species has available external clusters]
     :return dict: [dict that maps clusters to components]
     """
     samples_to_clusters = {}
@@ -57,32 +61,37 @@ def generate_mapping(p_hash: str,
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
             sample_id, sample_clusters = row
-            cluster = str(get_lowest_cluster(sample_clusters))
+            cluster = (
+                str(get_lowest_cluster(sample_clusters))
+                if is_external_clusters
+                else str(sample_clusters)
+            )
             if cluster in cluster_nums_to_map:
                 samples_to_clusters[sample_id] = cluster
 
     # list of all component graph filenames
     file_list = []
     for file in os.listdir(fs.output_network(p_hash)):
-        if fnmatch.fnmatch(file, 'network_component_*.graphml'):
+        if fnmatch.fnmatch(file, "network_component_*.graphml"):
             file_list.append(file)
 
     # generate dict that maps cluster number to component number
-    cluster_component_dict = match_clusters_to_components(p_hash,
-                                                          fs,
-                                                          file_list,
-                                                          samples_to_clusters)
+    cluster_component_dict = match_clusters_to_components(
+        p_hash, fs, file_list, samples_to_clusters
+    )
 
     # save as pickle
-    with open(fs.network_mapping(p_hash), 'wb') as mapping:
+    with open(fs.network_mapping(p_hash), "wb") as mapping:
         pickle.dump(cluster_component_dict, mapping)
     return cluster_component_dict
 
 
-def match_clusters_to_components(p_hash: str,
-                                 fs: PoppunkFileStore,
-                                 file_list: list,
-                                 samples_to_clusters: dict) -> dict:
+def match_clusters_to_components(
+    p_hash: str,
+    fs: PoppunkFileStore,
+    file_list: list,
+    samples_to_clusters: dict,
+) -> dict:
     """
     [Generate a dictionary mapping clusters to network components based on
     matching their shared samples]
@@ -101,10 +110,10 @@ def match_clusters_to_components(p_hash: str,
     # in PopPUNK.
     cluster_sample_counts = {}
     for component_filename in file_list:
-        component_number = re.findall(R'\d+', component_filename)[0]
-        component_xml = ET.parse(fs.network_output_component(
-            p_hash,
-            component_number)).getroot()
+        component_number = re.findall(R"\d+", component_filename)[0]
+        component_xml = ET.parse(
+            fs.network_output_component(p_hash, component_number)
+        ).getroot()
         sample_nodes = component_xml.findall(NODE_SCHEMA)
         component_cluster_counts = {}
         # for every sample in the component, increment its cluster's
@@ -122,26 +131,29 @@ def match_clusters_to_components(p_hash: str,
         # has more matching samples than the current value (or
         # if this is the first matching component)
         for cluster, count in component_cluster_counts.items():
-            if cluster not in cluster_sample_counts.keys() \
-                    or count > cluster_sample_counts[cluster]:
+            if (
+                cluster not in cluster_sample_counts.keys()
+                or count > cluster_sample_counts[cluster]
+            ):
                 cluster_component_dict[cluster] = component_number
                 cluster_sample_counts[cluster] = count
 
     return cluster_component_dict
 
 
-def cluster_num_from_label(cluster_label: str) -> str:
+def get_cluster_num(cluster: str) -> str:
     """
-    [Strip GPSC prefix from cluster label, as the internals of PopPUNK
-    use the numeric part only.]
+    [Extract the numeric part from a cluster label, regardless of the prefix.]
 
-    :param cluster_label: [external cluster label with GPSC prefix]
-    :return str: [cluster string with prefix removed]
+    :param cluster: [cluster from assign result.
+    Can be prefixed with external_cluster_prefix]
+    :return str: [numeric part of the cluster]
     """
-    return cluster_label.replace("GPSC", "")
+    match = re.search(r"\d+", str(cluster))
+    return match.group(0) if match else str(cluster)
 
 
-def cluster_nums_from_assign_result(assign_result: dict) -> list:
+def cluster_nums_from_assign(assign_result: dict) -> list:
     """
     [Get all cluster numbers from a cluster assign result.]
 
@@ -150,14 +162,16 @@ def cluster_nums_from_assign_result(assign_result: dict) -> list:
     """
     result = set()
     for item in assign_result.values():
-        result.add(cluster_num_from_label(item['cluster']))
+        result.add(get_cluster_num(item["cluster"]))
     return list(result)
 
 
-def delete_component_files(cluster_component_dict: dict,
-                           fs: PoppunkFileStore,
-                           assign_result: dict,
-                           p_hash: str) -> None:
+def delete_component_files(
+    cluster_component_dict: dict,
+    fs: PoppunkFileStore,
+    assign_result: dict,
+    p_hash: str,
+) -> None:
     """
     [poppunk generates >1100 component graph files. We only need to store those
     files from the clusters our queries belong to.]
@@ -170,15 +184,16 @@ def delete_component_files(cluster_component_dict: dict,
     :param p_hash: [project hash]
     """
     components = []
-    for cluster_no in cluster_nums_from_assign_result(assign_result):
+    for cluster_no in cluster_nums_from_assign(assign_result):
         components.append(cluster_component_dict[cluster_no])
 
     # delete redundant component files
-    keep_filenames = list(map(lambda x: f"network_component_{x}.graphml",
-                              components))
-    keep_filenames.append('network_cytoscape.csv')
-    keep_filenames.append('network_cytoscape.graphml')
-    keep_filenames.append('cluster_component_dict.pickle')
+    keep_filenames = list(
+        map(lambda x: f"network_component_{x}.graphml", components)
+    )
+    keep_filenames.append("network_cytoscape.csv")
+    keep_filenames.append("network_cytoscape.graphml")
+    keep_filenames.append("cluster_component_dict.pickle")
     dir = fs.output_network(p_hash)
     # remove files not in keep_filenames
     for item in list(set(os.listdir(dir)) - set(keep_filenames)):
@@ -201,10 +216,9 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
     file_list = []
     for root, dirs, files in os.walk(folder):
         for file in files:
-            if file != 'cluster_component_dict.pickle':
+            if file != "cluster_component_dict.pickle":
                 file_list.append(os.path.join(root, file))
-    with fileinput.input(files=(file_list),
-                         inplace=True) as input:
+    with fileinput.input(files=(file_list), inplace=True) as input:
         for line in input:
             line = line.rstrip()
             if not line:
@@ -215,9 +229,9 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def add_query_ref_status(fs: PoppunkFileStore,
-                         p_hash: str,
-                         filename_dict: dict) -> None:
+def add_query_ref_status(
+    fs: PoppunkFileStore, p_hash: str, filename_dict: dict
+) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -229,7 +243,7 @@ def add_query_ref_status(fs: PoppunkFileStore,
 
     :param fs: [filestore to locate output files]
     :param p_hash: [project hash to find right project folder]
-    :param filename_dict: [dict that maps filehashes(keys) to
+    :param filename_dict: [dict that maps filehashes(keys) toclear
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
     """
@@ -237,7 +251,8 @@ def add_query_ref_status(fs: PoppunkFileStore,
     query_names = list(filename_dict.values())
     # list of all component graph filenames
     file_list = glob.glob(
-        fs.output_network(p_hash)+"/network_component_*.graphml")
+        fs.output_network(p_hash) + "/network_component_*.graphml"
+    )
     for path in file_list:
         xml_tree = ET.parse(path)
         graph = xml_tree.getroot()
@@ -246,11 +261,11 @@ def add_query_ref_status(fs: PoppunkFileStore,
             name = node.find("./").text
             child = ET.Element("data")
             child.set("key", "ref_query")
-            child.text = 'query' if name in query_names else 'ref'
+            child.text = "query" if name in query_names else "ref"
             node.append(child)
-        ET.indent(xml_tree, space='  ', level=0)
-        with open(path, 'wb') as f:
-            xml_tree.write(f, encoding='utf-8')
+        ET.indent(xml_tree, space="  ", level=0)
+        with open(path, "wb") as f:
+            xml_tree.write(f, encoding="utf-8")
 
 
 def get_lowest_cluster(clusters_str: str) -> int:
@@ -266,17 +281,21 @@ def get_lowest_cluster(clusters_str: str) -> int:
     return min(clusters)
 
 
-def get_external_clusters_from_file(external_clusters_file: str,
-                                    hashes_list: list) -> dict:
+def get_external_clusters_from_file(
+    previous_query_clustering_file: str,
+    hashes_list: list,
+    external_clusters_prefix: str,
+) -> dict:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
     file and returns a dictionary of sample hash to external cluster name. If
     there are multiple external clusters listed for a sample, the lowest
     cluster number is returned]
 
-    :param external_clusters_file: [filename of the project's external clusters
-        file]
+    :param previous_query_clustering_file: [filename
+    of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
+    :param external_clusters_prefix: prefix for external cluster name
     :return dict: [dict of sample hash to lowest numbered-cluster for that
         sample]
     """
@@ -284,8 +303,8 @@ def get_external_clusters_from_file(external_clusters_file: str,
     # for
     remaining_hashes = hashes_list[:]
     result = {}
-    with open(external_clusters_file) as f:
-        reader = csv.reader(f, delimiter=',')
+    with open(previous_query_clustering_file) as f:
+        reader = csv.reader(f, delimiter=",")
         for row in reader:
             # We expect two columns in the external clusters csv: the
             # first contains the sample id (which will be the hash in
@@ -297,7 +316,9 @@ def get_external_clusters_from_file(external_clusters_file: str,
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
                     cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = "GPSC{}".format(cluster_no)
+                    result[sample_id] = (
+                        f"{external_clusters_prefix}{cluster_no}"
+                    )
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)
