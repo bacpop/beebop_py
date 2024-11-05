@@ -24,7 +24,7 @@ if not redis_host:
     redis_host = "127.0.0.1"
 app = Flask(__name__)
 redis = Redis(host=redis_host)
-job_timeout = 600
+job_timeout = 1200
 
 storage_location = os.environ.get('STORAGE_LOCATION')
 dbs_location = os.environ.get('DBS_LOCATION')

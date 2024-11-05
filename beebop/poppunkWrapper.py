@@ -1,5 +1,6 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
+from PopPUNK.utils import setGtThreads
 from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
 
@@ -30,6 +31,7 @@ class PoppunkWrapper:
         self.args = args
         self.p_hash = p_hash
         self.species = species
+        setGtThreads(2)
 
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
@@ -61,9 +63,12 @@ class PoppunkWrapper:
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
             gpu_graph=self.args.assign.gpu_graph,
-            save_partial_query_graph=self.args.assign.save_partial_query_graph
+            save_partial_query_graph=self.args.assign.save_partial_query_graph,
+            stable=None,
+            use_full_network=False
         )
 
+# try to do in 1 call just add --cytoscape
     def create_microreact(self, cluster: str, internal_cluster: str) -> None:
         """
         [Generates microreact visualisation output based on previous
@@ -107,7 +112,10 @@ class PoppunkWrapper:
             tree=self.args.visualise.tree,
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            display_cluster=self.args.visualise.display_cluster
+            display_cluster=self.args.visualise.display_cluster,
+            recalculate_distances=True,
+            use_partial_query_graph=self.fs.parital_query_graph(self.p_hash),
+            tmp=self.fs.tmp(self.p_hash)
         )
 
     def create_network(self) -> None:
@@ -147,5 +155,8 @@ class PoppunkWrapper:
             tree="none",
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            display_cluster=self.args.visualise.display_cluster
+            display_cluster=self.args.visualise.display_cluster,
+            recalculate_distances=True,
+            use_partial_query_graph=self.fs.parital_query_graph(self.p_hash),
+            tmp=self.fs.tmp(self.p_hash)
         )

@@ -161,6 +161,6 @@ def network_internal(
         p_hash, cluster_nums_to_map, fs, db_fs.external_clustering
     )
 
-    delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
+    # delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

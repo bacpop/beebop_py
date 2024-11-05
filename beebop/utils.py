@@ -216,7 +216,7 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
     file_list = []
     for root, dirs, files in os.walk(folder):
         for file in files:
-            if file != "cluster_component_dict.pickle":
+            if not file.endswith(".pickle") and not file.endswith(".h5"):
                 file_list.append(os.path.join(root, file))
     with fileinput.input(files=(file_list), inplace=True) as input:
         for line in input:
