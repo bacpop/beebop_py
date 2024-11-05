@@ -2,7 +2,7 @@
     "assign":{
         "update_db": false,
         "write_references": true,
-        "threads": 2,
+        "threads": 1,
         "overwrite": true,
         "plot_fit": 0,
         "graph_weights": false,
@@ -19,7 +19,7 @@
         "serial": false
     },
     "visualise":{
-        "threads":2,
+        "threads":1,
         "gpu_dist":false,
         "deviceid":0,
         "microreact":false,
@@ -38,7 +38,7 @@
     },
     "species": {
         "Streptococcus pneumoniae": {
-            "dbname": "GPS_v9_ref",
+            "dbname": "GPS_v9",
             "external_cluster_prefix": "GPSC",
             "external_clusters_file": "GPS_v9_external_clusters.csv",
             "qc_dict": { 

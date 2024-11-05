@@ -1,6 +1,5 @@
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
-from PopPUNK.utils import setGtThreads
 from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
 
@@ -31,7 +30,6 @@ class PoppunkWrapper:
         self.args = args
         self.p_hash = p_hash
         self.species = species
-        setGtThreads(2)
 
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
