@@ -18,7 +18,7 @@ def microreact(
     name_mapping: dict,
     species: str,
     redis_host: str,
-    queue_kwargs: dict
+    queue_kwargs: dict,
 ) -> None:
     """
     [generate files to use on microreact.org
@@ -34,10 +34,13 @@ def microreact(
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
     :param species: [Type of species]
+    :param redis_host: [host of redis server]
+    :param queue_kwargs: [kwargs for the queue]
     """
 
+    redis = Redis(host=redis_host)
     # get results from previous job
-    current_job = get_current_job(Redis())
+    current_job = get_current_job(redis)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters = None
 
@@ -48,15 +51,45 @@ def microreact(
         print("no external cluster info found")
 
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    redis = Redis(host=redis_host)
-    redis.delete(f"beebop:hash:job:microreact:{p_hash}")
+    queue_microreact_jobs(
+        assign_result,
+        p_hash,
+        fs,
+        wrapper,
+        name_mapping,
+        external_to_poppunk_clusters,
+        redis,
+        queue_kwargs,
+    )
+
+
+def queue_microreact_jobs(
+    assign_result: dict,
+    p_hash: str,
+    fs: PoppunkFileStore,
+    wrapper: PoppunkWrapper,
+    name_mapping: dict,
+    external_to_poppunk_clusters: dict,
+    redis: Redis,
+    queue_kwargs: dict,
+):
+    """
+    Enqueues microreact jobs for each unique cluster in the assignment results.
+
+    :param assign_result: Dictionary containing the assignment results, where each value is expected to have a "cluster" key.
+    :param p_hash: Unique hash identifier for the current process.
+    :param fs: Instance of PoppunkFileStore for file storage operations.
+    :param wrapper: Instance of PoppunkWrapper for wrapping Poppunk operations.
+    :param name_mapping: Dictionary mapping names to their respective identifiers.
+    :param external_to_poppunk_clusters: Dictionary mapping external clusters to Poppunk clusters.
+    :param redis: Redis connection instance.
+    :param queue_kwargs: Additional keyword arguments to pass to the queue when enqueuing jobs.
+    """
     q = Queue(connection=redis)
-    queries_clusters = []
-    for item in assign_result.values():
-        queries_clusters.append(item["cluster"])
+    queries_clusters = [item["cluster"] for item in assign_result.values()]
     for assign_cluster in set(queries_clusters):
         cluster_microreact_job = q.enqueue(
-            microreact_internal,
+            microreact_per_cluster,
             args=(
                 assign_cluster,
                 p_hash,
@@ -65,15 +98,21 @@ def microreact(
                 name_mapping,
                 external_to_poppunk_clusters,
             ),
-            **queue_kwargs
+            **queue_kwargs,
         )
-        # store as list like this and can get them all 
-        redis.hset(f"beebop:hash:job:microreact:{p_hash}", assign_cluster, cluster_microreact_job.id)
-        cluster_microreact_job.latest_result(timeout=queue_kwargs.get("job_timeout", 60))
-    
-    
 
-def microreact_internal(
+        redis.hset(
+            f"beebop:hash:job:microreact:{p_hash}",
+            assign_cluster,
+            cluster_microreact_job.id,
+        )
+        # Wait for the job to finish
+        cluster_microreact_job.latest_result(
+            timeout=queue_kwargs.get("job_timeout", 60)
+        ) 
+
+
+def microreact_per_cluster(
     assign_cluster,
     p_hash,
     fs,
@@ -82,16 +121,15 @@ def microreact_internal(
     external_to_poppunk_clusters: dict = None,
 ) -> None:
     """
+    This function is called by the queue to generate the microreact files for a single cluster.
+    
     :param assign_result: [result from assign_clusters() to get all cluster
         numbers that include query samples]
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
-    :param db_fs: [DatabaseFilestore with paths to db files]
-    :param args: [arguments for poppunk functions]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
-    :param species: [Type of species]
     :param external_to_poppunk_clusters: [dict of external to poppunk
         clusters, used to identify the include file to pass to poppunk]
     """
@@ -103,9 +141,7 @@ def microreact_internal(
         internal_cluster = assign_cluster
 
     wrapper.create_microreact(cluster_no, internal_cluster)
-    replace_filehashes(
-        fs.output_microreact(p_hash, cluster_no), name_mapping
-    )
+    replace_filehashes(fs.output_microreact(p_hash, cluster_no), name_mapping)
 
 
 def network(

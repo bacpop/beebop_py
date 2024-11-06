@@ -38,7 +38,7 @@
     },
     "species": {
         "Streptococcus pneumoniae": {
-            "dbname": "GPS_v9_ref",
+            "dbname": "GPS_v9",
             "external_cluster_prefix": "GPSC",
             "external_clusters_file": "GPS_v9_external_clusters.csv",
             "qc_dict": { 
