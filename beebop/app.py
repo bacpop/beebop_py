@@ -307,7 +307,9 @@ def run_poppunk_internal(sketches: dict,
                                      db_fs,
                                      args,
                                      name_mapping,
-                                     species),
+                                     species,
+                                     redis_host,
+                                     queue_kwargs),
                                depends_on=job_network, **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash,
                job_microreact.id)
@@ -364,12 +366,16 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         if status_assign == "finished":
             status_microreact = get_status_job('microreact', p_hash, redis)
             status_network = get_status_job('network', p_hash, redis)
+            m_s = redis.hgetall(f"beebop:hash:job:microreact:{p_hash}")
+            m_status = { k.decode("utf-8"): Job.fetch(v.decode("utf-8"), connection=redis).get_status()  for k, v in m_s.items() }
         else:
             status_microreact = "waiting"
             status_network = "waiting"
+            m_status = {}
         return {"assign": status_assign,
                 "microreact": status_microreact,
-                "network": status_network}
+                "network": status_network,
+                "m_status": m_status}
     except AttributeError:
         return {"error": "Unknown project hash"}
 

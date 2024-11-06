@@ -7,6 +7,7 @@ from beebop.utils import get_cluster_num
 from beebop.utils import cluster_nums_from_assign
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
+from rq import Queue
 
 
 def microreact(
@@ -16,6 +17,8 @@ def microreact(
     args: dict,
     name_mapping: dict,
     species: str,
+    redis_host: str,
+    queue_kwargs: dict
 ) -> None:
     """
     [generate files to use on microreact.org
@@ -44,26 +47,38 @@ def microreact(
     except FileNotFoundError:
         print("no external cluster info found")
 
-    microreact_internal(
-        assign_result,
-        p_hash,
-        fs,
-        db_fs,
-        args,
-        name_mapping,
-        species,
-        external_to_poppunk_clusters,
-    )
-
+    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
+    redis = Redis(host=redis_host)
+    redis.delete(f"beebop:hash:job:microreact:{p_hash}")
+    q = Queue(connection=redis)
+    queries_clusters = []
+    for item in assign_result.values():
+        queries_clusters.append(item["cluster"])
+    for assign_cluster in set(queries_clusters):
+        cluster_microreact_job = q.enqueue(
+            microreact_internal,
+            args=(
+                assign_cluster,
+                p_hash,
+                fs,
+                wrapper,
+                name_mapping,
+                external_to_poppunk_clusters,
+            ),
+            **queue_kwargs
+        )
+        # store as list like this and can get them all 
+        redis.hset(f"beebop:hash:job:microreact:{p_hash}", assign_cluster, cluster_microreact_job.id)
+        cluster_microreact_job.latest_result(timeout=queue_kwargs.get("job_timeout", 60))
+    
+    
 
 def microreact_internal(
-    assign_result,
+    assign_cluster,
     p_hash,
     fs,
-    db_fs,
-    args,
+    wrapper,
     name_mapping,
-    species,
     external_to_poppunk_clusters: dict = None,
 ) -> None:
     """
@@ -80,21 +95,17 @@ def microreact_internal(
     :param external_to_poppunk_clusters: [dict of external to poppunk
         clusters, used to identify the include file to pass to poppunk]
     """
-    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    queries_clusters = []
-    for item in assign_result.values():
-        queries_clusters.append(item["cluster"])
-    for assign_cluster in set(queries_clusters):
-        cluster_no = get_cluster_num(assign_cluster)
-        if external_to_poppunk_clusters:
-            internal_cluster = external_to_poppunk_clusters[assign_cluster]
-        else:
-            internal_cluster = assign_cluster
 
-        wrapper.create_microreact(cluster_no, internal_cluster)
-        replace_filehashes(
-            fs.output_microreact(p_hash, cluster_no), name_mapping
-        )
+    cluster_no = get_cluster_num(assign_cluster)
+    if external_to_poppunk_clusters:
+        internal_cluster = external_to_poppunk_clusters[assign_cluster]
+    else:
+        internal_cluster = assign_cluster
+
+    wrapper.create_microreact(cluster_no, internal_cluster)
+    replace_filehashes(
+        fs.output_microreact(p_hash, cluster_no), name_mapping
+    )
 
 
 def network(
