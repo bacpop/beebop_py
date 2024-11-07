@@ -301,19 +301,20 @@ def run_poppunk_internal(sketches: dict,
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
+    # delete all previous microreact cluster job results
+    redis.delete(f"beebop:hash:job:microreact:{p_hash}")
     job_microreact = q.enqueue(visualise.microreact,
                                args=(p_hash,
                                      fs,
                                      db_fs,
                                      args,
                                      name_mapping,
-                                     species),
+                                     species,
+                                     redis_host,
+                                     queue_kwargs),
                                depends_on=job_network, **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash,
-               job_microreact.id)
-    # delete all previous microreact job results
-    redis.delete(f"beebop:hash:job:microreact:{p_hash}")
-    
+               job_microreact.id) 
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
                                      "network": job_network.id }))
@@ -380,7 +381,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         return {"assign": status_assign,
                 "microreact": status_microreact,
                 "network": status_network,
-                "microreactClusters": microreact_cluster_statuses}
+                "microreactClusters": microreact_cluster_statuses }
     except AttributeError:
         return {"error": "Unknown project hash"}
 

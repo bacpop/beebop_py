@@ -115,10 +115,8 @@ def microreact_per_cluster(
     assign_cluster,
     p_hash,
     fs,
-    db_fs,
-    args,
+    wrapper,
     name_mapping,
-    species,
     external_to_poppunk_clusters: dict = None,
 ) -> None:
     """
@@ -134,16 +132,6 @@ def microreact_per_cluster(
     :param external_to_poppunk_clusters: [dict of external to poppunk
         clusters, used to identify the include file to pass to poppunk]
     """
-    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    queries_clusters = []
-    for item in assign_result.values():
-        queries_clusters.append(item["cluster"])
-    for assign_cluster in set(queries_clusters):
-        cluster_no = get_cluster_num(assign_cluster)
-        if external_to_poppunk_clusters:
-            internal_cluster = external_to_poppunk_clusters[assign_cluster]
-        else:
-            internal_cluster = assign_cluster
 
     cluster_no = get_cluster_num(assign_cluster)
     if external_to_poppunk_clusters:
