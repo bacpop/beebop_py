@@ -318,8 +318,7 @@ def run_poppunk_internal(sketches: dict,
     
     return jsonify(response_success({"assign": job_assign.id,
                                      "microreact": job_microreact.id,
-                                     "network": job_network.id, 
-                                     "microreactClusters": {}}))
+                                     "network": job_network.id}))
 
 
 # get job status
