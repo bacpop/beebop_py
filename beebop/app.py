@@ -313,11 +313,16 @@ def run_poppunk_internal(sketches: dict,
                                      redis_host,
                                      queue_kwargs),
                                depends_on=job_network, **queue_kwargs)
-    redis.hset("beebop:hash:job:microreact", p_hash,
-               job_microreact.id) 
-    return jsonify(response_success({"assign": job_assign.id,
-                                     "microreact": job_microreact.id,
-                                     "network": job_network.id }))
+    redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
+    return jsonify(
+        response_success(
+            {
+                "assign": job_assign.id,
+                "microreact": job_microreact.id,
+                "network": job_network.id,
+            }
+        )
+    )
 
 
 # get job status
@@ -372,7 +377,9 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
                 cluster.decode("utf-8"): Job.fetch(
                     status.decode("utf-8"), connection=redis
                 ).get_status()
-                for cluster, status in redis.hgetall(f"beebop:hash:job:microreact:{p_hash}").items()
+                for cluster, status in redis.hgetall(
+                    f"beebop:hash:job:microreact:{p_hash}"
+                ).items()
             }
         else:
             status_microreact = "waiting"
@@ -381,7 +388,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         return {"assign": status_assign,
                 "microreact": status_microreact,
                 "network": status_network,
-                "microreactClusters": microreact_cluster_statuses }
+                "microreactClusters": microreact_cluster_statuses}
     except AttributeError:
         return {"error": "Unknown project hash"}
 
