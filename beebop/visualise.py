@@ -87,6 +87,7 @@ def queue_microreact_jobs(
     :param redis: Redis connection instance.
     :param queue_kwargs: Additional keyword arguments to pass
         to the queue when enqueuing jobs.
+    :return None
     """
     q = Queue(connection=redis)
     queries_clusters = [item["cluster"] for item in assign_result.values()]
