@@ -16,7 +16,9 @@
         "save_partial_query_graph": true,
         "min_kmer_count": 0,
         "exact_count": false,
-        "serial": false
+        "serial": false,
+        "stable": null,
+        "use_full_network": false
     },
     "visualise":{
         "threads":1,
@@ -34,7 +36,8 @@
         "mst_distances":"core",
         "overwrite":true,
         "display_cluster":null,
-        "gpu_graph":false
+        "gpu_graph":false,
+        "recalculate_distances": true
     },
     "species": {
         "Streptococcus pneumoniae": {

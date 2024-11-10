@@ -647,57 +647,6 @@ def test_add_files():
     assert '7622_5_91.fa'.encode('utf-8') not in contents2
 
 
-def test_generate_mapping():
-    cluster_nos_to_map = ['5', '7', '9', '13', '14', '31', '32']
-    result = utils.generate_mapping('results_modifications',
-                                    cluster_nos_to_map, fs, True)
-    print(result)
-    exp_cluster_component_dict = {
-        '13': '2',
-        '31': '1',
-        '32': '3',
-        '7': '4',
-        '9': '6',
-        '14': '7',
-        '5': '5'
-    }
-    assert result == exp_cluster_component_dict
-
-
-def test_delete_component_files():
-    # should remove all component files apart from components 7 and 5
-    cluster_component_dict = {
-        '4': '7',
-        '5': '5',
-        '23': '12',
-        '1': '2',
-        '12': '3'
-    }
-    assign_result = {
-        0: {'cluster': '4'},
-        1: {'cluster': '5'}
-    }
-    p_hash = 'results_modifications'
-    utils.delete_component_files(cluster_component_dict,
-                                 fs,
-                                 assign_result,
-                                 p_hash)
-    assert not os.path.exists(fs.output_network(p_hash) +
-                              "/network_component_1.graphml")
-    assert not os.path.exists(fs.output_network(p_hash) +
-                              "/network_component_2.graphml")
-    assert not os.path.exists(fs.output_network(p_hash) +
-                              "/network_component_3.graphml")
-    assert not os.path.exists(fs.output_network(p_hash) +
-                              "/network_component_4.graphml")
-    assert os.path.exists(fs.output_network(p_hash) +
-                          "/network_component_5.graphml")
-    assert not os.path.exists(fs.output_network(p_hash) +
-                              "/network_component_6.graphml")
-    assert os.path.exists(fs.output_network(p_hash) +
-                          "/network_component_7.graphml")
-
-
 def test_replace_filehashes():
     p_hash = 'results_modifications'
     folder = fs.output_network(p_hash)

@@ -3,6 +3,13 @@
 # beebop_py
 ## Python API for beebop
 
+### Usage
+
+#### Databases
+
+To update the database being used for a species, update the `dbname` json property in `args.json`.
+Note: for development you may prefer to use the *ref* database to speed up PopPUNK runs.
+
 #### Adding a new species 
 
 The current species can be seen in `args.json` in the `species` object. To add a new species do the following:
@@ -13,7 +20,6 @@ The current species can be seen in `args.json` in the `species` object. To add a
 #### A note on Assign Cluster Quality Control
 The app assigns clusters with quality control (qc) on. This is to enable the `--run-qc` flag as per [here](https://poppunk.bacpop.org/qc.html).
 The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. These are species dependent and can be changed as per the species requirements.
-### Usage
 
 #### Clone the repository
 ```

@@ -1,13 +1,10 @@
 from rq import get_current_job, Queue
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status
 from beebop.utils import get_cluster_num
-from beebop.utils import cluster_nums_from_assign
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
-from rq import Queue
 
 
 def microreact(
@@ -160,7 +157,7 @@ def network(
     """
     [Generate files to draw a network.
     Output files are .csv and .graphml (one overall and several component
-    files, those that are not relevant for us get deleted).
+    files).
     Since network component number and poppunk cluster number do not
     match, we need to generate a mapping to find the right component files.
     To highlight query samples in the network graph, a ref or query status is
@@ -175,17 +172,12 @@ def network(
         corresponding filenames (values) of all query samples.]
     :param species: [Type of species]
     """
-    # get results from previous job
-    current_job = get_current_job(Redis())
-    assign_result = current_job.dependency.result
     network_internal(
-        assign_result, p_hash, fs, db_fs, args, name_mapping, species
+        p_hash, fs, db_fs, args, name_mapping, species
     )
-    return assign_result
 
 
 def network_internal(
-    assign_result,
     p_hash,
     fs,
     db_fs: DatabaseFileStore,
@@ -194,8 +186,6 @@ def network_internal(
     species: str,
 ) -> None:
     """
-    :param assign_result: [result from assign_clusters() to get all cluster
-        numbers that include query samples]
     :param p_hash: [project hash to find input data (output from
         assign_clusters)]
     :param fs: [PoppunkFileStore with paths to input data]
@@ -208,11 +198,5 @@ def network_internal(
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()
 
-    cluster_nums_to_map = cluster_nums_from_assign(assign_result)
-    cluster_component_dict = generate_mapping(
-        p_hash, cluster_nums_to_map, fs, db_fs.external_clustering
-    )
-
-    # delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

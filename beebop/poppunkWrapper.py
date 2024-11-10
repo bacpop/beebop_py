@@ -62,8 +62,8 @@ class PoppunkWrapper:
             gpu_dist=self.args.assign.gpu_dist,
             gpu_graph=self.args.assign.gpu_graph,
             save_partial_query_graph=self.args.assign.save_partial_query_graph,
-            stable=None,
-            use_full_network=False
+            stable=self.args.assign.stable,
+            use_full_network=self.args.assign.use_full_network
         )
 
 # try to do in 1 call just add --cytoscape
@@ -111,7 +111,7 @@ class PoppunkWrapper:
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
             display_cluster=self.args.visualise.display_cluster,
-            recalculate_distances=True,
+            recalculate_distances=self.args.visualise.recalculate_distances,
             use_partial_query_graph=self.fs.parital_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash)
         )
