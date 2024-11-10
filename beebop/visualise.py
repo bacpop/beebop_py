@@ -71,7 +71,7 @@ def queue_microreact_jobs(
     external_to_poppunk_clusters: dict,
     redis: Redis,
     queue_kwargs: dict,
-):
+) -> None:
     """
     Enqueues microreact jobs for each unique cluster in the assignment results.
 
@@ -87,7 +87,6 @@ def queue_microreact_jobs(
     :param redis: Redis connection instance.
     :param queue_kwargs: Additional keyword arguments to pass
         to the queue when enqueuing jobs.
-    :return none: 
     """
     q = Queue(connection=redis)
     queries_clusters = [item["cluster"] for item in assign_result.values()]
