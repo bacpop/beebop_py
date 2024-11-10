@@ -1,4 +1,4 @@
-from rq import get_current_job
+from rq import get_current_job, Queue
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import generate_mapping, delete_component_files
@@ -72,18 +72,22 @@ def queue_microreact_jobs(
     external_to_poppunk_clusters: dict,
     redis: Redis,
     queue_kwargs: dict,
-):
+) -> None:
     """
     Enqueues microreact jobs for each unique cluster in the assignment results.
 
-    :param assign_result: Dictionary containing the assignment results, where each value is expected to have a "cluster" key.
+    :param assign_result: Dictionary containing the assignment results,
+        where each value is expected to have a "cluster" key.
     :param p_hash: Unique hash identifier for the current process.
     :param fs: Instance of PoppunkFileStore for file storage operations.
     :param wrapper: Instance of PoppunkWrapper for wrapping Poppunk operations.
-    :param name_mapping: Dictionary mapping names to their respective identifiers.
-    :param external_to_poppunk_clusters: Dictionary mapping external clusters to Poppunk clusters.
+    :param name_mapping: Dictionary mapping names to
+        their respective identifiers.
+    :param external_to_poppunk_clusters: Dictionary mapping
+        external clusters to Poppunk clusters.
     :param redis: Redis connection instance.
-    :param queue_kwargs: Additional keyword arguments to pass to the queue when enqueuing jobs.
+    :param queue_kwargs: Additional keyword arguments to pass
+        to the queue when enqueuing jobs.
     """
     q = Queue(connection=redis)
     queries_clusters = [item["cluster"] for item in assign_result.values()]
@@ -109,7 +113,7 @@ def queue_microreact_jobs(
         # Wait for the job to finish
         cluster_microreact_job.latest_result(
             timeout=queue_kwargs.get("job_timeout", 60)
-        ) 
+        )
 
 
 def microreact_per_cluster(
@@ -121,13 +125,14 @@ def microreact_per_cluster(
     external_to_poppunk_clusters: dict = None,
 ) -> None:
     """
-    This function is called by the queue to generate the microreact files for a single cluster.
-    
-    :param assign_result: [result from assign_clusters() to get all cluster
-        numbers that include query samples]
+    This function is called by the queue
+        to generate the microreact files for a single cluster.
+
+    :param assign_cluster: [cluster number to generate microreact files for]
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
+    :param wrapper: [PoppunkWrapper with paths to input data]
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
     :param external_to_poppunk_clusters: [dict of external to poppunk
