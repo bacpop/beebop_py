@@ -21,10 +21,16 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
 
-You will need species databases, please download and extract it into `/storage` by running:
+You will need species databases, please download and extract it into `/storage`. You can download all databases with the following command:
 
 ```
 ./scripts/download_databases
+```
+
+or just the reference databases with:
+
+```
+./scripts/download_databases --refs
 ```
 
 #### Install dependencies
