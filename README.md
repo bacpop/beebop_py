@@ -80,11 +80,18 @@ To install all other required dependencies go into the beebop_py project folder 
 poetry install
 ```
 #### Run the app
+
 Start the flask app with
 ```
 ./scripts/run_app
 ```
-In a second terminal, you can now query the flask endpoints, e.g.:
+and in another terminal start rq worker:
+
+```
+rq worker
+```
+
+You can now can now query the flask endpoints, e.g.:
 - /version
   ```
   curl http://127.0.0.1:5000/version
