@@ -110,6 +110,14 @@ jobs:
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
+      
+    - name: Run rq worker
+      working-directory: ./main
+      run: |
+        source $CONDA/etc/profile.d/conda.sh
+        conda activate beebop_py
+        rq worker > rq_output.txt 2>&1 &
+    
 
     - name: Test with pytest
       env:
