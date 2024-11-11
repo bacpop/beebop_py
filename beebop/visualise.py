@@ -109,7 +109,7 @@ def queue_microreact_jobs(
             assign_cluster,
             cluster_microreact_job.id,
         )
-        # Wait for the job to finish
+        # Wait for the job to finish before moving onto next cluster
         cluster_microreact_job.latest_result(
             timeout=queue_kwargs.get("job_timeout", 60)
         )

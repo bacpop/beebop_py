@@ -103,14 +103,13 @@ jobs:
         conda activate beebop_py
         poetry install
 
-    - name: Run Redis & rq worker
+    - name: Run Redis
       working-directory: ./main
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
-        rq worker > rq_output.txt 2>&1 &
 
     - name: Test with pytest
       env:
@@ -120,6 +119,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         export PATH="/usr/share/miniconda/bin:$PATH"
+        rq worker > rq_output.txt 2>&1 &
         STORAGE_LOCATION=./tests/results DBS_LOCATION=./storage/dbs poetry run coverage run -m pytest
 
     - name: Process coverage
