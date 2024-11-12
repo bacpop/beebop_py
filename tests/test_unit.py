@@ -98,7 +98,6 @@ def test_assign_clusters():
     expected = unordered(list(setup.expected_assign_result.values()))
     assert list(result.values()) == expected
 
-
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
         assign_result = setup.expected_assign_result
@@ -116,12 +115,16 @@ def test_microreact(mocker):
         new=mock_get_current_job
     )
     p_hash = 'unit_test_microreact'
+    
     setup.do_network_internal(p_hash)
 
     visualise.microreact(
         p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species,
         "localhost", {}
     )
+    
+    time.sleep(30) # wait for jobs to finish
+    
     assert os.path.exists(
         fs.output_microreact(p_hash, 16) + "/microreact_16_core_NJ.nwk"
     )
