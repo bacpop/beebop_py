@@ -61,8 +61,11 @@ def test_run_poppunk_pneumo(client, qtbot):
     # check if visualisation files are stored
     def microreact_status_finished():
         status = client.get("/status/" + p_hash)
-        microreact_clusters_status = read_data(status)['microreactClusters']
-        assert  all( status == "finished" for status in microreact_clusters_status.values())
+        microreact_clusters_status = read_data(status)["microreactClusters"]
+        assert all(
+            status == "finished"
+            for status in microreact_clusters_status.values()
+        )
 
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
@@ -210,8 +213,11 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
     # check if visualisation files are stored
     def microreact_status_finished():
         status = client.get("/status/" + p_hash)
-        microreact_clusters_status = read_data(status)['microreactClusters']
-        assert  all( status == "finished" for status in microreact_clusters_status.values())
+        microreact_clusters_status = read_data(status)["microreactClusters"]
+        assert all(
+            status == "finished"
+            for status in microreact_clusters_status.values()
+        )
 
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(
