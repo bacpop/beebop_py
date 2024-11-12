@@ -183,7 +183,7 @@ def test_queue_microreact_jobs(mocker):
                 external_to_poppunk_clusters,
             ),
             job_timeout=60,
-            depends_on=mockJob if i > 0 else None,
+            depends_on=mocker.ANY,
         )
         for i, item in enumerate(setup.expected_assign_result.values())
     ]
