@@ -72,6 +72,7 @@ def queue_microreact_jobs(
 ) -> None:
     """
     Enqueues microreact jobs for each unique cluster in the assignment results.
+    Runs sequentially, with each job depending on the previous one.
 
     :param assign_result: Dictionary containing the assignment results,
         where each value is expected to have a "cluster" key.
@@ -88,6 +89,7 @@ def queue_microreact_jobs(
     """
     q = Queue(connection=redis)
     queries_clusters = [item["cluster"] for item in assign_result.values()]
+    previous_job = None
     for assign_cluster in set(queries_clusters):
         cluster_microreact_job = q.enqueue(
             microreact_per_cluster,
@@ -99,6 +101,7 @@ def queue_microreact_jobs(
                 name_mapping,
                 external_to_poppunk_clusters,
             ),
+            depends_on=previous_job,
             **queue_kwargs,
         )
 
@@ -107,10 +110,7 @@ def queue_microreact_jobs(
             assign_cluster,
             cluster_microreact_job.id,
         )
-        # Wait for the job to finish
-        cluster_microreact_job.latest_result(
-            timeout=queue_kwargs.get("job_timeout", 60)
-        )
+        previous_job = cluster_microreact_job
 
 
 def microreact_per_cluster(
