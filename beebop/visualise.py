@@ -172,9 +172,13 @@ def network(
         corresponding filenames (values) of all query samples.]
     :param species: [Type of species]
     """
+        # get results from previous job
+    current_job = get_current_job(Redis())
+    assign_result = current_job.dependency.result
     network_internal(
         p_hash, fs, db_fs, args, name_mapping, species
     )
+    return assign_result
 
 
 def network_internal(
