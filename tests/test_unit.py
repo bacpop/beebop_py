@@ -183,8 +183,9 @@ def test_queue_microreact_jobs(mocker):
                 external_to_poppunk_clusters,
             ),
             job_timeout=60,
+            depends_on=mockJob if i > 0 else None,
         )
-        for item in setup.expected_assign_result.values()
+        for i, item in enumerate(setup.expected_assign_result.values())
     ]
 
     visualise.queue_microreact_jobs(
@@ -198,7 +199,6 @@ def test_queue_microreact_jobs(mocker):
         queue_kwargs={"job_timeout": 60},
     )
 
-    mockJob.latest_result.assert_called_with(timeout=60)
     redis.hset.assert_has_calls(expected_hset_calls, any_order=True)
     mockQueue.enqueue.assert_has_calls(expected_enqueue_calls, any_order=True)
 
