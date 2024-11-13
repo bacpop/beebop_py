@@ -62,6 +62,7 @@ def test_run_poppunk_pneumo(client, qtbot):
     def microreact_status_finished():
         status = client.get("/status/" + p_hash)
         microreact_clusters_status = read_data(status)["microreactClusters"]
+        assert len(microreact_clusters_status) > 0
         assert all(
             status == "finished"
             for status in microreact_clusters_status.values()
@@ -214,6 +215,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
     def microreact_status_finished():
         status = client.get("/status/" + p_hash)
         microreact_clusters_status = read_data(status)["microreactClusters"]
+        assert len(microreact_clusters_status) > 0
         assert all(
             status == "finished"
             for status in microreact_clusters_status.values()
