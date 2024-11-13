@@ -99,6 +99,7 @@ def test_assign_clusters():
     expected = unordered(list(setup.expected_assign_result.values()))
     assert list(result.values()) == expected
 
+
 def test_microreact(mocker):
     def mock_get_current_job(Redis):
         assign_result = setup.expected_assign_result
@@ -867,20 +868,21 @@ def test_get_species_config_valid(mock_get_species_kmers, client):
     for species, kmers in data["data"].items():
         assert kmers == {"kmerMax": 31, "kmerMin": 15, "kmerStep": 2}
 
+
 def test_parital_query_graph():
     p_hash = "test_hash"
     expected_path = str(PurePath(fs.output(p_hash), f"{p_hash}_query.subset"))
     assert fs.parital_query_graph(p_hash) == expected_path
 
-@patch("os.makedirs")    
+
+@patch("os.makedirs")
 def test_tmp(mock_makedirs):
     p_hash = "test_hash"
     expected_path = PurePath(fs.output(p_hash), "tmp")
-    
+
     # Call the tmp method
     result_path = fs.tmp(p_hash)
-    
+
     # Check if the directory is created and the path is correct
     mock_makedirs.assert_called_once_with(expected_path, exist_ok=True)
     assert result_path == str(expected_path)
-

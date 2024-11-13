@@ -30,6 +30,7 @@ def get_args() -> SimpleNamespace:
 
 NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 
+
 def get_cluster_num(cluster: str) -> str:
     """
     [Extract the numeric part from a cluster label, regardless of the prefix.]

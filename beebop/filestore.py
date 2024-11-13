@@ -117,7 +117,7 @@ class PoppunkFileStore:
         :return str: [path to network results folder]
         """
         return str(PurePath(self.output(p_hash), "network"))
-    
+
     def parital_query_graph(self, p_hash) -> str:
         return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
 
@@ -223,6 +223,7 @@ class PoppunkFileStore:
         return str(PurePath(self.output(p_hash),
                             "network",
                             'cluster_component_dict.pickle'))
+
     def tmp(self, p_hash) -> str:
         tmp_path = PurePath(self.output(p_hash), "tmp")
         os.makedirs(tmp_path, exist_ok=True)
