@@ -154,7 +154,7 @@ class PoppunkWrapper:
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
             display_cluster=self.args.visualise.display_cluster,
-            recalculate_distances=True,
+            recalculate_distances=self.args.visualise.recalculate_distances,
             use_partial_query_graph=self.fs.parital_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash)
         )

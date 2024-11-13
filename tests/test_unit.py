@@ -20,6 +20,7 @@ import beebop.visualise
 from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
+from pathlib import PurePath
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -240,7 +241,6 @@ def test_network(mocker):
 
 
 def test_network_internal():
-    assign_result = setup.expected_assign_result
     p_hash = 'unit_test_network_internal'
     setup.do_network_internal(p_hash)
     assert os.path.exists(fs.output_network(p_hash) +
@@ -733,7 +733,9 @@ def test_poppunk_wrapper_assign_cluster(mock_assign):
         accessory=args.assign.accessory_only,
         gpu_dist=args.assign.gpu_dist,
         gpu_graph=args.assign.gpu_graph,
-        save_partial_query_graph=args.assign.save_partial_query_graph
+        save_partial_query_graph=args.assign.save_partial_query_graph,
+        stable=args.assign.stable,
+        use_full_network=args.assign.use_full_network,
     )
 
 
@@ -864,3 +866,21 @@ def test_get_species_config_valid(mock_get_species_kmers, client):
     assert "Streptococcus agalactiae" in data["data"]
     for species, kmers in data["data"].items():
         assert kmers == {"kmerMax": 31, "kmerMin": 15, "kmerStep": 2}
+
+def test_parital_query_graph():
+    p_hash = "test_hash"
+    expected_path = str(PurePath(fs.output(p_hash), f"{p_hash}_query.subset"))
+    assert fs.parital_query_graph(p_hash) == expected_path
+
+@patch("os.makedirs")    
+def test_tmp(mock_makedirs):
+    p_hash = "test_hash"
+    expected_path = PurePath(fs.output(p_hash), "tmp")
+    
+    # Call the tmp method
+    result_path = fs.tmp(p_hash)
+    
+    # Check if the directory is created and the path is correct
+    mock_makedirs.assert_called_once_with(expected_path, exist_ok=True)
+    assert result_path == str(expected_path)
+
