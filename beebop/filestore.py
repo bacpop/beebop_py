@@ -122,7 +122,7 @@ class PoppunkFileStore:
         """
         :param p_hash: [project hash]
         :return str: [path to partial query graph]
-        """        
+        """
         return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
 
     def include_files(self, p_hash, cluster) -> str:
