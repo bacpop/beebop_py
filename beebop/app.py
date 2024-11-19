@@ -89,12 +89,8 @@ def generate_zip(fs: PoppunkFileStore,
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_num]
-        file_list = (f'network_component_{component}.graphml',
-                     'network_cytoscape.csv',
-                     'network_cytoscape.graphml')
+        file_list = (f'network_component_{cluster_num}.graphml',
+                     'network_cytoscape.csv')
         add_files(memory_file, path_folder, file_list)
     memory_file.seek(0)
     return memory_file
@@ -394,7 +390,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
 
 
 @app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
-def get_network_graph(p_hash) -> json:
+def get_network_graphs(p_hash) -> json:
     """
     [returns all network graphml files for a given project hash]
 
@@ -404,28 +400,42 @@ def get_network_graph(p_hash) -> json:
     fs = PoppunkFileStore(storage_location)
     try:
         cluster_result = get_clusters_internal(p_hash, storage_location)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
         graphmls = {}
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
-            component = \
-                cluster_component_mapping[get_cluster_num(cluster)]
-            path = fs.network_output_component(p_hash, component)
-            with open(path, 'r') as graphml_file:
+            path = fs.network_output_component(
+                p_hash, get_cluster_num(cluster)
+            )
+            with open(path, "r") as graphml_file:
                 graph = graphml_file.read()
             graphmls[cluster] = graph
         return jsonify(response_success(graphmls))
-    except (KeyError):
-        f = jsonify(error=response_failure({
-                "error": "Cluster not found",
-                "detail": "Cluster not found"
-                })), 500
+
+    except KeyError:
+        f = (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "Cluster not found",
+                        "detail": "Cluster not found",
+                    }
+                )
+            ),
+            500,
+        )
+
     except FileNotFoundError:
-        return jsonify(error=response_failure({
-            "error": "File not found",
-            "detail": "GraphML files not found"
-        })), 404
+        return (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "File not found",
+                        "detail": "GraphML files not found",
+                    }
+                )
+            ),
+            404,
+        )
 
 
 # get job result

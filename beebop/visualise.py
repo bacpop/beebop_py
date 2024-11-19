@@ -190,8 +190,6 @@ def network_internal(
     species: str,
 ) -> None:
     """
-    :param p_hash: [project hash to find input data (output from
-        assign_clusters)]
     :param fs: [PoppunkFileStore with paths to input data]
     :param db_fs: [DatabaseFileStore with paths to db files]
     :param args: [arguments for poppunk functions]
@@ -201,6 +199,6 @@ def network_internal(
     """
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()
-
+    
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

@@ -211,22 +211,12 @@ class PoppunkFileStore:
     def network_output_component(self, p_hash, component_number) -> str:
         """
         :param p_hash: [project hash]
-        :param component_number: [component number, which is not to be
-            confused with cluster number!]
+        :param component_number: [component number, which is the same as cluster number]
         :return str: [path to network component file]
         """
         return str(PurePath(self.output(p_hash),
                             "network",
                             f"network_component_{component_number}.graphml"))
-
-    def network_mapping(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to cluster/component mapping file]
-        """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            'cluster_component_dict.pickle'))
 
     def tmp(self, p_hash) -> str:
         """

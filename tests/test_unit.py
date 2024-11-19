@@ -237,15 +237,24 @@ def test_network(mocker):
     visualise.network(
         p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
     )
-    assert os.path.exists(fs.output_network(p_hash) +
-                          "/network_cytoscape.graphml")
+
+    for cluster in external_to_poppunk_clusters.keys():
+        cluster_num = utils.get_cluster_num(cluster)
+        assert os.path.exists(
+            fs.output_network(p_hash)
+            + f"/network_component_{cluster_num}.graphml"
+        )
 
 
 def test_network_internal():
-    p_hash = 'unit_test_network_internal'
+    p_hash = "unit_test_network_internal"
     setup.do_network_internal(p_hash)
-    assert os.path.exists(fs.output_network(p_hash) +
-                          "/network_cytoscape.graphml")
+    for cluster in external_to_poppunk_clusters.keys():
+        cluster_num = utils.get_cluster_num(cluster)
+        assert os.path.exists(
+            fs.output_network(p_hash)
+            + f"/network_component_{cluster_num}.graphml"
+        )
 
 
 def test_run_poppunk_internal(qtbot):
@@ -577,8 +586,7 @@ def test_send_zip_internal(client):
                                          storage_location)
         response.direct_passthrough = False
         assert 'network_cytoscape.csv'.encode('utf-8') in response.data
-        assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
-        assert 'network_component_38.graphml'.encode('utf-8') in response.data
+        assert 'network_component_1.graphml'.encode('utf-8') in response.data
 
 
 def test_hex_to_decimal():
