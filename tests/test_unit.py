@@ -13,14 +13,13 @@ import string
 import random
 import os
 from flask import Flask
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 from io import BytesIO
 from pathlib import Path
+import beebop.visualise
 from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
-import shutil
-import PopPUNK.assign
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -111,36 +110,106 @@ def test_microreact(mocker):
         class mock_job:
             def __init__(self, result):
                 self.dependency = mock_dependency(result)
+
         return mock_job(assign_result)
-    mocker.patch(
-        'beebop.visualise.get_current_job',
-        new=mock_get_current_job
-    )
-    p_hash = 'unit_test_microreact'
+
+    mocker.patch("beebop.visualise.get_current_job", new=mock_get_current_job)
+    p_hash = "unit_test_microreact"
+
     setup.do_network_internal(p_hash)
 
     visualise.microreact(
-        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
-    )
-    assert os.path.exists(fs.output_microreact(p_hash, 16) +
-                          "/microreact_16_core_NJ.nwk")
-
-
-def test_microreact_internal():
-    p_hash = "unit_test_microreact_internal"
-    setup.do_network_internal(p_hash)
-    visualise.microreact_internal(
-        setup.expected_assign_result,
         p_hash,
         fs,
         setup.db_fs,
         args,
         setup.name_mapping,
         setup.species,
+        "localhost",
+        {},
+    )
+
+    time.sleep(30)  # wait for jobs to finish
+
+    assert os.path.exists(
+        fs.output_microreact(p_hash, 16) + "/microreact_16_core_NJ.nwk"
+    )
+    assert os.path.exists(
+        fs.output_microreact(p_hash, 8) + "/microreact_8_core_NJ.nwk"
+    )
+    assert os.path.exists(
+        fs.output_microreact(p_hash, 29) + "/microreact_29_core_NJ.nwk"
+    )
+
+
+@patch("beebop.visualise.replace_filehashes")
+def test_microreact_per_cluster(mock_replace_filehashes, mocker):
+    p_hash = "unit_test_microreact_internal"
+    cluster = "GPSC16"
+    wrapper = Mock()
+    mocker.patch.object(wrapper, "create_microreact")
+
+    visualise.microreact_per_cluster(
+        cluster,
+        p_hash,
+        fs,
+        wrapper,
+        setup.name_mapping,
         external_to_poppunk_clusters,
     )
-    assert os.path.exists(fs.output_microreact(p_hash, 16) +
-                          "/microreact_16_core_NJ.nwk")
+
+    wrapper.create_microreact.assert_called_with("16", "9")
+    mock_replace_filehashes.assert_called_with(
+        fs.output_microreact(p_hash, 16), setup.name_mapping
+    )
+
+
+def test_queue_microreact_jobs(mocker):
+    p_hash = "unit_test_microreact_internal"
+    wrapper = Mock()
+    redis = Mock()
+    mocker.patch.object(redis, "hset")
+    mockQueue = Mock()
+    mockJob = Mock()
+    mockJob.id.return_value = "1234"
+    mockQueue.enqueue.return_value = mockJob
+    mocker.patch("beebop.visualise.Queue", return_value=mockQueue)
+    expected_hset_calls = [
+        call(
+            f"beebop:hash:job:microreact:{p_hash}", item["cluster"], mockJob.id
+        )
+        for item in setup.expected_assign_result.values()
+    ]
+    expected_enqueue_calls = [
+        call(
+            visualise.microreact_per_cluster,
+            args=(
+                item["cluster"],
+                p_hash,
+                fs,
+                wrapper,
+                setup.name_mapping,
+                external_to_poppunk_clusters,
+            ),
+            job_timeout=60,
+            depends_on=mocker.ANY,
+        )
+        for i, item in enumerate(setup.expected_assign_result.values())
+    ]
+
+    visualise.queue_microreact_jobs(
+        setup.expected_assign_result,
+        p_hash,
+        fs,
+        wrapper,
+        setup.name_mapping,
+        external_to_poppunk_clusters,
+        redis,
+        queue_kwargs={"job_timeout": 60},
+    )
+
+    redis.hset.assert_has_calls(expected_hset_calls, any_order=True)
+    mockQueue.enqueue.assert_has_calls(expected_enqueue_calls, any_order=True)
 
 
 def test_network(mocker):

@@ -301,19 +301,28 @@ def run_poppunk_internal(sketches: dict,
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
+    # delete all previous microreact cluster job results for this project
+    redis.delete(f"beebop:hash:job:microreact:{p_hash}")
     job_microreact = q.enqueue(visualise.microreact,
                                args=(p_hash,
                                      fs,
                                      db_fs,
                                      args,
                                      name_mapping,
-                                     species),
+                                     species,
+                                     redis_host,
+                                     queue_kwargs),
                                depends_on=job_network, **queue_kwargs)
-    redis.hset("beebop:hash:job:microreact", p_hash,
-               job_microreact.id)
-    return jsonify(response_success({"assign": job_assign.id,
-                                     "microreact": job_microreact.id,
-                                     "network": job_network.id}))
+    redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
+    return jsonify(
+        response_success(
+            {
+                "assign": job_assign.id,
+                "microreact": job_microreact.id,
+                "network": job_network.id,
+            }
+        )
+    )
 
 
 # get job status
@@ -364,12 +373,22 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         if status_assign == "finished":
             status_microreact = get_status_job('microreact', p_hash, redis)
             status_network = get_status_job('network', p_hash, redis)
+            microreact_cluster_statuses = {
+                cluster.decode("utf-8"): Job.fetch(
+                    status.decode("utf-8"), connection=redis
+                ).get_status()
+                for cluster, status in redis.hgetall(
+                    f"beebop:hash:job:microreact:{p_hash}"
+                ).items()
+            }
         else:
             status_microreact = "waiting"
             status_network = "waiting"
+            microreact_cluster_statuses = {}
         return {"assign": status_assign,
                 "microreact": status_microreact,
-                "network": status_network}
+                "network": status_network,
+                "microreactClusters": microreact_cluster_statuses}
     except AttributeError:
         return {"error": "Unknown project hash"}
 

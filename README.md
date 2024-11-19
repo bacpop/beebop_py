@@ -21,10 +21,16 @@ git clone git@github.com:bacpop/beebop_py.git
 ```
 #### Get the database
 
-You will need species databases, please download and extract it into `/storage` by running:
+You will need species databases, please download and extract it into `/storage`. You can download all databases with the following command:
 
 ```
 ./scripts/download_databases
+```
+
+or just the reference databases with:
+
+```
+./scripts/download_databases --refs
 ```
 
 #### Install dependencies
@@ -74,11 +80,14 @@ To install all other required dependencies go into the beebop_py project folder 
 poetry install
 ```
 #### Run the app
+
 Start the flask app with
 ```
 ./scripts/run_app
 ```
+
 In a second terminal, you can now query the flask endpoints, e.g.:
+
 - /version
   ```
   curl http://127.0.0.1:5000/version
