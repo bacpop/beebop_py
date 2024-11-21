@@ -2,6 +2,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
+from typing import Optional
 
 
 class PoppunkWrapper:
@@ -33,7 +34,7 @@ class PoppunkWrapper:
 
     def assign_clusters(self,
                         dbFuncs: DatabaseFileStore,
-                        qNames: list) -> None:
+                        qNames: list, failed_output: Optional[str]=None) -> None:
         """
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
@@ -43,7 +44,7 @@ class PoppunkWrapper:
             dbFuncs=dbFuncs,
             ref_db=self.db_fs.db,
             qNames=qNames,
-            output=self.fs.output(self.p_hash),
+            output=failed_output or self.fs.output(self.p_hash),
             qc_dict=vars(getattr(self.args.species, self.species).qc_dict),
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
@@ -66,7 +67,7 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network
         )
 
-# try to do in 1 call just add --cytoscape
+
     def create_microreact(self, cluster: str, internal_cluster: str) -> None:
         """
         [Generates microreact visualisation output based on previous

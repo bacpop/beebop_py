@@ -1,4 +1,5 @@
 from rq import get_current_job, Queue
+from rq.job import Dependency
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import replace_filehashes, add_query_ref_status
@@ -91,6 +92,7 @@ def queue_microreact_jobs(
     queries_clusters = [item["cluster"] for item in assign_result.values()]
     previous_job = None
     for assign_cluster in set(queries_clusters):
+        dependency = Dependency(previous_job, allow_failure=True) if previous_job else None
         cluster_microreact_job = q.enqueue(
             microreact_per_cluster,
             args=(
@@ -101,7 +103,7 @@ def queue_microreact_jobs(
                 name_mapping,
                 external_to_poppunk_clusters,
             ),
-            depends_on=previous_job,
+            depends_on=dependency,
             **queue_kwargs,
         )
 

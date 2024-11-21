@@ -158,7 +158,7 @@ def get_external_clusters_from_file(
     # copy hashes list to keep track of hashes we still need to find samples
     # for
     remaining_hashes = hashes_list[:]
-    result = {}
+    result = {"found": {}, "not_found": []}
     with open(previous_query_clustering_file) as f:
         reader = csv.reader(f, delimiter=",")
         for row in reader:
@@ -171,10 +171,14 @@ def get_external_clusters_from_file(
             if sample_id in remaining_hashes:
                 # Add lowest numeric cluster to dictionary
                 if len(row) > 1:
-                    cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = (
-                        f"{external_clusters_prefix}{cluster_no}"
-                    )
+                    try:
+                        cluster_no = get_lowest_cluster(row[1])
+                        result["found"][sample_id] = (
+                            f"{external_clusters_prefix}{cluster_no}"
+                        )
+                    except ValueError:
+                        print(f"unable to assign cluster for {sample_id}")
+                        result["not_found"].append(sample_id)
 
                 # Remove sample id from remaining hashes to find
                 remaining_hashes.remove(sample_id)
