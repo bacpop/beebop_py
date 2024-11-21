@@ -123,13 +123,12 @@ def get_clusters(
             update_external_clusters_csv(previous_query_clustering_file, not_found_q_names, external_clusters_not_found)
             # update external_clusters             
             external_clusters.update(external_clusters_not_found)
+            # delete full_assign directory as dont need anymore
+            shutil.rmtree(assign_full_dir)
                         
         save_external_to_poppunk_clusters(
             queries_names, queries_clusters, external_clusters, p_hash, fs
         )
-        # delete full_assign directory as dont need anymore
-        shutil.rmtree(assign_full_dir)
-        
         result = assign_clusters_to_result(external_clusters.items())
     else:
         result = assign_clusters_to_result(zip(queries_names, queries_clusters))
