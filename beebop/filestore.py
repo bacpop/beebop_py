@@ -8,6 +8,7 @@ class FileStore:
     """
     General filestore to be used by PoppunkFileStore
     """
+
     def __init__(self, path):
         """
         :param path: path to folder
@@ -31,7 +32,7 @@ class FileStore:
         if not os.path.exists(src):
             raise Exception(f"Sketch for hash '{hash}' not found in storage")
         else:
-            with open(src, 'r') as fp:
+            with open(src, "r") as fp:
                 sketch = json.load(fp)
         return sketch
 
@@ -49,7 +50,7 @@ class FileStore:
         """
         dst = self.filename(hash)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        with open(dst, 'w') as fp:
+        with open(dst, "w") as fp:
             json.dump(sketch, fp)
 
 
@@ -57,13 +58,14 @@ class PoppunkFileStore:
     """
     Filestore that provides paths to poppunk in- and outputs
     """
+
     def __init__(self, storage_location):
         """
         :param storage_location: [path to storage location]
         """
         self.storage_location = storage_location
         self.input = FileStore(f"{storage_location}/json")
-        self.output_base = PurePath(storage_location, 'poppunk_output')
+        self.output_base = PurePath(storage_location, "poppunk_output")
         os.makedirs(self.output_base, exist_ok=True)
 
     def output(self, p_hash) -> str:
@@ -100,8 +102,11 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to mapping between external and poppunk clusters]
         """
-        return str(PurePath(self.output(p_hash),
-                            "external_to_poppunk_clusters.pickle"))
+        return str(
+            PurePath(
+                self.output(p_hash), "external_to_poppunk_clusters.pickle"
+            )
+        )
 
     def output_microreact(self, p_hash, cluster) -> str:
         """
@@ -118,7 +123,7 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "network"))
 
-    def parital_query_graph(self, p_hash) -> str:
+    def partial_query_graph(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to partial query graph]
@@ -131,8 +136,7 @@ class PoppunkFileStore:
         :param cluster: [cluster number]
         :return str: [path to include files]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"include{cluster}.txt"))
+        return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
 
     def network_file(self, p_hash) -> str:
         """
@@ -194,19 +198,22 @@ class PoppunkFileStore:
         :param cluster: [cluster number]
         :return str: [path to microreact json file]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"microreact_{cluster}",
-                            (f"microreact_{cluster}.microreact")
-                            ))
+        return str(
+            PurePath(
+                self.output(p_hash),
+                f"microreact_{cluster}",
+                (f"microreact_{cluster}.microreact"),
+            )
+        )
 
     def network_output_csv(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to network csv file]
         """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            "network_cytoscape.csv"))
+        return str(
+            PurePath(self.output(p_hash), "network", "network_cytoscape.csv")
+        )
 
     def network_output_component(self, p_hash, component_number) -> str:
         """
@@ -214,9 +221,13 @@ class PoppunkFileStore:
         :param component_number: [component number, which is the same as cluster number]
         :return str: [path to network component file]
         """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            f"network_component_{component_number}.graphml"))
+        return str(
+            PurePath(
+                self.output(p_hash),
+                "network",
+                f"network_component_{component_number}.graphml",
+            )
+        )
 
     def tmp(self, p_hash) -> str:
         """
@@ -227,11 +238,39 @@ class PoppunkFileStore:
         os.makedirs(tmp_path, exist_ok=True)
         return str(tmp_path)
 
+    def assign_output_full(self, p_hash) -> str:
+        path = PurePath(self.output(p_hash), "assign_full", p_hash)
+        os.makedirs(path, exist_ok=True)
+        return str(path)
+
+    def partial_query_graph_full_assign(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to partial query graph]
+        """
+        return str(
+            PurePath(self.assign_output_full(p_hash), f"{p_hash}_query.subset")
+        )
+    def external_previous_query_clustering_path_full_assign(self, p_hash) -> str:
+        """
+        Generates the file path for the external
+        previous query clustering results.
+
+        :param p_hash (str): The hash value representing the query.
+
+        :return str: [The file path to the external]
+        previous query clustering CSV file.
+        """
+        return str(
+            PurePath(self.assign_output_full(p_hash), f"{p_hash}_external_clusters.csv")
+        )
+
 
 class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
+
     def __init__(
         self, full_path: str, external_clusters_file: Optional[str] = None
     ):
@@ -241,10 +280,12 @@ class DatabaseFileStore:
         self.db = full_path
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
-        self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists'))
-        self.previous_clustering = str(PurePath(self.db,
-                                                f"{self.name}_clusters.csv"))
+        self.distances = str(
+            PurePath(self.db, self.name).with_suffix(".dists")
+        )
+        self.previous_clustering = str(
+            PurePath(self.db, f"{self.name}_clusters.csv")
+        )
         self.external_clustering = (
             str(PurePath("beebop", "resources", external_clusters_file))
             if external_clusters_file

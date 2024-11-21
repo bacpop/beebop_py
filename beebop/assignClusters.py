@@ -5,8 +5,10 @@ import re
 import os
 import pickle
 import pandas as pd
+from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+import shutil
 
 
 def hex_to_decimal(sketches_dict) -> None:
@@ -70,93 +72,67 @@ def get_clusters(
 
     # run query assignment
     wrapper = PoppunkWrapper(fs, ref_db_fs, args, p_hash, species)
-    wrapper.assign_clusters(dbFuncs, qNames)
+    wrapper.assign_clusters(dbFuncs, qNames, outdir)
 
     queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
         outdir, species, ref_db_fs.db, qNames
     )
 
-    result = {}
     external_clusters_prefix = getattr(
         args.species, species
     ).external_cluster_prefix
     if external_clusters_prefix:
         previous_query_clustering_file = fs.previous_query_clustering(p_hash)
 
-        external_clusters = get_external_clusters_from_file(
+        external_clusters, not_found_q_names = get_external_clusters_from_file(
             previous_query_clustering_file,
             queries_names,
             external_clusters_prefix,
-        )
-        # not matched
-        not_found = external_clusters["not_found"]        
-        # TODO: only filter if len > 0.. i.e move below code to if block
-        filtered_names = [name for name in queries_names if name not in not_found]
-        filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
-        if len(not_found) > 0:
+        ) 
+        if len(not_found_q_names) > 0:
+            queries_names, queries_clusters = filter_queries(queries_names, queries_clusters, not_found_q_names)
             # run assign clusters for failed samples in new directory
-            failed_output_dir = f"{outdir}/failed/{p_hash}"
-            if not os.path.exists(failed_output_dir):
-                os.makedirs(failed_output_dir, exist_ok=True) 
-                # create hdf5 db
-            failed_sketches_dict = { key: value for key, value in sketches_dict.items() if key in not_found}
-            failed_q_names = sketch_to_hdf5(failed_sketches_dict, failed_output_dir)
+            assign_full_dir = fs.assign_output_full(p_hash)
+            # create hdf5 db
+            not_found_sketches_dict = { key: value for key, value in sketches_dict.items() if key in not_found_q_names}
+            sketch_to_hdf5(not_found_sketches_dict, assign_full_dir)
+            # run poppunk assign
             wrapper = PoppunkWrapper(fs, full_db_fs, args, p_hash, species)
-            wrapper.assign_clusters(dbFuncs, not_found,failed_output_dir)
+            wrapper.assign_clusters(dbFuncs, not_found_q_names, assign_full_dir)
             
-            q_names, q_clusters, _, _, _, _, _ = (
-                summarise_clusters(failed_output_dir, species, full_db_fs.db, failed_q_names)
+            # summarise and update queries_names and queries_clusters
+            not_found_q_names, not_found_q_clusters, _, _, _, _, _ = (
+                summarise_clusters(assign_full_dir, species, full_db_fs.db, not_found_q_names) 
             )
+            queries_names.extend(not_found_q_names)
+            queries_clusters.extend(not_found_q_clusters)
+            
             # copy include_.txt files from failed_output_dir to outdir
-            include_files = [f for f in os.listdir(failed_output_dir) if f.startswith("include")]
-            for include_file in include_files:
-                os.rename(f"{failed_output_dir}/{include_file}", f"{outdir}/{include_file}")
+            copy_include_files(assign_full_dir, outdir)
             # copy over .subset file
-            failed_subset_file = f"{failed_output_dir}/{p_hash}_query.subset"
-            main_subset_file = fs.parital_query_graph(p_hash)
-            with open(failed_subset_file, "r") as f:
-                failed_lines = set(f.read().splitlines())
-            with open(main_subset_file, "r") as f:
-                main_lines = set(f.read().splitlines())
-            
-            combined_lines = list(main_lines.union(failed_lines))
-            with open(main_subset_file, "w") as f:
-                f.write("\n".join(combined_lines))           
-            
+            merge_partial_query_graphs(p_hash, fs)
+                
             # get external clusters from previous querying    
-            failed_prev_querying = f"{failed_output_dir}/{p_hash}_external_clusters.csv" 
-            external_clusters_new = get_external_clusters_from_file(
-                failed_prev_querying,
-                q_names,
+            not_found_prev_querying = fs.external_previous_query_clustering_path_full_assign(p_hash)
+            external_clusters_not_found, _ = get_external_clusters_from_file(
+                not_found_prev_querying,
+                not_found_q_names,
                 external_clusters_prefix,
             )
-            filtered_names.extend(q_names)
-            filtered_clusters.extend(q_clusters)
             # update original external_clusters with new found clusters
-            df = pd.read_csv(previous_query_clustering_file)
-            sample_id_col = df.columns[0]
-            cluster_col = df.columns[1]
-            mask = df[sample_id_col].isin(q_names)
-            df.loc[mask, cluster_col] = [get_cluster_num(external_clusters_new["found"][sample_id]) for sample_id in q_names]
-            df.to_csv(previous_query_clustering_file, index=False)
+            update_external_clusters_csv(previous_query_clustering_file, not_found_q_names, external_clusters_not_found)
             # update external_clusters             
-            external_clusters["found"].update(external_clusters_new["found"])
+            external_clusters.update(external_clusters_not_found)
                         
-            
-
-        for i, (name, cluster) in enumerate(
-            external_clusters["found"].items()
-        ):
-            result[i] = {"hash": name, "cluster": cluster}
-
         save_external_to_poppunk_clusters(
-            filtered_names, filtered_clusters, external_clusters["found"], p_hash, fs
+            queries_names, queries_clusters, external_clusters, p_hash, fs
         )
+        # delete full_assign directory as dont need anymore
+        shutil.rmtree(assign_full_dir)
+        
+        result = assign_clusters_to_result(external_clusters.items())
     else:
-        for i, (name, cluster) in enumerate(
-            zip(queries_names, queries_clusters)
-        ):
-            result[i] = {"hash": name, "cluster": cluster}
+        result = assign_clusters_to_result(zip(queries_names, queries_clusters))
 
     # save result to retrieve when reloading project results - this
     # overwrites the initial output file written before the assign
@@ -164,6 +140,42 @@ def get_clusters(
     with open(fs.output_cluster(p_hash), "wb") as f:
         pickle.dump(result, f)
 
+    return result
+
+def update_external_clusters_csv(previous_query_clustering_file: str, not_found_q_names: list, external_clusters_not_found: dict) -> None:
+    df = pd.read_csv(previous_query_clustering_file)
+    sample_id_col = df.columns[0]
+    cluster_col = df.columns[1]
+    query_names_mask = df[sample_id_col].isin(not_found_q_names)
+    df.loc[query_names_mask, cluster_col] = [get_cluster_num(external_clusters_not_found[sample_id]) for sample_id in not_found_q_names]
+    df.to_csv(previous_query_clustering_file, index=False)
+    
+def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
+    full_assign_subset_file = fs.partial_query_graph_full_assign(p_hash)
+    main_subset_file = fs.partial_query_graph(p_hash)
+    with open(full_assign_subset_file, "r") as f:
+        failed_lines = set(f.read().splitlines())
+    with open(main_subset_file, "r") as f:
+        main_lines = set(f.read().splitlines())
+    
+    combined_lines = list(main_lines.union(failed_lines))
+    with open(main_subset_file, "w") as f:
+        f.write("\n".join(combined_lines))  
+                
+def copy_include_files(assign_full_dir: str, outdir: str) -> None:
+    include_files = [f for f in os.listdir(assign_full_dir) if f.startswith("include")]
+    for include_file in include_files:
+        os.rename(f"{assign_full_dir}/{include_file}", f"{outdir}/{include_file}")
+        
+def filter_queries(queries_names: list[str], queries_clusters: list[str], not_found: list[str]) -> tuple[list[str], list[str]]:
+    filtered_names = [name for name in queries_names if name not in not_found]
+    filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
+    return filtered_names, filtered_clusters
+
+def assign_clusters_to_result(query_cluster_mapping: Union[dict.items, zip]) -> dict:
+    result = {}
+    for i, (name, cluster) in enumerate(query_cluster_mapping):
+        result[i] = {"hash": name, "cluster": cluster}
     return result
 
 
