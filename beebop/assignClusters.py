@@ -8,7 +8,7 @@ from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import shutil
-
+from dataclasses import dataclass
 
 def hex_to_decimal(sketches_dict) -> None:
     """
@@ -135,7 +135,7 @@ def handle_external_clusters(
     )
     if not_found_query_names:
         queries_names, queries_clusters = filter_queries(
-            queries_names, queries_clusters, not_found_query_names
+            queries_names, queries_clusters, not_found_query_names, fs, p_hash
         )
         output_full_tmp = fs.assign_output_full(p_hash)
         not_found_query_names_new, not_found_query_clusters = (
@@ -227,11 +227,27 @@ def copy_include_files(assign_full_dir: str, outdir: str) -> None:
     for include_file in include_files:
         os.rename(f"{assign_full_dir}/{include_file}", f"{outdir}/{include_file}")
 
-def filter_queries(queries_names: list[str], queries_clusters: list[str], not_found: list[str]) -> tuple[list[str], list[str]]:
+
+def filter_queries(
+    queries_names: list[str],
+    queries_clusters: list[str],
+    not_found: list[str],
+    fs: PoppunkFileStore,
+    p_hash: str,
+) -> tuple[list[str], list[str]]:
     filtered_names = [name for name in queries_names if name not in not_found]
     filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
+
+    delete_include_files(fs, p_hash, set(queries_clusters) - set(filtered_clusters))
+    
     return filtered_names, filtered_clusters
 
+def delete_include_files(fs: PoppunkFileStore, p_hash: str, clusters: set) -> None:
+    for cluster in clusters:
+        include_file = fs.include_files(p_hash, cluster)
+        if os.path.exists(include_file):
+            os.remove(include_file)
+            
 def assign_clusters_to_result(query_cluster_mapping: Union[dict.items, zip]) -> dict:
     result = {}
     for i, (name, cluster) in enumerate(query_cluster_mapping):
