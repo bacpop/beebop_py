@@ -8,6 +8,7 @@ from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import shutil
+from typing import Optional, Any
 from dataclasses import dataclass
 
 def hex_to_decimal(sketches_dict) -> None:
@@ -27,6 +28,17 @@ def hex_to_decimal(sketches_dict) -> None:
             ):
                 sample[key] = list(map(lambda x: int(x, 16), value))
 
+@dataclass
+class ClusteringConfig:
+    species: str
+    p_hash: str
+    args: dict
+    external_clusters_prefix: Optional[str]
+    fs: PoppunkFileStore
+    full_db_fs: DatabaseFileStore
+    ref_db_fs: DatabaseFileStore
+    db_funcs: dict[str, Any]  
+    out_dir: str
 
 def get_clusters(
     hashes_list: list,
@@ -50,44 +62,43 @@ def get_clusters(
     :param species: [Type of species]
     :return dict: [dict with filehash (key) and cluster number (value)]
     """
-    outdir = setup_output_directory(fs, p_hash)
-    
-    dbFuncs = setupDBFuncs(args=args.assign)
-
-    # transform json to dict
-    sketches_dict = create_sketches_dict(hashes_list, fs)
-
-    # Preprocess sketches
-    qNames = preprocess_sketches(sketches_dict, outdir)
-
-    # Run query assignment
-    assign_query_clusters(fs, ref_db_fs, args, p_hash, species, dbFuncs, qNames, outdir)
-
-    queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
-        outdir, species, ref_db_fs.db, qNames
+    out_dir = setup_output_directory(fs, p_hash)
+    db_funcs = setupDBFuncs(args=args.assign)
+    config = ClusteringConfig(
+        species,
+        p_hash,
+        args,
+        getattr(args.species, species).external_cluster_prefix,
+        fs,
+        full_db_fs,
+        ref_db_fs,
+        db_funcs,
+        out_dir,
     )
 
-    external_clusters_prefix = getattr(
-        args.species, species
-    ).external_cluster_prefix
-    
-    if external_clusters_prefix:
-         result = handle_external_clusters(
-            p_hash,
-            fs,
-            args,
-            species,
+    # transform json to dict
+    sketches_dict = create_sketches_dict(hashes_list, config.fs)
+
+    # Preprocess sketches
+    qNames = preprocess_sketches(sketches_dict, config.out_dir)
+
+    # Run query assignment
+    assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
+    queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
+        config.out_dir, species, config.ref_db_fs.db, qNames
+    )
+
+    if config.external_clusters_prefix:
+        result = handle_external_clusters(
+            config,
             sketches_dict,
             queries_names,
             queries_clusters,
-            dbFuncs,
-            full_db_fs,
-            external_clusters_prefix,
         )
     else:
         result = assign_clusters_to_result(zip(queries_names, queries_clusters))
 
-    save_result(fs, p_hash, result)
+    save_result(config, result)
     return result
 
 def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
@@ -103,110 +114,87 @@ def preprocess_sketches(sketches_dict: dict, outdir: str) -> list:
     hex_to_decimal(sketches_dict)
     return sketch_to_hdf5(sketches_dict, outdir)
 
-
 def assign_query_clusters(
-    fs: PoppunkFileStore,
+    config: ClusteringConfig,
     db_fs: DatabaseFileStore,
-    args: dict,
-    p_hash: str,
-    species: str,
-    dbFuncs: dict,
     qNames: list,
     outdir: str,
 ):
-    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    wrapper.assign_clusters(dbFuncs, qNames, outdir)
+    wrapper = PoppunkWrapper(config.fs, db_fs, config.args, config.p_hash, config.species)
+    wrapper.assign_clusters(config.db_funcs, qNames, outdir)
 
 def handle_external_clusters(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    args: dict,
-    species: str,
+    config: ClusteringConfig,
     sketches_dict: dict,
     queries_names: list,
     queries_clusters: list,
-    dbFuncs,
-    full_db_fs: DatabaseFileStore,
-    external_clusters_prefix: str,
 ) -> dict:
-    previous_query_clustering = fs.previous_query_clustering(p_hash)
+    previous_query_clustering = config.fs.previous_query_clustering(config.p_hash)
     external_clusters, not_found_query_names = get_external_clusters_from_file(
-        previous_query_clustering, queries_names, external_clusters_prefix
+        previous_query_clustering, queries_names, config.external_clusters_prefix
     )
     if not_found_query_names:
         queries_names, queries_clusters = filter_queries(
-            queries_names, queries_clusters, not_found_query_names, fs, p_hash
+            queries_names, queries_clusters, not_found_query_names, config
         )
-        output_full_tmp = fs.assign_output_full(p_hash)
+        output_full_tmp = config.fs.assign_output_full(config.p_hash)
         not_found_query_names_new, not_found_query_clusters = (
             handle_not_found_queries(
-                p_hash,
-                fs,
-                args,
-                species,
+                config,
                 sketches_dict,
                 not_found_query_names,
-                dbFuncs,
-                full_db_fs,
                 output_full_tmp,
             )
         )
         queries_names.extend(not_found_query_names_new)
         queries_clusters.extend(not_found_query_clusters)
         update_external_clusters(
-            p_hash,
-            fs,
+            config,
             not_found_query_names,
             external_clusters,
-            external_clusters_prefix,
             previous_query_clustering,
         )
         
         shutil.rmtree(output_full_tmp)
 
     save_external_to_poppunk_clusters(
-        queries_names, queries_clusters, external_clusters, p_hash, fs
+        queries_names, queries_clusters, external_clusters, config.p_hash, config.fs
     )
     return assign_clusters_to_result(external_clusters.items())
 
 def handle_not_found_queries(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    args: dict,
-    species: str,
+    config: ClusteringConfig,
     sketches_dict: dict,
     not_found_query_names: list,
-    dbFuncs,
-    full_db_fs: DatabaseFileStore,
-    assign_full_dir: str,
+    output_full_tmp: str,
 ) -> tuple[list, list]:
     not_found_sketches_dict = {
         key: value for key, value in sketches_dict.items() if key in not_found_query_names
     }
-    sketch_to_hdf5(not_found_sketches_dict, assign_full_dir)
-    assign_query_clusters(fs, full_db_fs, args, p_hash, species, dbFuncs, not_found_query_names, assign_full_dir)
+    sketch_to_hdf5(not_found_sketches_dict, output_full_tmp)
+    
+    assign_query_clusters(config, config.full_db_fs, not_found_query_names, output_full_tmp)
     not_found_query_names_new, not_found_query_clusters, _, _, _, _, _ = (
-            summarise_clusters(assign_full_dir, species, full_db_fs.db, not_found_query_names) 
+            summarise_clusters(output_full_tmp, config.species, config.full_db_fs.db, not_found_query_names) 
         )
-    copy_include_files(assign_full_dir, fs.output(p_hash))
-    merge_partial_query_graphs(p_hash, fs)
+    
+    copy_include_files(output_full_tmp, config.out_dir)
+    merge_partial_query_graphs(config.p_hash, config.fs)
     
     return not_found_query_names_new, not_found_query_clusters
 
 def update_external_clusters(
-    p_hash: str,
-    fs: PoppunkFileStore,
+    config: ClusteringConfig,
     not_found_query_names: list,
     external_clusters: dict,
-    external_clusters_prefix: str,
-    previous_query_clustering_file: str,
+    previous_query_clustering: str,
 ):
-    not_found_prev_querying = fs.external_previous_query_clustering_path_full_assign(p_hash)
+    not_found_prev_querying = config.fs.external_previous_query_clustering_path_full_assign(config.p_hash)
     external_clusters_not_found, _ = get_external_clusters_from_file(
-        not_found_prev_querying, not_found_query_names, external_clusters_prefix
+        not_found_prev_querying, not_found_query_names, config.external_clusters_prefix
     )
     update_external_clusters_csv(
-        previous_query_clustering_file, not_found_query_names, external_clusters_not_found
+        previous_query_clustering, not_found_query_names, external_clusters_not_found
     )
     external_clusters.update(external_clusters_not_found)
 
@@ -232,13 +220,12 @@ def filter_queries(
     queries_names: list[str],
     queries_clusters: list[str],
     not_found: list[str],
-    fs: PoppunkFileStore,
-    p_hash: str,
+    config: ClusteringConfig,
 ) -> tuple[list[str], list[str]]:
     filtered_names = [name for name in queries_names if name not in not_found]
     filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
 
-    delete_include_files(fs, p_hash, set(queries_clusters) - set(filtered_clusters))
+    delete_include_files(config.fs, config.p_hash, set(queries_clusters) - set(filtered_clusters))
     
     return filtered_names, filtered_clusters
 
@@ -247,14 +234,14 @@ def delete_include_files(fs: PoppunkFileStore, p_hash: str, clusters: set) -> No
         include_file = fs.include_files(p_hash, cluster)
         if os.path.exists(include_file):
             os.remove(include_file)
-            
+
 def assign_clusters_to_result(query_cluster_mapping: Union[dict.items, zip]) -> dict:
     result = {}
     for i, (name, cluster) in enumerate(query_cluster_mapping):
         result[i] = {"hash": name, "cluster": cluster}
     return result
 
-def save_result(fs: PoppunkFileStore, p_hash: str, result: dict):
+def save_result(config: ClusteringConfig, result: dict):
     """
      save result to retrieve when reloading project results - this
      overwrites the initial output file written before the assign
@@ -265,7 +252,7 @@ def save_result(fs: PoppunkFileStore, p_hash: str, result: dict):
         p_hash (str): _description_
         result (dict): _description_
     """
-    with open(fs.output_cluster(p_hash), "wb") as f:
+    with open(config.fs.output_cluster(config.p_hash), "wb") as f:
         pickle.dump(result, f)
 
 def save_external_to_poppunk_clusters(

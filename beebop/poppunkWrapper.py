@@ -35,7 +35,7 @@ class PoppunkWrapper:
 
     def assign_clusters(
         self,
-        dbFuncs: dict,
+        db_funcs: dict,
         qNames: list[str],
         output: str,
     ) -> None:
@@ -45,7 +45,7 @@ class PoppunkWrapper:
         :param qNames: [hd5 database with all sketches]
         """
         assign_query_hdf5(
-            dbFuncs=dbFuncs,
+            dbFuncs=db_funcs,
             ref_db=self.db_fs.db,
             qNames=qNames,
             output=output,
