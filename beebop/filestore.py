@@ -239,7 +239,7 @@ class PoppunkFileStore:
         return str(tmp_path)
 
     def assign_output_full(self, p_hash) -> str:
-        path = PurePath(self.output(p_hash), "assign_full", p_hash)
+        path = PurePath(self.tmp(p_hash), p_hash)
         os.makedirs(path, exist_ok=True)
         return str(path)
 

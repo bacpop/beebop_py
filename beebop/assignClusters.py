@@ -1,10 +1,9 @@
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-from beebop.utils import get_external_clusters_from_file, get_cluster_num
+from beebop.utils import get_external_clusters_from_file, update_external_clusters_csv
 import re
 import os
 import pickle
-import pandas as pd
 from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -138,7 +137,7 @@ def handle_external_clusters(
         queries_names, queries_clusters = filter_queries(
             queries_names, queries_clusters, not_found_query_names
         )
-        output_tmp = fs.assign_output_full(p_hash)
+        output_full_tmp = fs.assign_output_full(p_hash)
         not_found_query_names_new, not_found_query_clusters = (
             handle_not_found_queries(
                 p_hash,
@@ -149,7 +148,7 @@ def handle_external_clusters(
                 not_found_query_names,
                 dbFuncs,
                 full_db_fs,
-                output_tmp,
+                output_full_tmp,
             )
         )
         queries_names.extend(not_found_query_names_new)
@@ -163,7 +162,7 @@ def handle_external_clusters(
             previous_query_clustering,
         )
         
-        shutil.rmtree(output_tmp)
+        shutil.rmtree(output_full_tmp)
 
     save_external_to_poppunk_clusters(
         queries_names, queries_clusters, external_clusters, p_hash, fs
@@ -210,14 +209,6 @@ def update_external_clusters(
         previous_query_clustering_file, not_found_query_names, external_clusters_not_found
     )
     external_clusters.update(external_clusters_not_found)
-
-def update_external_clusters_csv(previous_query_clustering_file: str, not_found_q_names: list, external_clusters_not_found: dict) -> None:
-    df = pd.read_csv(previous_query_clustering_file)
-    sample_id_col = df.columns[0]
-    cluster_col = df.columns[1]
-    query_names_mask = df[sample_id_col].isin(not_found_q_names)
-    df.loc[query_names_mask, cluster_col] = [get_cluster_num(external_clusters_not_found[sample_id]) for sample_id in not_found_q_names]
-    df.to_csv(previous_query_clustering_file, index=False)
 
 def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
     full_assign_subset_file = fs.partial_query_graph_full_assign(p_hash)
