@@ -92,7 +92,11 @@ def queue_microreact_jobs(
     queries_clusters = [item["cluster"] for item in assign_result.values()]
     previous_job = None
     for assign_cluster in set(queries_clusters):
-        dependency = Dependency(previous_job, allow_failure=True) if previous_job else None
+        dependency = (
+            Dependency(previous_job, allow_failure=True)
+            if previous_job
+            else None
+        )
         cluster_microreact_job = q.enqueue(
             microreact_per_cluster,
             args=(
@@ -201,6 +205,6 @@ def network_internal(
     """
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()
-    
+
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

@@ -218,7 +218,8 @@ class PoppunkFileStore:
     def network_output_component(self, p_hash, component_number) -> str:
         """
         :param p_hash: [project hash]
-        :param component_number: [component number, which is the same as cluster number]
+        :param component_number:
+            [component number, which is the same as cluster number]
         :return str: [path to network component file]
         """
         return str(
@@ -239,7 +240,7 @@ class PoppunkFileStore:
         return str(tmp_path)
 
     def assign_output_full(self, p_hash) -> str:
-        """ 
+        """
         Generates the path to the full assign output folder.
 
         :param p_hash: [project hash]
@@ -257,13 +258,19 @@ class PoppunkFileStore:
         return str(
             PurePath(self.assign_output_full(p_hash), f"{p_hash}_query.subset")
         )
-    def external_previous_query_clustering_path_full_assign(self, p_hash) -> str:
+
+    def external_previous_query_clustering_path_full_assign(
+        self, p_hash
+    ) -> str:
         """
         :param p_hash (str): The hash value representing the query.
         :return str: [The file path to the external]
         """
         return str(
-            PurePath(self.assign_output_full(p_hash), f"{p_hash}_external_clusters.csv")
+            PurePath(
+                self.assign_output_full(p_hash),
+                f"{p_hash}_external_clusters.csv",
+            )
         )
 
 

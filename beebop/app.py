@@ -253,8 +253,8 @@ def run_poppunk_internal(sketches: dict,
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
     )
-    full_db_fs = DatabaseFileStore (
-         f"{dbs_location}/{species_args.fulldb}",
+    full_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.fulldb}",
         species_args.external_clusters_file,
     )
 
