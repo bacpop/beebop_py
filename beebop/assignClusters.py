@@ -51,12 +51,16 @@ def get_clusters(
 ) -> dict:
     """
     Assign cluster numbers to samples using PopPUNK.
+    This can be either the internal PopPUNK clustering or external 
+    clustering, depending on the presence of external_clusters.csv for species.
 
     :param hashes_list: [list of file hashes from all query samples]
     :param p_hash: [project_hash]
     :param fs: [PoppunkFileStore with paths to input files]
-    :param db_fs: [DatabaseFileStore which provides paths
-        to database files]
+    :param ref_db_fs: [DatabaseFileStore which provides paths
+        to database files for the reference database]
+    :param full_db_fs: [DatabaseFileStore which provides paths
+        to database files for the full database]
     :param args: [arguments for Poppunk's assign function, stored in
         resources/args.json]
     :param species: [Type of species]
@@ -76,13 +80,9 @@ def get_clusters(
         out_dir,
     )
 
-    # transform json to dict
     sketches_dict = create_sketches_dict(hashes_list, config.fs)
-
-    # Preprocess sketches
     qNames = preprocess_sketches(sketches_dict, config.out_dir)
 
-    # Run query assignment
     assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
     queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
         config.out_dir, species, config.ref_db_fs.db, qNames
@@ -102,15 +102,36 @@ def get_clusters(
     return result
 
 def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
+    """
+    [Create output directory that stores all files from PopPUNK assign job]
+    
+    :param fs: [PoppunkFileStore with paths to input files]
+    :param p_hash: [project hash]
+    :return str: [path to output directory]
+    """
     outdir = fs.output(p_hash)
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     return outdir
 
 def create_sketches_dict(hashes_list: list, fs: PoppunkFileStore) -> dict:
+    """
+    [Create a dictionary of sketches for all query samples]
+    
+    :param hashes_list: [list of file hashes to get sketches for]
+    :param fs: [PoppunkFileStore with paths to input files]
+    :return dict: [dictionary with filehash (key) and sketch (value)]
+    """
     return {hash: fs.input.get(hash) for hash in hashes_list}
 
 def preprocess_sketches(sketches_dict: dict, outdir: str) -> list:
+    """
+    [Convert hexadecimal sketches to decimal and save them to hdf5 file]
+    
+    :param sketches_dict: [dictionary with filehash (key) and sketch (value)]
+    :param outdir: [path to output directory]
+    :return list: [list of sample hashes]
+    """
     hex_to_decimal(sketches_dict)
     return sketch_to_hdf5(sketches_dict, outdir)
 
@@ -119,7 +140,17 @@ def assign_query_clusters(
     db_fs: DatabaseFileStore,
     qNames: list,
     outdir: str,
-):
+) -> None:
+    """
+    [Assign clusters to query samples using PopPUNK assign]
+    
+    :param config: [ClusteringConfig with all necessary information]
+    :param db_fs: [DatabaseFileStore which provides paths
+        to database files]
+    :param qNames: [list of sample hashes]
+    :param outdir: [path to output directory
+        where all files from PopPUNK assign job are stored]
+    """
     wrapper = PoppunkWrapper(config.fs, db_fs, config.args, config.p_hash, config.species)
     wrapper.assign_clusters(config.db_funcs, qNames, outdir)
 
@@ -129,6 +160,18 @@ def handle_external_clusters(
     queries_names: list,
     queries_clusters: list,
 ) -> dict:
+    """
+    [Handles the assignment of external clusters to query sequences.
+    This function processes external clusters from a previous query clustering,
+    filters out queries that are not found, handles these not found queries,
+    updates the external clusters, and finally saves the updated clusters.]
+    
+    :param config: [ClusteringConfig with all necessary information]
+    :param sketches_dict: [dictionary with filehash (key) and sketch (value)]
+    :param queries_names: [list of sample hashes]
+    :param queries_clusters: [list of sample PopPUNK clusters]
+    :return dict: [dict with filehash (key) and external cluster (value)]
+    """
     previous_query_clustering = config.fs.previous_query_clustering(config.p_hash)
     external_clusters, not_found_query_names = get_external_clusters_from_file(
         previous_query_clustering, queries_names, config.external_clusters_prefix
@@ -155,6 +198,7 @@ def handle_external_clusters(
             previous_query_clustering,
         )
         
+        # Clean up temporary output directory used to assign to full database
         shutil.rmtree(output_full_tmp)
 
     save_external_to_poppunk_clusters(
@@ -168,6 +212,20 @@ def handle_not_found_queries(
     not_found_query_names: list,
     output_full_tmp: str,
 ) -> tuple[list, list]:
+    """
+    [Handles queries that were not found in the 
+    initial external clusters file.
+    This function processes the sketches of the queries that were not found,
+    assigns clusters to them, and then summarizes the clusters. It also
+    copies necessary files and merges partial query graphs.]
+    
+    :param config: [ClusteringConfig with all necessary information]
+    :param sketches_dict: [dictionary with filehash (key) and sketch (value)]
+    :param not_found_query_names: [list of sample hashes that were not found]
+    :param output_full_tmp: [path to temporary output directory]
+    :return tuple[list, list]: [list initial not found sample hashes, 
+        list of clusters assigned to initial not found samples]
+    """
     not_found_sketches_dict = {
         key: value for key, value in sketches_dict.items() if key in not_found_query_names
     }
@@ -188,7 +246,19 @@ def update_external_clusters(
     not_found_query_names: list,
     external_clusters: dict,
     previous_query_clustering: str,
-):
+) -> None:
+    """
+    [Updates the external clusters with the external clusters found
+    in the new previous query clustering from assigning using the full database.
+    This function reads the external clusters from the new previous query clustering file 
+    and updates the initial external clusters file with the clusters 
+    that were not found in the current query with the full database.]
+    
+    :param config: [ClusteringConfig with all necessary information]
+    :param not_found_query_names: [list of sample hashes that were not found]
+    :param external_clusters: [dict of sample hashes to external cluster labels]
+    :param previous_query_clustering: [path to previous query clustering file]
+    """
     not_found_prev_querying = config.fs.external_previous_query_clustering_path_full_assign(config.p_hash)
     external_clusters_not_found, _ = get_external_clusters_from_file(
         not_found_prev_querying, not_found_query_names, config.external_clusters_prefix
@@ -199,6 +269,13 @@ def update_external_clusters(
     external_clusters.update(external_clusters_not_found)
 
 def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
+    """
+    [Merge the partial query graphs from the full assign job with the
+    partial query graphs from the initial assign job.]
+    
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore with paths to input files
+    """
     full_assign_subset_file = fs.partial_query_graph_full_assign(p_hash)
     main_subset_file = fs.partial_query_graph(p_hash)
     with open(full_assign_subset_file, "r") as f:
@@ -211,6 +288,13 @@ def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
         f.write("\n".join(combined_lines))  
 
 def copy_include_files(assign_full_dir: str, outdir: str) -> None:
+    """
+    [Copy include files from the full assign output directory to the output directory
+    where all files from the PopPUNK assign job are stored.]
+    
+    :param assign_full_dir: [path to full assign output directory]
+    :param outdir: [path to output directory]
+    """
     include_files = [f for f in os.listdir(assign_full_dir) if f.startswith("include")]
     for include_file in include_files:
         os.rename(f"{assign_full_dir}/{include_file}", f"{outdir}/{include_file}")
@@ -222,6 +306,16 @@ def filter_queries(
     not_found: list[str],
     config: ClusteringConfig,
 ) -> tuple[list[str], list[str]]:
+    """
+    [Filter out queries that were not found in the initial external clusters file.
+    This function filters out the queries that were not found in the initial external clusters file,
+    deletes include files for these queries, and returns the filtered queries.]
+    
+    :param queries_names: [list of sample hashes]
+    :param queries_clusters: [list of sample PopPUNK clusters]
+    :param not_found: [list of sample hashes that were not found]
+    :param config: [ClusteringConfig with all necessary information]
+    """
     filtered_names = [name for name in queries_names if name not in not_found]
     filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
 
@@ -230,27 +324,40 @@ def filter_queries(
     return filtered_names, filtered_clusters
 
 def delete_include_files(fs: PoppunkFileStore, p_hash: str, clusters: set) -> None:
+    """
+    [Delete include files for samples that were not found in the initial external clusters file.]
+    
+    :param fs: [PoppunkFileStore with paths to input files]
+    :param p_hash: [project hash]
+    :param clusters: [set of cluster numbers to delete include
+    """
     for cluster in clusters:
         include_file = fs.include_files(p_hash, cluster)
         if os.path.exists(include_file):
             os.remove(include_file)
 
 def assign_clusters_to_result(query_cluster_mapping: Union[dict.items, zip]) -> dict:
+    """
+    [Assign clusters to the result dictionary,
+        where the key is the index and the value is a dictionary 
+        with the sample hash and the cluster number]
+    
+    :param query_cluster_mapping: [dictionary items or zip object with sample hash and cluster number]
+    :return dict: [dict with index (key) and sample hash and cluster number (value)]
+    """
     result = {}
     for i, (name, cluster) in enumerate(query_cluster_mapping):
         result[i] = {"hash": name, "cluster": cluster}
     return result
 
-def save_result(config: ClusteringConfig, result: dict):
+def save_result(config: ClusteringConfig, result: dict) -> None:
     """
-     save result to retrieve when reloading project results - this
+     [save result to retrieve when reloading project results - this
      overwrites the initial output file written before the assign
-     job ran
-
-    Args:
-        fs (PoppunkFileStore): _description_
-        p_hash (str): _description_
-        result (dict): _description_
+     job ran]
+     
+     :param config: [ClusteringConfig with all necessary information]
+     :param result: [dict with index (key) and sample hash and cluster number (value)]   
     """
     with open(config.fs.output_cluster(config.p_hash), "wb") as f:
         pickle.dump(result, f)

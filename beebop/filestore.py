@@ -239,6 +239,12 @@ class PoppunkFileStore:
         return str(tmp_path)
 
     def assign_output_full(self, p_hash) -> str:
+        """ 
+        Generates the path to the full assign output folder.
+
+        :param p_hash: [project hash]
+        :return str: [path to full assign output folder]
+        """
         path = PurePath(self.tmp(p_hash), p_hash)
         os.makedirs(path, exist_ok=True)
         return str(path)
@@ -253,13 +259,8 @@ class PoppunkFileStore:
         )
     def external_previous_query_clustering_path_full_assign(self, p_hash) -> str:
         """
-        Generates the file path for the external
-        previous query clustering results.
-
         :param p_hash (str): The hash value representing the query.
-
         :return str: [The file path to the external]
-        previous query clustering CSV file.
         """
         return str(
             PurePath(self.assign_output_full(p_hash), f"{p_hash}_external_clusters.csv")

@@ -138,19 +138,20 @@ def get_external_clusters_from_file(
     previous_query_clustering_file: str,
     hashes_list: list,
     external_clusters_prefix: str,
-) -> tuple[dict, list]:
+) -> tuple[dict[str, str], list[str]]:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
     file and returns a dictionary of sample hash to external cluster name. If
     there are multiple external clusters listed for a sample, the lowest
-    cluster number is returned]
+    cluster number is returned. If any samples are found but do  not
+    have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return dict: [dict of sample hash to lowest numbered-cluster for that
-        sample]
+    :return tuple: [dictionary of sample hash to external cluster name,
+        list of sample hashes that were not found]
     """
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, hashes_list
@@ -178,6 +179,14 @@ def update_external_clusters_csv(
     not_found_q_names: list,
     external_clusters_not_found: dict,
 ) -> None:
+    """
+    [Update the external clusters CSV file with the clusters of the samples
+    that were not found in the external clusters file.]
+    
+    :param previous_query_clustering_file: [Path to CSV file containing sample data]
+    :param not_found_q_names: [List of sample names that were not found in the external clusters file]
+    :param external_clusters_not_found: [Dictionary mapping sample names to external cluster names]
+    """
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, not_found_q_names
     )
@@ -191,5 +200,13 @@ def update_external_clusters_csv(
 def get_df_sample_mask(
     previous_query_clustering_file: str, samples: str
 ) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Read a CSV file and create a boolean mask for matching sample names.
+    
+    :param previous_query_clustering_file: [Path to CSV file containing sample data
+        samples: List of sample names to match]
+    :param samples: [List of sample names to match]
+    :return tuple: [DataFrame containing sample data, boolean mask for matching samples]
+    """
     df = pd.read_csv(previous_query_clustering_file)
     return df, df["sample"].isin(samples)

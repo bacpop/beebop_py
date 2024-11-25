@@ -248,7 +248,7 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-# pass in both full and refs to assign
+    # pass in both full and refs to assign
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
