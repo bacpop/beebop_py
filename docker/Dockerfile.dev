@@ -23,7 +23,7 @@ RUN conda config --append channels conda-forge && \
 #     rm -rf /var/lib/apt/lists/*
 RUN conda install python=3.10
 RUN conda install graph-tool
-RUN conda install mandrake
+RUN conda install --solver=classic mandrake
 RUN conda install rapidnj
 RUN conda install -c bioconda pp-sketchlib=2.0.0
 RUN pip install joblib==1.1.0
