@@ -21,7 +21,7 @@ RUN conda config --append channels conda-forge && \
 #     libxkbcommon-dev \
 #     libxkbcommon-x11-dev && \
 #     rm -rf /var/lib/apt/lists/*
-
+RUN RUN conda install python=3.10
 RUN conda install graph-tool && \
 conda install mandrake && \
 conda install rapidnj && \
