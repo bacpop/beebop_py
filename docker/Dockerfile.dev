@@ -21,14 +21,14 @@ RUN conda config --append channels conda-forge && \
 #     libxkbcommon-dev \
 #     libxkbcommon-x11-dev && \
 #     rm -rf /var/lib/apt/lists/*
-RUN RUN conda install python=3.10
+RUN conda install python=3.10
 RUN conda install graph-tool && \
-conda install mandrake && \
-conda install rapidnj && \
-conda install -c bioconda pp-sketchlib=2.0.0 && \
-pip install joblib==1.1.0
-    
-    
+    conda install mandrake && \
+    conda install rapidnj && \
+    conda install -c bioconda pp-sketchlib=2.0.0 && \
+    pip install joblib==1.1.0
+
+
 # Install conda and pip packages. update poppunk desired version
 RUN pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.1#egg=PopPUNK 
 
