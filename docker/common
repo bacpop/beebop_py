@@ -4,6 +4,7 @@ set -e
 PACKAGE_ROOT=$(realpath $HERE/..)
 PACKAGE_NAME=beebop-py
 PACKAGE_ORG=mrcide
+PACKAGE_DEV=dev
 
 # Buildkite doesn't check out a full history from the remote (just the
 # single commit) so you end up with a detached head and git rev-parse
@@ -20,6 +21,11 @@ else
     GIT_BRANCH=$(git -C "$PACKAGE_ROOT" symbolic-ref --short HEAD)
 fi
 
+# production images
 TAG_SHA="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_SHA}"
 TAG_BRANCH="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_BRANCH}"
 TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
+
+# development images
+TAG_DEV_SHA="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_BRANCH}:${PACKAGE_DEV}"
+TAG_DEV_BRANCH="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_BRANCH}:${PACKAGE_DEV}"

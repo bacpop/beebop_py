@@ -10,6 +10,9 @@ HERE=$(dirname $0)
 docker tag $TAG_SHA $TAG_BRANCH
 docker push $TAG_BRANCH
 
+docker tag $TAG_DEV_SHA $TAG_DEV_BRANCH
+docker push $TAG_DEV_BRANCH
+
 if [ $GIT_BRANCH == "main" ]; then
    docker tag $TAG_SHA $TAG_LATEST
    docker push $TAG_LATEST

@@ -1,0 +1,44 @@
+FROM continuumio/miniconda3
+
+# Switch to root to handle system installations
+USER root
+
+# Configure conda channels
+RUN conda config --append channels conda-forge && \
+    conda config --append channels bioconda
+
+# System dependencies - combined to reduce layers
+RUN apt-get update && \
+    apt-get install -y \
+    libeigen3-dev \
+    libegl1 \
+    libopenblas-dev \
+    libxcb.*-dev \
+    libx11-xcb-dev \
+    libglu1-mesa-dev \
+    libxrender-dev \
+    libxi-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install conda and pip packages. update poppunk desired version
+RUN conda install python=3.10 && \
+    conda install graph-tool && \
+    conda install mandrake && \
+    conda install rapidnj && \
+    conda install -c bioconda pp-sketchlib=2.0.0 && \
+    pip install joblib==1.1.0 && \
+    pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.1#egg=PopPUNK 
+
+# Poetry setup
+RUN pip install poetry
+COPY *.toml *.lock /
+RUN poetry config virtualenvs.create false && \
+    poetry install
+
+COPY . /beebop
+WORKDIR /beebop
+EXPOSE 5000
+
+CMD poetry run waitress-serve --port=5000 'beebop.app:app'
