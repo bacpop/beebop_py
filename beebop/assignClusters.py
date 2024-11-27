@@ -290,14 +290,14 @@ def update_external_clusters(
     and updates the initial external clusters file with the clusters
     that were not found in the current query with the full database.]
 
-    :param config:
-        [ClusteringConfig with all necessary information]
-    :param not_found_query_names:
-        [list of sample hashes that were not found]
-    :param external_clusters:
-        [dict of sample hashes to external cluster labels]
-    :param previous_query_clustering:
-        [path to previous query clustering file]
+    :param config:[
+        ClusteringConfig with all necessary information]
+    :param not_found_query_names:[
+        list of sample hashes that were not found]
+    :param external_clusters:[
+        dict of sample hashes to external cluster labels]
+    :param previous_query_clustering:[
+        path to previous query clustering file]
     """
     not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(
         config.p_hash
@@ -371,6 +371,8 @@ def filter_queries(
     :param queries_clusters: [list of sample PopPUNK clusters]
     :param not_found: [list of sample hashes that were not found]
     :param config: [ClusteringConfig with all necessary information]
+    :return tuple[list[str], list[str]]: [filtered sample hashes,
+        filtered sample PopPUNK clusters]
     """
     filtered_names = [name for name in queries_names if name not in not_found]
     filtered_clusters = [
@@ -413,10 +415,10 @@ def assign_clusters_to_result(
         where the key is the index and the value is a dictionary
         with the sample hash and the cluster number]
 
-    :param query_cluster_mapping:
-        [dictionary items or zip object with sample hash and cluster number]
-    :return dict:
-        [dict with index (key) and sample hash and cluster number (value)]
+    :param query_cluster_mapping:[
+        dictionary items or zip object with sample hash and cluster number]
+    :return dict:[
+        dict with index (key) and sample hash and cluster number (value)]
     """
     result = {}
     for i, (name, cluster) in enumerate(query_cluster_mapping):
@@ -430,10 +432,10 @@ def save_result(config: ClusteringConfig, result: dict) -> None:
     overwrites the initial output file written before the assign
     job ran]
 
-    :param config:
-        [ClusteringConfig with all necessary information]
-    :param result:
-        [dict with index (key) and sample hash and cluster number (value)]
+    :param config:[
+        ClusteringConfig with all necessary information]
+    :param result:[
+        dict with index (key) and sample hash and cluster number (value)]
     """
     with open(config.fs.output_cluster(config.p_hash), "wb") as f:
         pickle.dump(result, f)

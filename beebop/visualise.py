@@ -196,6 +196,8 @@ def network_internal(
     species: str,
 ) -> None:
     """
+    :param p_hash: [project hash to find input data (output from
+        assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
     :param db_fs: [DatabaseFileStore with paths to db files]
     :param args: [arguments for poppunk functions]
