@@ -184,12 +184,12 @@ def update_external_clusters_csv(
     that were not found in the external clusters file.]
 
     :param previous_query_clustering_file:Path to CSV file
-        containing sample data
-    :param not_found_q_names:List of sample names
-        that were not
-        found in the external clusters file
-    :param external_clusters_not_found:Dictionary mapping
-        sample names to external cluster names
+    containing sample data]
+    :param not_found_q_names:[List of sample names
+    that were not
+    found in the external clusters file]
+    :param external_clusters_not_found:[Dictionary mapping
+    sample names to external cluster names]
     """
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, not_found_q_names
