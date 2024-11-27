@@ -214,5 +214,5 @@ def get_df_sample_mask(
     :return tuple:
         [DataFrame containing sample data, boolean mask for matching samples]
     """
-    df = pd.read_csv(previous_query_clustering_file)
+    df = pd.read_csv(previous_query_clustering_file, dtype=str)
     return df, df["sample"].isin(samples)

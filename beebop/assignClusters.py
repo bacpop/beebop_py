@@ -199,7 +199,7 @@ def handle_external_clusters(
         queries_names, queries_clusters = filter_queries(
             queries_names, queries_clusters, not_found_query_names, config
         )
-        output_full_tmp = config.fs.assign_output_full(config.p_hash)
+        output_full_tmp = config.fs.output_tmp(config.p_hash)
         not_found_query_names_new, not_found_query_clusters = (
             handle_not_found_queries(
                 config,
@@ -299,10 +299,8 @@ def update_external_clusters(
     :param previous_query_clustering:
         [path to previous query clustering file]
     """
-    not_found_prev_querying = (
-        config.fs.external_previous_query_clustering_path_full_assign(
-            config.p_hash
-        )
+    not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(
+        config.p_hash
     )
     external_clusters_not_found, _ = get_external_clusters_from_file(
         not_found_prev_querying,
@@ -325,9 +323,9 @@ def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
     :param p_hash: [project hash]
     :param fs: [PoppunkFileStore with paths to input files
     """
-    full_assign_subset_file = fs.partial_query_graph_full_assign(p_hash)
+    tmp_assign_subset_file = fs.partial_query_graph_tmp(p_hash)
     main_subset_file = fs.partial_query_graph(p_hash)
-    with open(full_assign_subset_file, "r") as f:
+    with open(tmp_assign_subset_file, "r") as f:
         failed_lines = set(f.read().splitlines())
     with open(main_subset_file, "r") as f:
         main_lines = set(f.read().splitlines())
@@ -337,21 +335,21 @@ def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
         f.write("\n".join(combined_lines))
 
 
-def copy_include_files(assign_full_dir: str, outdir: str) -> None:
+def copy_include_files(output_full_tmp: str, outdir: str) -> None:
     """
     [Copy include files from the full assign output directory
         to the output directory
     where all files from the PopPUNK assign job are stored.]
 
-    :param assign_full_dir: [path to full assign output directory]
+    :param output_full_tmp: [path to full assign output directory]
     :param outdir: [path to output directory]
     """
     include_files = [
-        f for f in os.listdir(assign_full_dir) if f.startswith("include")
+        f for f in os.listdir(output_full_tmp) if f.startswith("include")
     ]
     for include_file in include_files:
         os.rename(
-            f"{assign_full_dir}/{include_file}", f"{outdir}/{include_file}"
+            f"{output_full_tmp}/{include_file}", f"{outdir}/{include_file}"
         )
 
 
