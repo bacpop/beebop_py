@@ -39,7 +39,7 @@ def microreact(
     redis = Redis(host=redis_host)
     # get results from previous job
     current_job = get_current_job(redis)
-    assign_result = current_job.dependency.result
+    assign_result = current_job.dependency.result # gets first dependency result (i.e assign_clusters)
     external_to_poppunk_clusters = None
 
     try:

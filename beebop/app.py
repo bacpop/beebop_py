@@ -4,7 +4,7 @@ from waitress import serve
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Dependency
 import os
 from io import BytesIO
 import zipfile
@@ -314,7 +314,7 @@ def run_poppunk_internal(sketches: dict,
                                      species,
                                      redis_host,
                                      queue_kwargs),
-                               depends_on=job_network, **queue_kwargs)
+                               depends_on=Dependency([job_assign, job_network], allow_failure=True), **queue_kwargs)
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     return jsonify(
         response_success(
