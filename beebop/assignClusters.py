@@ -415,9 +415,9 @@ def assign_clusters_to_result(
         where the key is the index and the value is a dictionary
         with the sample hash and the cluster number]
 
-    :param query_cluster_mapping:[dictionary items or zip object
+    :param query_cluster_mapping: [dictionary items or zip object
         with sample hash and cluster number]
-    :return dict:[dict with index (key)
+    :return dict: [dict with index (key)
         and sample hash and cluster number (value)]
     """
     result = {}
@@ -432,9 +432,9 @@ def save_result(config: ClusteringConfig, result: dict) -> None:
     overwrites the initial output file written before the assign
     job ran]
 
-    :param config:[ClusteringConfig with
+    :param config: [ClusteringConfig with
         all necessary information]
-    :param result:[dict with index (key)
+    :param result: [dict with index (key)
         and sample hash and cluster number (value)]
     """
     with open(config.fs.output_cluster(config.p_hash), "wb") as f:

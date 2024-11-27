@@ -43,6 +43,7 @@ class PoppunkWrapper:
         :param dbFuncs: [database functions, generated with poppunks
             setupDBFuncs()]
         :param qNames: [hd5 database with all sketches]
+        :param output: [output folder for assign_clusters]
         """
         assign_query_hdf5(
             dbFuncs=db_funcs,

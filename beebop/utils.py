@@ -207,11 +207,11 @@ def get_df_sample_mask(
     """
     Read a CSV file and create a boolean mask for matching sample names.
 
-    :param previous_query_clustering_file:[Path to CSV file
+    :param previous_query_clustering_file: [Path to CSV file
         containing sample data
         samples: List of sample names to match]
     :param samples: [List of sample names to match]
-    :return tuple:[DataFrame containing sample data,
+    :return tuple: [DataFrame containing sample data,
         boolean mask for matching samples]
     """
     df = pd.read_csv(previous_query_clustering_file, dtype=str)

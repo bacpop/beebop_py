@@ -218,7 +218,7 @@ class PoppunkFileStore:
     def network_output_component(self, p_hash, component_number) -> str:
         """
         :param p_hash: [project hash]
-        :param component_number:[component number,
+        :param component_number: [component number,
             which is the same as cluster number]
         :return str: [path to network component file]
         """
