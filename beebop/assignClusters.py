@@ -290,13 +290,13 @@ def update_external_clusters(
     and updates the initial external clusters file with the clusters
     that were not found in the current query with the full database.]
 
-    :param config:[ClusteringConfig
+    :param config: [ClusteringConfig
         with all necessary information]
-    :param not_found_query_names:[list of sample hashes
+    :param not_found_query_names: [list of sample hashes
         that were not found]
-    :param external_clusters:[dict of sample hashes
+    :param external_clusters: [dict of sample hashes
         to external cluster labels]
-    :param previous_query_clustering:[path to previous
+    :param previous_query_clustering: [path to previous
         query clustering file]
     """
     not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(

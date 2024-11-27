@@ -40,7 +40,7 @@ class PoppunkWrapper:
         output: str,
     ) -> None:
         """
-        :param dbFuncs: [database functions, generated with poppunks
+        :param db_funcs: [database functions, generated with poppunks
             setupDBFuncs()]
         :param qNames: [hd5 database with all sketches]
         :param output: [output folder for assign_clusters]
