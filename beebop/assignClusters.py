@@ -287,8 +287,8 @@ def update_external_clusters(
     using the full database.
     This function reads the external clusters from the
     new previous query clustering file
-    and updates the initial external clusters file with the clusters
-    that were not found in the current query with the full database.]
+    and updates the initial external clusters file with the clusters for samples
+    that were initially not found, and have now been assigned by the current query with the full database.]
 
     :param config: [ClusteringConfig
         with all necessary information]
