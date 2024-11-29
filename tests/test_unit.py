@@ -1153,7 +1153,7 @@ def test_handle_external_clusters_with_not_found(mocker, config):
 @patch("beebop.assignClusters.sketch_to_hdf5")
 @patch("beebop.assignClusters.assign_query_clusters")
 @patch("beebop.assignClusters.summarise_clusters")
-@patch("beebop.assignClusters.merge_partial_query_graphs")
+@patch("beebop.assignClusters.merge_txt_files")
 @patch("beebop.assignClusters.copy_include_files")
 def test_handle_not_found_queries(
     mock_copy_files,
@@ -1167,6 +1167,8 @@ def test_handle_not_found_queries(
     not_found = ["hash2"]
     output_dir = "output_dir"
     mock_summarise.return_value = ["hash1"], [10], "", "", "", "", ""
+    config.fs.partial_query_graph.return_value = "partial_query_graph"
+    config.fs.partial_query_graph_tmp.return_value = "partial_query_graph_tmp"
 
     query_names, query_clusters = assignClusters.handle_not_found_queries(
         config, sketches, not_found, output_dir
@@ -1179,7 +1181,7 @@ def test_handle_not_found_queries(
         config, config.full_db_fs, not_found, output_dir
     )
     mock_copy_files.assert_called_once_with(output_dir, config.out_dir)
-    mock_merge.assert_called_once_with(config.p_hash, config.fs)
+    mock_merge.assert_called_once_with("partial_query_graph", "partial_query_graph_tmp")
     assert query_names == ["hash1"]
     assert query_clusters == [10]
 
@@ -1223,13 +1225,10 @@ def test_merge_partial_query_graphs(tmp_path, config):
     tmp_file = tmp_path / "tmp_query.subset"
     main_file = tmp_path / "main_query.subset"
 
-    config.fs.partial_query_graph_tmp.return_value = str(tmp_file)
-    config.fs.partial_query_graph.return_value = str(main_file)
-
     tmp_file.write_text("sample2\nsample10\n")
     main_file.write_text("sample1\nsample2\nsample3\nsample4\n")
 
-    assignClusters.merge_partial_query_graphs(config.p_hash, config.fs)
+    assignClusters.merge_txt_files(main_file, tmp_file)
 
     main_file_queries = list(main_file.read_text().splitlines())
 
@@ -1239,7 +1238,7 @@ def test_merge_partial_query_graphs(tmp_path, config):
     )
 
 
-def test_copy_include_files(tmp_path):
+def test_copy_include_files_no_conflict(tmp_path):
     output_full_tmp = tmp_path / "output_full_tmp"
     outdir = tmp_path / "outdir"
     output_full_tmp.mkdir()
@@ -1271,6 +1270,25 @@ def test_copy_include_files(tmp_path):
         assert (output_full_tmp / f).exists()  # Still in original location
         assert not (outdir / f).exists()  # Not in new location
 
+def test_copy_include_file_conflict(tmp_path):
+    output_full_tmp = tmp_path / "output_full_tmp"
+    outdir = tmp_path / "outdir"
+    output_full_tmp.mkdir()
+    outdir.mkdir()
+    
+    include_files_tmp = ["include_1.txt",]
+    include_files = ["include_1.txt"]
+    
+    # Create include files
+    (output_full_tmp / include_files_tmp[0]).write_text("new content")
+    (outdir / include_files[0]).write_text("original content")
+    
+    assignClusters.copy_include_files(str(output_full_tmp), str(outdir))
+    
+    assert not (output_full_tmp / include_files_tmp[0]).exists()  # Original removed
+    included_file_content = (outdir / include_files[0]).read_text()
+    assert "new content" in included_file_content  # New content
+    assert "original content" in included_file_content  # Original content
 
 @patch("beebop.assignClusters.delete_include_files")
 def test_filter_queries(mock_delete_include_files, config):

@@ -270,7 +270,7 @@ def handle_not_found_queries(
     )
 
     copy_include_files(output_full_tmp, config.out_dir)
-    merge_partial_query_graphs(config.p_hash, config.fs)
+    merge_txt_files(config.fs.partial_query_graph(config.p_hash), config.fs.partial_query_graph_tmp(config.p_hash))
 
     return not_found_query_names_new, not_found_query_clusters
 
@@ -315,23 +315,21 @@ def update_external_clusters(
     external_clusters.update(external_clusters_not_found)
 
 
-def merge_partial_query_graphs(p_hash: str, fs: PoppunkFileStore) -> None:
+def merge_txt_files(main_file: str, merge_file: str) -> None:
     """
-    [Merge the partial query graphs from the full assign job with the
-    partial query graphs from the initial assign job.]
+    [Merge the contents of the merge file into the main file]
 
-    :param p_hash: [project hash]
-    :param fs: [PoppunkFileStore with paths to input files
+    :param main_file: [path to main file]
+    :param merge_file: [path to merge file]
     """
-    tmp_assign_subset_file = fs.partial_query_graph_tmp(p_hash)
-    main_subset_file = fs.partial_query_graph(p_hash)
-    with open(tmp_assign_subset_file, "r") as f:
+
+    with open(merge_file, "r") as f:
         failed_lines = set(f.read().splitlines())
-    with open(main_subset_file, "r") as f:
+    with open(main_file, "r") as f:
         main_lines = set(f.read().splitlines())
 
     combined_lines = list(main_lines.union(failed_lines))
-    with open(main_subset_file, "w") as f:
+    with open(main_file, "w") as f:
         f.write("\n".join(combined_lines))
 
 
@@ -339,7 +337,9 @@ def copy_include_files(output_full_tmp: str, outdir: str) -> None:
     """
     [Copy include files from the full assign output directory
         to the output directory
-    where all files from the PopPUNK assign job are stored.]
+    where all files from the PopPUNK assign job are stored.
+    If the include file already exists in the output directory,
+    the contents of the full assign output include file are merged]
 
     :param output_full_tmp: [path to full assign output directory]
     :param outdir: [path to output directory]
@@ -348,9 +348,15 @@ def copy_include_files(output_full_tmp: str, outdir: str) -> None:
         f for f in os.listdir(output_full_tmp) if f.startswith("include")
     ]
     for include_file in include_files:
-        os.rename(
-            f"{output_full_tmp}/{include_file}", f"{outdir}/{include_file}"
-        )
+        dest_file = f"{outdir}/{include_file}"
+        source_file = f"{output_full_tmp}/{include_file}"
+        if os.path.exists(dest_file):
+            merge_txt_files(dest_file, source_file)
+            os.remove(source_file)
+        else:
+            os.rename(
+                source_file, dest_file
+            )
 
 
 def filter_queries(
