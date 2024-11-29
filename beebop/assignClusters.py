@@ -239,7 +239,7 @@ def handle_not_found_queries(
     """
     [Handles queries that were not found in the
     initial external clusters file.
-    This function processes the sketches of the queries that were not found,
+    This function processes the sketches of the queries that were not found for external clusters from the reference db,
     assigns clusters to them from the full db, and then summarizes the clusters. It also
     copies necessary files and merges partial query graphs.]
 
