@@ -1,36 +1,51 @@
 FROM continuumio/miniconda3
 
+RUN conda create -n beebop-env python=3.10
+SHELL ["conda", "run", "-n", "beebop-env", "/bin/bash", "-c"]
+# RUN echo "source activate beebop-env" > ~/.bashrc
+# ENV PATH /opt/conda/envs/beebop-env/bin:$PATH
+
 # Switch to root to handle system installations
 USER root
 
-# Configure conda channels
+# System dependencies 
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    g++ \
+    cmake \
+    libeigen3-dev \
+    libegl1 \
+    libopenblas-dev \
+    libxcb.*-dev \
+    libx11-xcb-dev \
+    libglu1-mesa-dev \
+    libxrender-dev \
+    libxi-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# RUN conda install python=3.10
+RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
+# RUN pip install cmake
 RUN conda config --append channels conda-forge && \
     conda config --append channels bioconda
 
-# System dependencies - combined to reduce layers
-# RUN apt-get update && \
-#     apt-get install -y \
-#     libeigen3-dev \
-#     libegl1 \
-#     libopenblas-dev \
-#     libxcb.*-dev \
-#     libx11-xcb-dev \
-#     libglu1-mesa-dev \
-#     libxrender-dev \
-#     libxi-dev \
-#     libxkbcommon-dev \
-#     libxkbcommon-x11-dev && \
-#     rm -rf /var/lib/apt/lists/*
-RUN conda install python=3.10
-RUN conda install graph-tool
-RUN conda install --solver=classic mandrake
-RUN conda install --solver=clasic rapidnj
-RUN conda install -c bioconda pp-sketchlib=2.0.0
-RUN pip install joblib==1.1.0
+RUN conda install -n base conda-forge::mamba
+RUN conda config --set channel_priority flexible
 
+RUN mamba install conda-forge:graph-tool
+RUN mamba install conda-forge:mandrake
+# RUN mamba install rapidnj
+# RUN mamba install bioconda:pp-sketchlib
+RUN mamba install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
+# RUN pip install joblib==1.1.0
 
-# Install conda and pip packages. update poppunk desired version
-RUN pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.1#egg=PopPUNK 
+# Update poppunk desired version
+# RUN mamba install cmake
+RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK 
 
 # Poetry setup
 RUN pip install poetry
@@ -42,4 +57,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD poetry run waitress-serve --port=5000 'beebop.app:app'
+CMD /bin/bash -c "conda run --no-capture -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'"

@@ -5,10 +5,10 @@ HERE=$(dirname $0)
 . $HERE/common
 
 # Build the production image
-docker build --pull \
-       --tag $TAG_SHA \
-       -f docker/Dockerfile.prod \
-       $PACKAGE_ROOT
+# docker build --pull \
+#        --tag $TAG_SHA \
+#        -f docker/Dockerfile.prod \
+#        $PACKAGE_ROOT
 
 # Build the development image
 docker build --pull \
@@ -18,5 +18,5 @@ docker build --pull \
 
 # We always push the SHA tagged versions, for debugging if the tests
 # after this step fail
-docker push $TAG_SHA
-docker push $TAG_DEV_SHA
+# docker push $TAG_SHA
+# docker push $TAG_DEV_SHA
