@@ -52,4 +52,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD conda run --no-capture -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'
+CMD ["bash", "-c", "conda run --no-capture-output -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture-output -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'"]
