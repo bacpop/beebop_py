@@ -1093,6 +1093,7 @@ def test_handle_external_clusters_all_found(mocker, config):
 def test_handle_external_clusters_with_not_found(mocker, config):
     q_names = ["sample1", "sample2", "sample3"]
     q_clusters = [1, 2, 1000]
+    not_found_q_clusters = {1234, 6969}
     external_clusters, not_found = {
         "sample1": "GPSC69",
         "sample2": "GPSC420",
@@ -1107,7 +1108,7 @@ def test_handle_external_clusters_with_not_found(mocker, config):
     # mock function calls for not found queries
     mock_filter_queries = mocker.patch(
         "beebop.assignClusters.filter_queries",
-        return_value=(q_names, q_clusters),
+        return_value=(q_names, q_clusters, not_found_q_clusters),
     )
     mock_handle_not_found = mocker.patch(
         "beebop.assignClusters.handle_not_found_queries",
@@ -1130,10 +1131,10 @@ def test_handle_external_clusters_with_not_found(mocker, config):
 
     # not found function calls
     mock_filter_queries.assert_called_once_with(
-        q_names, q_clusters, not_found, config
+        q_names, q_clusters, not_found
     )
     mock_handle_not_found.assert_called_once_with(
-        config, {}, not_found, tmp_output
+        config, {}, not_found, tmp_output, not_found_q_clusters
     )
     mock_update_external_clusters.assert_called_once_with(
         config, not_found, external_clusters, "previous_query_clustering"
@@ -1153,11 +1154,9 @@ def test_handle_external_clusters_with_not_found(mocker, config):
 @patch("beebop.assignClusters.sketch_to_hdf5")
 @patch("beebop.assignClusters.assign_query_clusters")
 @patch("beebop.assignClusters.summarise_clusters")
-@patch("beebop.assignClusters.merge_txt_files")
-@patch("beebop.assignClusters.copy_include_files")
+@patch("beebop.assignClusters.handle_files_manipulation")
 def test_handle_not_found_queries(
-    mock_copy_files,
-    mock_merge,
+    mock_files_manipulation,
     mock_summarise,
     mock_assign,
     mock_sketch_to_hdf5,
@@ -1165,13 +1164,12 @@ def test_handle_not_found_queries(
 ):
     sketches = {"hash1": "sketch sample 1", "hash2": "sketch sample 2"}
     not_found = ["hash2"]
+    not_found_query_clusters = {6969}
     output_dir = "output_dir"
     mock_summarise.return_value = ["hash1"], [10], "", "", "", "", ""
-    config.fs.partial_query_graph.return_value = "partial_query_graph"
-    config.fs.partial_query_graph_tmp.return_value = "partial_query_graph_tmp"
 
     query_names, query_clusters = assignClusters.handle_not_found_queries(
-        config, sketches, not_found, output_dir
+        config, sketches, not_found, output_dir, not_found_query_clusters
     )
 
     mock_sketch_to_hdf5.assert_called_once_with(
@@ -1180,10 +1178,26 @@ def test_handle_not_found_queries(
     mock_assign.assert_called_once_with(
         config, config.full_db_fs, not_found, output_dir
     )
-    mock_copy_files.assert_called_once_with(output_dir, config.out_dir)
-    mock_merge.assert_called_once_with("partial_query_graph", "partial_query_graph_tmp")
+    mock_files_manipulation.assert_called_once_with(
+        config, output_dir, not_found_query_clusters
+    )
     assert query_names == ["hash1"]
     assert query_clusters == [10]
+
+@patch("beebop.assignClusters.merge_txt_files")
+@patch("beebop.assignClusters.copy_include_files")
+@patch("beebop.assignClusters.delete_include_files")
+def test_handle_files_manipulation(mock_delete, mock_copy, mock_merge, config):
+    outdir_tmp = "outdir_tmp"
+    not_found_query_clusters = {1234, 6969}
+    config.fs.partial_query_graph.return_value = "partial_query_graph"
+    config.fs.partial_query_graph_tmp.return_value = "partial_query_graph_tmp"
+    
+    assignClusters.handle_files_manipulation(config, outdir_tmp, not_found_query_clusters)
+
+    mock_delete.assert_called_once_with(config.fs, config.p_hash, not_found_query_clusters)
+    mock_copy.assert_called_once_with(outdir_tmp, config.out_dir)
+    mock_merge.assert_called_once_with("partial_query_graph", "partial_query_graph_tmp")
 
 
 @patch("beebop.assignClusters.update_external_clusters_csv")
@@ -1290,21 +1304,18 @@ def test_copy_include_file_conflict(tmp_path):
     assert "new content" in included_file_content  # New content
     assert "original content" in included_file_content  # Original content
 
-@patch("beebop.assignClusters.delete_include_files")
-def test_filter_queries(mock_delete_include_files, config):
+def test_filter_queries():
     q_names = ["sample1", "sample2", "sample3"]
     q_clusters = [1, 2, 3]
     not_found = ["sample2"]
 
-    filtered_names, filtered_clusters = assignClusters.filter_queries(
-        q_names, q_clusters, not_found, config
+    filtered_names, filtered_clusters, not_found_q_clusters = assignClusters.filter_queries(
+        q_names, q_clusters, not_found
     )
 
     assert filtered_names == ["sample1", "sample3"]
     assert filtered_clusters == [1, 3]
-    mock_delete_include_files.assert_called_once_with(
-        config.fs, config.p_hash, set(q_clusters) - set(filtered_clusters)
-    )
+    assert not_found_q_clusters 
 
 
 def test_delete_include_files(tmp_path):

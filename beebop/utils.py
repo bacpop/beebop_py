@@ -176,8 +176,8 @@ def get_external_clusters_from_file(
 
 def update_external_clusters_csv(
     previous_query_clustering_file: str,
-    not_found_q_names: list,
-    external_clusters_not_found: dict,
+    q_names: list,
+    external_clusters_to_update: dict,
 ) -> None:
     """
     [Update the external clusters CSV file with the clusters of the samples
@@ -185,18 +185,18 @@ def update_external_clusters_csv(
 
     :param previous_query_clustering_file: [Path to CSV file
     containing sample data]
-    :param not_found_q_names: [List of sample names
+    :param q_names: [List of sample names
     that were not
     found in the external clusters file]
-    :param external_clusters_not_found: [Dictionary mapping
+    :param external_clusters_to_update: [Dictionary mapping
     sample names to external cluster names]
     """
     df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, not_found_q_names
+        previous_query_clustering_file, q_names
     )
     df.loc[samples_mask, "Cluster"] = [
-        get_cluster_num(external_clusters_not_found[sample_id])
-        for sample_id in not_found_q_names
+        get_cluster_num(external_clusters_to_update[sample_id])
+        for sample_id in q_names
     ]
     df.to_csv(previous_query_clustering_file, index=False)
 

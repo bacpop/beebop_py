@@ -241,7 +241,7 @@ class PoppunkFileStore:
 
     def output_tmp(self, p_hash) -> str:
         """
-        Generates the path to the full assign output folder.
+        Generates the path to the full assign output folder when using full db.
 
         :param p_hash: [project hash]
         :return str: [path to full assign output folder]
