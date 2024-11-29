@@ -26,7 +26,6 @@ RUN apt-get update && \
     libxkbcommon-x11-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# RUN conda install python=3.10
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
 # RUN pip install cmake
@@ -38,13 +37,9 @@ RUN conda config --set channel_priority flexible
 
 RUN mamba install conda-forge:graph-tool
 RUN mamba install conda-forge:mandrake
-# RUN mamba install rapidnj
-# RUN mamba install bioconda:pp-sketchlib
 RUN mamba install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
-# RUN pip install joblib==1.1.0
 
 # Update poppunk desired version
-# RUN mamba install cmake
 RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK 
 
 # Poetry setup
@@ -57,4 +52,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD /bin/bash -c "conda run --no-capture -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'"
+CMD conda run --no-capture -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'
