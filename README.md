@@ -101,3 +101,19 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 ```
 TESTING=True poetry run pytest
 ```
+
+### Use/Deploy specific version of PopPUNK
+
+To use deploy a specific version/commit/branch of PopPUNK, you can update `RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK `
+in `DockerFile.dev` with the desired version/commit/branch.
+
+The new images built with `/docker/build` will have a *-dev* postfix.
+
+### Local Development
+
+You can build the image with `/docker/build`, this new image can now be used by Beebop.
+
+### Deployment
+
+A pull request can be created so buildkite pushes the images to the docker hub.
+Then on the `beebop-deploy` the api image can be updated with the new dev image.

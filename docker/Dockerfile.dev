@@ -1,42 +1,46 @@
 FROM continuumio/miniconda3
 
+# Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
-RUN conda install python=3.10
 
-# Switch to root to handle system installations
-USER root
+# Set up conda environment
+RUN conda install python=3.10
+RUN conda config --append channels conda-forge && \
+    conda config --append channels bioconda
+
+# Install mamba: which is a faster package manager than conda
+RUN conda install -c conda-forge mamba
+RUN conda config --set channel_priority flexible
+
+# Install PopPUNK conda dependencies
+RUN mamba install -y -c conda-forge -y graph-tool mandrake 
+RUN mamba install -y \
+    # Core data packages
+    pandas \
+    requests \
+    networkx \
+    scikit-learn \
+    # Bioinformatics tools
+    pp-sketchlib \
+    biopython \
+    treeswift \
+    rapidnj \
+    # Analysis tools
+    hdbscan \
+    # Progress tracking
+    tqdm \
+    && mamba clean -afy
 
 # System dependencies 
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
-    g++ \
     cmake \
     libeigen3-dev \
-    libegl1 \
-    libopenblas-dev \
-    libxcb.*-dev \
-    libx11-xcb-dev \
-    libglu1-mesa-dev \
-    libxrender-dev \
-    libxi-dev \
-    libxkbcommon-dev \
-    libxkbcommon-x11-dev && \
-    rm -rf /var/lib/apt/lists/*
+    libhdf5-dev \
+    libopenblas-dev
 
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN conda config --append channels conda-forge && \
-    conda config --append channels bioconda
-
-RUN conda install -n base conda-forge::mamba
-RUN conda config --set channel_priority flexible
-
-RUN mamba install conda-forge:graph-tool
-RUN mamba install conda-forge:mandrake
-RUN mamba install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
-
-# Update poppunk desired version
+# Update PopPUNK to desired version
 RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK 
 
 # Poetry setup
@@ -49,4 +53,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD ["bash", "-c", "conda run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
+CMD ["bash", "-c", "mamba run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
