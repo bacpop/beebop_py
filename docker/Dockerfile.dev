@@ -1,9 +1,7 @@
 FROM continuumio/miniconda3
 
-RUN conda create -n beebop-env python=3.10
-SHELL ["conda", "run", "-n", "beebop-env", "/bin/bash", "-c"]
-# RUN echo "source activate beebop-env" > ~/.bashrc
-# ENV PATH /opt/conda/envs/beebop-env/bin:$PATH
+SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
+RUN conda install python=3.10
 
 # Switch to root to handle system installations
 USER root
@@ -28,7 +26,6 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
-# RUN pip install cmake
 RUN conda config --append channels conda-forge && \
     conda config --append channels bioconda
 
@@ -52,4 +49,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD ["bash", "-c", "conda run --no-capture-output -n beebop-env rq worker > rq_output.txt 2>&1 & conda run --no-capture-output -n beebop-env poetry run waitress-serve --port=5000 'beebop.app:app'"]
+CMD ["bash", "-c", "conda run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
