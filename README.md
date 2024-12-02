@@ -115,4 +115,5 @@ You can build the image with `/docker/build --with-dev`, this new image can now 
 ### Deployment
 
 A pull request can be created so buildkite pushes the images to the docker hub. Add `--with-dev` to the build & push commands `pipeline.yaml`.
+**Ensure to remove the `--with-dev` flag before merging the PR.**
 Then on the `beebop-deploy` the api image can be updated with the new dev image.
