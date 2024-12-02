@@ -1130,9 +1130,7 @@ def test_handle_external_clusters_with_not_found(mocker, config):
     )
 
     # not found function calls
-    mock_filter_queries.assert_called_once_with(
-        q_names, q_clusters, not_found
-    )
+    mock_filter_queries.assert_called_once_with(q_names, q_clusters, not_found)
     mock_handle_not_found.assert_called_once_with(
         config, {}, not_found, tmp_output, not_found_q_clusters
     )
@@ -1184,6 +1182,7 @@ def test_handle_not_found_queries(
     assert query_names == ["hash1"]
     assert query_clusters == [10]
 
+
 @patch("beebop.assignClusters.merge_txt_files")
 @patch("beebop.assignClusters.copy_include_files")
 @patch("beebop.assignClusters.delete_include_files")
@@ -1192,12 +1191,18 @@ def test_handle_files_manipulation(mock_delete, mock_copy, mock_merge, config):
     not_found_query_clusters = {1234, 6969}
     config.fs.partial_query_graph.return_value = "partial_query_graph"
     config.fs.partial_query_graph_tmp.return_value = "partial_query_graph_tmp"
-    
-    assignClusters.handle_files_manipulation(config, outdir_tmp, not_found_query_clusters)
 
-    mock_delete.assert_called_once_with(config.fs, config.p_hash, not_found_query_clusters)
+    assignClusters.handle_files_manipulation(
+        config, outdir_tmp, not_found_query_clusters
+    )
+
+    mock_delete.assert_called_once_with(
+        config.fs, config.p_hash, not_found_query_clusters
+    )
     mock_copy.assert_called_once_with(outdir_tmp, config.out_dir)
-    mock_merge.assert_called_once_with("partial_query_graph", "partial_query_graph_tmp")
+    mock_merge.assert_called_once_with(
+        "partial_query_graph", "partial_query_graph_tmp"
+    )
 
 
 @patch("beebop.assignClusters.update_external_clusters_csv")
@@ -1284,38 +1289,44 @@ def test_copy_include_files_no_conflict(tmp_path):
         assert (output_full_tmp / f).exists()  # Still in original location
         assert not (outdir / f).exists()  # Not in new location
 
+
 def test_copy_include_file_conflict(tmp_path):
     output_full_tmp = tmp_path / "output_full_tmp"
     outdir = tmp_path / "outdir"
     output_full_tmp.mkdir()
     outdir.mkdir()
-    
-    include_files_tmp = ["include_1.txt",]
+
+    include_files_tmp = [
+        "include_1.txt",
+    ]
     include_files = ["include_1.txt"]
-    
+
     # Create include files
     (output_full_tmp / include_files_tmp[0]).write_text("new content")
     (outdir / include_files[0]).write_text("original content")
-    
+
     assignClusters.copy_include_files(str(output_full_tmp), str(outdir))
-    
-    assert not (output_full_tmp / include_files_tmp[0]).exists()  # Original removed
+
+    assert not (
+        output_full_tmp / include_files_tmp[0]
+    ).exists()  # Original removed
     included_file_content = (outdir / include_files[0]).read_text()
     assert "new content" in included_file_content  # New content
     assert "original content" in included_file_content  # Original content
+
 
 def test_filter_queries():
     q_names = ["sample1", "sample2", "sample3"]
     q_clusters = [1, 2, 3]
     not_found = ["sample2"]
 
-    filtered_names, filtered_clusters, not_found_q_clusters = assignClusters.filter_queries(
-        q_names, q_clusters, not_found
+    filtered_names, filtered_clusters, not_found_q_clusters = (
+        assignClusters.filter_queries(q_names, q_clusters, not_found)
     )
 
     assert filtered_names == ["sample1", "sample3"]
     assert filtered_clusters == [1, 3]
-    assert not_found_q_clusters 
+    assert not_found_q_clusters
 
 
 def test_delete_include_files(tmp_path):

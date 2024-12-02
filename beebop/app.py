@@ -305,16 +305,21 @@ def run_poppunk_internal(sketches: dict,
     # microreact
     # delete all previous microreact cluster job results
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(p_hash,
-                                     fs,
-                                     full_db_fs,
-                                     args,
-                                     name_mapping,
-                                     species,
-                                     redis_host,
-                                     queue_kwargs),
-                               depends_on=Dependency([job_assign, job_network], allow_failure=True), **queue_kwargs)
+    job_microreact = q.enqueue(
+        visualise.microreact,
+        args=(
+            p_hash,
+            fs,
+            full_db_fs,
+            args,
+            name_mapping,
+            species,
+            redis_host,
+            queue_kwargs,
+        ),
+        depends_on=Dependency([job_assign, job_network], allow_failure=True),
+        **queue_kwargs,
+    )
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     return jsonify(
         response_success(
