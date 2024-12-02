@@ -107,3 +107,8 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 ```
 TESTING=True poetry run pytest
 ```
+
+### Miscellaneous
+
+- There is a .drawio graph in graphs folder illustrating the proccess of running a analysis. This includes
+all the files created anf how they are used in each job
