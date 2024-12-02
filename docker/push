@@ -7,12 +7,14 @@ HERE=$(dirname $0)
 # In case we switch agents between steps
 [ ! -z $(docker images -q $TAG_SHA) ] || docker pull $TAG_SHA
 
-# production image
 docker tag $TAG_SHA $TAG_BRANCH
 docker push $TAG_BRANCH
-# development image
-docker tag $TAG_DEV_SHA $TAG_DEV_BRANCH
-docker push $TAG_DEV_BRANCH
+
+if [ "$1" == "--with-dev" ]; then
+    [ ! -z $(docker images -q $TAG_DEV_SHA) ] || docker pull $TAG_DEV_SHA
+    docker tag $TAG_DEV_SHA $TAG_DEV_BRANCH
+    docker push $TAG_DEV_BRANCH
+fi
 
 if [ $GIT_BRANCH == "main" ]; then
    docker tag $TAG_SHA $TAG_LATEST

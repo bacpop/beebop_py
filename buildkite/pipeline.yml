@@ -1,8 +1,9 @@
+# Add --with-dev to the build dev image for a specific version of PopPunk
 steps:
   - label: ":whale::python: Build"
-    command: docker/build
+    command: docker/build --with-dev
 
   - wait
 
   - label: ":shipit: Push images"
-    command: docker/push
+    command: docker/push --with-dev

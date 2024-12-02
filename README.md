@@ -104,16 +104,15 @@ TESTING=True poetry run pytest
 
 ### Use/Deploy specific version of PopPUNK
 
-To use deploy a specific version/commit/branch of PopPUNK, you can update `RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK `
-in `DockerFile.dev` with the desired version/commit/branch.
+To use a specific version, commit or branch of PopPUNK in a beebop_py deployment, you can update the line which installs  PopPUNK in `DockerFile.dev to`RUN pip install git+https://github.com/bacpop/PopPUNK@[VERSION]#egg=PopPUNK `, replacing `[VERSION]` with the desired version/commit/branch.
 
-The new images built with `/docker/build` will have a *-dev* postfix.
+The new dev images built with `/docker/build --with-dev` will have a *-dev* postfix.
 
 ### Local Development
 
-You can build the image with `/docker/build`, this new image can now be used by Beebop.
+You can build the image with `/docker/build --with-dev`, this new image can now be used by Beebop.
 
 ### Deployment
 
-A pull request can be created so buildkite pushes the images to the docker hub.
+A pull request can be created so buildkite pushes the images to the docker hub. Add `--with-dev` to the build & push commands `pipeline.yaml`.
 Then on the `beebop-deploy` the api image can be updated with the new dev image.
