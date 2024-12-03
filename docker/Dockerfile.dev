@@ -53,4 +53,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD ["bash", "-c", "mamba run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
+CMD ["bash", "-c", "conda run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
