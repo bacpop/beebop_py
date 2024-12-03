@@ -1,0 +1,25 @@
+name: build and push docker image,
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GHCR (GitHub Packages)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build docker image
+        run: ./docker/build --with-dev
+      - name: Push SHA docker image
+        run: ./docker/push --with-dev
