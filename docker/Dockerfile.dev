@@ -14,7 +14,7 @@ RUN conda config --append channels conda-forge && \
 RUN conda install -c conda-forge mamba
 RUN conda config --set channel_priority flexible
 
-# Install PopPUNK conda dependencies
+#Install PopPUNK conda dependencies
 RUN mamba install -y -c conda-forge -y graph-tool mandrake 
 RUN mamba install -y \
     # Core data packages
@@ -55,4 +55,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD ["conda run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
+CMD ["bash", "-c", "conda run --no-capture-output -n base poetry run waitress-serve --port=5000 'beebop.app:app'"]
