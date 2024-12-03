@@ -4,8 +4,7 @@ set -ex
 HERE=$(dirname $0)
 . $HERE/common
 
-
-
+# Build and push the production image
 docker build --pull \
        --tag $TAG_SHA \
        -f docker/Dockerfile.prod \
@@ -17,6 +16,7 @@ docker push $TAG_SHA
 # Build and push dev image only if --with-dev flag is set
 if [ "$1" == "--with-dev" ]; then
     docker build --pull \
+           --build-arg POPPUNK_VERSION=$POPPUNK_VERSION \
            --tag $TAG_DEV_SHA \
            -f docker/Dockerfile.dev \
            $PACKAGE_ROOT

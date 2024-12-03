@@ -104,7 +104,7 @@ TESTING=True poetry run pytest
 
 ### Use/Deploy specific version of PopPUNK
 
-To use a specific version, commit or branch of PopPUNK in a beebop_py deployment, you can update the line which installs  PopPUNK in `DockerFile.dev to`RUN pip install git+https://github.com/bacpop/PopPUNK@[VERSION]#egg=PopPUNK `, replacing `[VERSION]` with the desired version/commit/branch.
+To use a specific version, commit or branch of PopPUNK in a beebop_py deployment, you can update `POPPUNK_VERSION` in `common`.
 
 The new dev images built with `/docker/build --with-dev` will have a *-dev* postfix.
 

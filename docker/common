@@ -21,11 +21,12 @@ else
     GIT_BRANCH=$(git -C "$PACKAGE_ROOT" symbolic-ref --short HEAD)
 fi
 
-# production images
+# production image
 TAG_SHA="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_SHA}"
 TAG_BRANCH="${PACKAGE_ORG}/${PACKAGE_NAME}:${GIT_BRANCH}"
 TAG_LATEST="${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
 
-# development images
+# development image
 TAG_DEV_SHA="${TAG_SHA}-${PACKAGE_DEV}"
 TAG_DEV_BRANCH="${TAG_BRANCH}-${PACKAGE_DEV}"
+POPPUNK_VERSION=v2.6.7 # can be version, branch or commit

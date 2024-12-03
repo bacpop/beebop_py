@@ -1,5 +1,7 @@
 FROM continuumio/miniconda3
 
+ARG POPPUNK_VERSION="v2.6.7"
+
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 
@@ -40,8 +42,8 @@ RUN apt-get update && \
     libhdf5-dev \
     libopenblas-dev
 
-# Update PopPUNK to desired version
-RUN pip install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK 
+
+RUN pip install git+https://github.com/bacpop/PopPUNK@${POPPUNK_VERSION}#egg=PopPUNK 
 
 # Poetry setup
 RUN pip install poetry
