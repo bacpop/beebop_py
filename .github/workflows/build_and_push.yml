@@ -1,4 +1,4 @@
-name: build and push docker image,
+name: build and push docker image
 on:
   push:
     branches:
@@ -20,6 +20,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
-        run: ./docker/build --with-dev
+        run: ./docker/build --with-dev # TODO: remove --with_dev before merging
       - name: Push SHA docker image
-        run: ./docker/push --with-dev
+        run: ./docker/push --with-dev  # TODO: remove --with_dev before merging
