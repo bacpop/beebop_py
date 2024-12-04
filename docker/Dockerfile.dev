@@ -1,5 +1,7 @@
 FROM continuumio/miniconda3
 
+ENV CONDA_OVERRIDE_ARCHSPEC=skylake
+
 ARG POPPUNK_VERSION="v2.6.7"
 
 # Make RUN commands use the new environment:

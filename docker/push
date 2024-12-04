@@ -4,10 +4,10 @@ set -e
 HERE=$(dirname $0)
 . $HERE/common
 
-# In case we switch agents between steps
+# # In case we switch agents between steps
 
-docker tag $TAG_SHA $TAG_BRANCH
-docker push $TAG_BRANCH
+# docker tag $TAG_SHA $TAG_BRANCH
+# docker push $TAG_BRANCH
 
 if [ "$1" == "--with-dev" ]; then
     [ ! -z $(docker images -q $TAG_DEV_SHA) ] || docker pull $TAG_DEV_SHA
@@ -15,7 +15,7 @@ if [ "$1" == "--with-dev" ]; then
     docker push $TAG_DEV_BRANCH
 fi
 
-if [ $GIT_BRANCH == "main" ]; then
-   docker tag $TAG_SHA $TAG_LATEST
-   docker push $TAG_LATEST
-fi
+# if [ $GIT_BRANCH == "main" ]; then
+#    docker tag $TAG_SHA $TAG_LATEST
+#    docker push $TAG_LATEST
+# fi

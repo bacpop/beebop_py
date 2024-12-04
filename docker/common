@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
-REGISTRY=ghcr.io
+REGISTRY=BUILDKITE
 PACKAGE_ROOT=$(realpath $HERE/..)
 PACKAGE_NAME=beebop-py
-PACKAGE_ORG=bacpop
+PACKAGE_ORG=mrcide
 PACKAGE_DEV=dev
 
 GIT_SHA=$(git -C "$PACKAGE_ROOT" rev-parse --short=7 HEAD)

@@ -1,0 +1,8 @@
+steps:
+  - label: ":whale::python: Build"
+    command: docker/build --with-dev
+
+  - wait
+
+  - label: ":shipit: Push images"
+    command: docker/push --with-dev
