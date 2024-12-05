@@ -102,7 +102,7 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 TESTING=True poetry run pytest
 ```
 
-### Use/Deploy specific version of PopPUNK
+## Use/Deploy specific version of PopPUNK
 
 To use a specific version, commit or branch of PopPUNK in a beebop_py deployment, you can update `POPPUNK_VERSION` in `common`.
 

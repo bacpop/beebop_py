@@ -5,7 +5,7 @@ on:
       - main
   pull_request:
     branches:
-      - '*'
+      - "*"
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 jobs:
@@ -21,5 +21,5 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
         run: ./docker/build --with-dev # TODO: remove --with_dev before merging
-      - name: Push SHA docker image
-        run: ./docker/push --with-dev  # TODO: remove --with_dev before merging
+      - name: Push docker image
+        run: ./docker/push --with-dev # TODO: remove --with_dev before merging
