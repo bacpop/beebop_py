@@ -417,7 +417,6 @@ def filter_queries(
     :param queries_clusters: [list of sample PopPUNK clusters]
     :param not_found: [list of sample hashes
         that were not found]
-    :param config: [ClusteringConfig with all necessary information]
     :return tuple[list[str], list[str], set[str]]: [filtered sample hashes,
         filtered sample PopPUNK clusters,
             set of clusters assigned to not found samples]
