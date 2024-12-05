@@ -19,7 +19,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # add --with-dev to below commands to build & push the dev image
       - name: Build docker image
-        run: ./docker/build --with-dev # TODO: remove --with_dev before merging
+        run: ./docker/build 
       - name: Push docker image
-        run: ./docker/push --with-dev # TODO: remove --with_dev before merging
+        run: ./docker/push 
