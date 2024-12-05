@@ -303,7 +303,7 @@ def run_poppunk_internal(sketches: dict,
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
-    # delete all previous microreact cluster job results
+    # delete all previous microreact cluster job results for this project
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
     job_microreact = q.enqueue(
         visualise.microreact,

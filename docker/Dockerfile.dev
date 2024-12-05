@@ -1,0 +1,61 @@
+FROM continuumio/miniconda3
+
+# ensure conda does not install packages for the wrong architecture
+ENV CONDA_OVERRIDE_ARCHSPEC=skylake
+
+ARG POPPUNK_VERSION="v2.6.7"
+
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
+
+# Set up conda environment
+RUN conda install python=3.10
+RUN conda config --append channels conda-forge && \
+    conda config --append channels bioconda
+
+# Install mamba: which is a faster package manager than conda
+RUN conda install -c conda-forge mamba
+RUN conda config --set channel_priority flexible
+
+#Install PopPUNK conda dependencies
+RUN mamba install -y -c conda-forge -y graph-tool mandrake 
+RUN mamba install -y \
+    # Core data packages
+    pandas \
+    requests \
+    networkx \
+    scikit-learn \
+    # Bioinformatics tools
+    pp-sketchlib \
+    biopython \
+    treeswift \
+    rapidnj \
+    # Analysis tools
+    hdbscan \
+    # Progress tracking
+    tqdm \
+    && mamba clean -afy
+
+# System dependencies 
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    cmake \
+    libeigen3-dev \
+    libhdf5-dev \
+    libopenblas-dev
+
+
+RUN pip install git+https://github.com/bacpop/PopPUNK@${POPPUNK_VERSION}#egg=PopPUNK 
+
+# Poetry setup
+RUN pip install poetry
+COPY *.toml *.lock /
+RUN poetry config virtualenvs.create false && \
+    poetry install
+
+COPY . /beebop
+WORKDIR /beebop
+EXPOSE 5000
+
+CMD ["conda", "run" ,"--no-capture-output", "-n", "base", "poetry", "run", "waitress-serve", "--port=5000", "beebop.app:app"]
