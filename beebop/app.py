@@ -4,7 +4,7 @@ from waitress import serve
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Dependency
 import os
 from io import BytesIO
 import zipfile
@@ -169,7 +169,7 @@ def get_species_config() -> json:
     """
     all_species_args = vars(get_args().species)
     species_config = {
-        species: get_species_kmers(args.dbname)
+        species: get_species_kmers(args.refdb)
         for species, args in all_species_args.items()
     }
     return jsonify(response_success(species_config))
@@ -248,8 +248,13 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-    db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.dbname}",
+    # pass in both full and refs to assign
+    ref_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.refdb}",
+        species_args.external_clusters_file,
+    )
+    full_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.fulldb}",
         species_args.external_clusters_file,
     )
 
@@ -279,7 +284,8 @@ def run_poppunk_internal(sketches: dict,
                            hashes_list,
                            p_hash,
                            fs,
-                           db_fs,
+                           ref_db_fs,
+                           full_db_fs,
                            args,
                            species,
                            **queue_kwargs)
@@ -290,7 +296,7 @@ def run_poppunk_internal(sketches: dict,
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,
                                   fs,
-                                  db_fs,
+                                  full_db_fs,
                                   args,
                                   name_mapping,
                                   species),
@@ -299,16 +305,21 @@ def run_poppunk_internal(sketches: dict,
     # microreact
     # delete all previous microreact cluster job results for this project
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(p_hash,
-                                     fs,
-                                     db_fs,
-                                     args,
-                                     name_mapping,
-                                     species,
-                                     redis_host,
-                                     queue_kwargs),
-                               depends_on=job_network, **queue_kwargs)
+    job_microreact = q.enqueue(
+        visualise.microreact,
+        args=(
+            p_hash,
+            fs,
+            full_db_fs,
+            args,
+            name_mapping,
+            species,
+            redis_host,
+            queue_kwargs,
+        ),
+        depends_on=Dependency([job_assign, job_network], allow_failure=True),
+        **queue_kwargs,
+    )
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     return jsonify(
         response_success(

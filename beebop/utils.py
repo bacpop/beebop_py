@@ -1,14 +1,11 @@
 from types import SimpleNamespace
 import json
-import csv
 import xml.etree.ElementTree as ET
-import fnmatch
 import os
 import re
-import pickle
 import fileinput
 import glob
-
+import pandas as pd
 from beebop.filestore import PoppunkFileStore
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
@@ -141,45 +138,81 @@ def get_external_clusters_from_file(
     previous_query_clustering_file: str,
     hashes_list: list,
     external_clusters_prefix: str,
-) -> dict:
+) -> tuple[dict[str, str], list[str]]:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
     file and returns a dictionary of sample hash to external cluster name. If
     there are multiple external clusters listed for a sample, the lowest
-    cluster number is returned]
+    cluster number is returned. If any samples are found but do  not
+    have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return dict: [dict of sample hash to lowest numbered-cluster for that
-        sample]
+    :return tuple: [dictionary of sample hash to external cluster name,
+        list of sample hashes that were not found]
     """
-    # copy hashes list to keep track of hashes we still need to find samples
-    # for
-    remaining_hashes = hashes_list[:]
-    result = {}
-    with open(previous_query_clustering_file) as f:
-        reader = csv.reader(f, delimiter=",")
-        for row in reader:
-            # We expect two columns in the external clusters csv: the
-            # first contains the sample id (which will be the hash in
-            # the case of our uploaded samples), and the second contains
-            # all the external cluster numbers for the sample, separated
-            # by semicolons
-            sample_id = row[0]
-            if sample_id in remaining_hashes:
-                # Add lowest numeric cluster to dictionary
-                if len(row) > 1:
-                    cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = (
-                        f"{external_clusters_prefix}{cluster_no}"
-                    )
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, hashes_list
+    )
+    filtered_df = df[samples_mask]
 
-                # Remove sample id from remaining hashes to find
-                remaining_hashes.remove(sample_id)
+    # Split into found and not found based on NaN values
+    found_mask = filtered_df["Cluster"].notna()
+    not_found_hashes = filtered_df[~found_mask]["sample"].tolist()
 
-                # Break if no hashes left to find
-                if len(remaining_hashes) == 0:
-                    break
-    return result
+    # Process only rows with valid clusters
+    valid_clusters = filtered_df[found_mask]
+    cluster_numbers = valid_clusters["Cluster"].apply(get_lowest_cluster)
+
+    hash_to_cluster_mapping = (
+        external_clusters_prefix + cluster_numbers.astype(str)
+    )
+    hash_to_cluster_mapping.index = valid_clusters["sample"]
+
+    return hash_to_cluster_mapping.to_dict(), not_found_hashes
+
+
+def update_external_clusters_csv(
+    previous_query_clustering_file: str,
+    q_names: list,
+    external_clusters_to_update: dict,
+) -> None:
+    """
+    [Update the external clusters CSV file with the clusters of the samples
+    that were not found in the external clusters file.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param q_names: [List of sample names
+    that were not
+    found in the external clusters file]
+    :param external_clusters_to_update: [Dictionary mapping
+    sample names to external cluster names]
+    """
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, q_names
+    )
+    df.loc[samples_mask, "Cluster"] = [
+        get_cluster_num(external_clusters_to_update[sample_id])
+        for sample_id in q_names
+    ]
+    df.to_csv(previous_query_clustering_file, index=False)
+
+
+def get_df_sample_mask(
+    previous_query_clustering_file: str, samples: str
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Read a CSV file and create a boolean mask for matching sample names.
+
+    :param previous_query_clustering_file: [Path to CSV file
+        containing sample data
+        samples: List of sample names to match]
+    :param samples: [List of sample names to match]
+    :return tuple: [DataFrame containing sample data,
+        boolean mask for matching samples]
+    """
+    df = pd.read_csv(previous_query_clustering_file, dtype=str)
+    return df, df["sample"].isin(samples)

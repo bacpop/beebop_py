@@ -41,7 +41,8 @@
     },
     "species": {
         "Streptococcus pneumoniae": {
-            "dbname": "GPS_v9_ref",
+            "refdb": "GPS_v9_ref",
+            "fulldb": "GPS_v9",
             "external_cluster_prefix": "GPSC",
             "external_clusters_file": "GPS_v9_external_clusters.csv",
             "qc_dict": { 
@@ -60,7 +61,8 @@
             }
         },
         "Streptococcus agalactiae": {
-            "dbname": "GBS_refs",
+            "refdb": "GBS_refs",
+            "fulldb": "GBS_full",
             "external_cluster_prefix": null,
             "external_clusters_file": null,
             "qc_dict": { 
