@@ -4,7 +4,7 @@ from waitress import serve
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Dependency
 import os
 from io import BytesIO
 import zipfile
@@ -24,7 +24,7 @@ if not redis_host:
     redis_host = "127.0.0.1"
 app = Flask(__name__)
 redis = Redis(host=redis_host)
-job_timeout = 600
+job_timeout = 1200
 
 storage_location = os.environ.get('STORAGE_LOCATION')
 dbs_location = os.environ.get('DBS_LOCATION')
@@ -89,12 +89,8 @@ def generate_zip(fs: PoppunkFileStore,
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_num]
-        file_list = (f'network_component_{component}.graphml',
-                     'network_cytoscape.csv',
-                     'network_cytoscape.graphml')
+        file_list = (f'network_component_{cluster_num}.graphml',
+                     'network_cytoscape.csv')
         add_files(memory_file, path_folder, file_list)
     memory_file.seek(0)
     return memory_file
@@ -173,7 +169,7 @@ def get_species_config() -> json:
     """
     all_species_args = vars(get_args().species)
     species_config = {
-        species: get_species_kmers(args.dbname)
+        species: get_species_kmers(args.refdb)
         for species, args in all_species_args.items()
     }
     return jsonify(response_success(species_config))
@@ -252,8 +248,13 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-    db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.dbname}",
+    # pass in both full and refs to assign
+    ref_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.refdb}",
+        species_args.external_clusters_file,
+    )
+    full_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.fulldb}",
         species_args.external_clusters_file,
     )
 
@@ -283,7 +284,8 @@ def run_poppunk_internal(sketches: dict,
                            hashes_list,
                            p_hash,
                            fs,
-                           db_fs,
+                           ref_db_fs,
+                           full_db_fs,
                            args,
                            species,
                            **queue_kwargs)
@@ -294,7 +296,7 @@ def run_poppunk_internal(sketches: dict,
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,
                                   fs,
-                                  db_fs,
+                                  full_db_fs,
                                   args,
                                   name_mapping,
                                   species),
@@ -303,16 +305,21 @@ def run_poppunk_internal(sketches: dict,
     # microreact
     # delete all previous microreact cluster job results for this project
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(p_hash,
-                                     fs,
-                                     db_fs,
-                                     args,
-                                     name_mapping,
-                                     species,
-                                     redis_host,
-                                     queue_kwargs),
-                               depends_on=job_network, **queue_kwargs)
+    job_microreact = q.enqueue(
+        visualise.microreact,
+        args=(
+            p_hash,
+            fs,
+            full_db_fs,
+            args,
+            name_mapping,
+            species,
+            redis_host,
+            queue_kwargs,
+        ),
+        depends_on=Dependency([job_assign, job_network], allow_failure=True),
+        **queue_kwargs,
+    )
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     return jsonify(
         response_success(
@@ -394,7 +401,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
 
 
 @app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
-def get_network_graph(p_hash) -> json:
+def get_network_graphs(p_hash) -> json:
     """
     [returns all network graphml files for a given project hash]
 
@@ -404,28 +411,42 @@ def get_network_graph(p_hash) -> json:
     fs = PoppunkFileStore(storage_location)
     try:
         cluster_result = get_clusters_internal(p_hash, storage_location)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
         graphmls = {}
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
-            component = \
-                cluster_component_mapping[get_cluster_num(cluster)]
-            path = fs.network_output_component(p_hash, component)
-            with open(path, 'r') as graphml_file:
+            path = fs.network_output_component(
+                p_hash, get_cluster_num(cluster)
+            )
+            with open(path, "r") as graphml_file:
                 graph = graphml_file.read()
             graphmls[cluster] = graph
         return jsonify(response_success(graphmls))
-    except (KeyError):
-        f = jsonify(error=response_failure({
-                "error": "Cluster not found",
-                "detail": "Cluster not found"
-                })), 500
+
+    except KeyError:
+        f = (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "Cluster not found",
+                        "detail": "Cluster not found",
+                    }
+                )
+            ),
+            500,
+        )
+
     except FileNotFoundError:
-        return jsonify(error=response_failure({
-            "error": "File not found",
-            "detail": "GraphML files not found"
-        })), 404
+        return (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "File not found",
+                        "detail": "GraphML files not found",
+                    }
+                )
+            ),
+            404,
+        )
 
 
 # get job result

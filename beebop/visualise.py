@@ -1,10 +1,9 @@
 from rq import get_current_job, Queue
+from rq.job import Dependency
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import generate_mapping, delete_component_files
 from beebop.utils import replace_filehashes, add_query_ref_status
 from beebop.utils import get_cluster_num
-from beebop.utils import cluster_nums_from_assign
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 
@@ -40,6 +39,7 @@ def microreact(
     redis = Redis(host=redis_host)
     # get results from previous job
     current_job = get_current_job(redis)
+    # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters = None
 
@@ -93,6 +93,11 @@ def queue_microreact_jobs(
     queries_clusters = [item["cluster"] for item in assign_result.values()]
     previous_job = None
     for assign_cluster in set(queries_clusters):
+        dependency = (
+            Dependency(previous_job, allow_failure=True)
+            if previous_job
+            else None
+        )
         cluster_microreact_job = q.enqueue(
             microreact_per_cluster,
             args=(
@@ -103,7 +108,7 @@ def queue_microreact_jobs(
                 name_mapping,
                 external_to_poppunk_clusters,
             ),
-            depends_on=previous_job,
+            depends_on=dependency,
             **queue_kwargs,
         )
 
@@ -159,7 +164,7 @@ def network(
     """
     [Generate files to draw a network.
     Output files are .csv and .graphml (one overall and several component
-    files, those that are not relevant for us get deleted).
+    files).
     Since network component number and poppunk cluster number do not
     match, we need to generate a mapping to find the right component files.
     To highlight query samples in the network graph, a ref or query status is
@@ -178,13 +183,12 @@ def network(
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
     network_internal(
-        assign_result, p_hash, fs, db_fs, args, name_mapping, species
+        p_hash, fs, db_fs, args, name_mapping, species
     )
     return assign_result
 
 
 def network_internal(
-    assign_result,
     p_hash,
     fs,
     db_fs: DatabaseFileStore,
@@ -193,10 +197,8 @@ def network_internal(
     species: str,
 ) -> None:
     """
-    :param assign_result: [result from assign_clusters() to get all cluster
-        numbers that include query samples]
     :param p_hash: [project hash to find input data (output from
-        assign_clusters)]
+        assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
     :param db_fs: [DatabaseFileStore with paths to db files]
     :param args: [arguments for poppunk functions]
@@ -207,11 +209,5 @@ def network_internal(
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()
 
-    cluster_nums_to_map = cluster_nums_from_assign(assign_result)
-    cluster_component_dict = generate_mapping(
-        p_hash, cluster_nums_to_map, fs, db_fs.external_clustering
-    )
-
-    delete_component_files(cluster_component_dict, fs, assign_result, p_hash)
     replace_filehashes(fs.output_network(p_hash), name_mapping)
     add_query_ref_status(fs, p_hash, name_mapping)

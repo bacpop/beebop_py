@@ -1,14 +1,11 @@
 from types import SimpleNamespace
 import json
-import csv
 import xml.etree.ElementTree as ET
-import fnmatch
 import os
 import re
-import pickle
 import fileinput
 import glob
-
+import pandas as pd
 from beebop.filestore import PoppunkFileStore
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
@@ -29,116 +26,6 @@ def get_args() -> SimpleNamespace:
 
 
 NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
-
-
-def generate_mapping(
-    p_hash: str,
-    cluster_nums_to_map: list,
-    fs: PoppunkFileStore,
-    is_external_clusters: bool,
-) -> dict:
-    """
-    [PopPUNKs network visualisation generates one overall .graphml file
-    covering all clusters/ components. Furthermore, it generates one .graphml
-    file per component, where the component numbers are arbitrary and do not
-    match poppunk cluster numbers.
-    To find the right component file by cluster number, we need to generate
-    a mapping to be able to return the right component number based on cluster
-    number. This function will generate that mapping by looking up the first
-    filename from each component file in the csv file that holds all filenames
-    and their corresponding clusters.]
-
-    :param p_hash: [project hash]
-    :param cluster_nums_to_map: [clusters of interest for this project -
-        skip all other clusters]
-    :param fs: [PoppunkFileStore with paths to input data]
-    :param is_external_clusters: [The species has available external clusters]
-    :return dict: [dict that maps clusters to components]
-    """
-    samples_to_clusters = {}
-    with open(fs.network_output_csv(p_hash)) as f:
-        next(f)  # Skip the header
-        reader = csv.reader(f, skipinitialspace=True)
-        for row in reader:
-            sample_id, sample_clusters = row
-            cluster = (
-                str(get_lowest_cluster(sample_clusters))
-                if is_external_clusters
-                else str(sample_clusters)
-            )
-            if cluster in cluster_nums_to_map:
-                samples_to_clusters[sample_id] = cluster
-
-    # list of all component graph filenames
-    file_list = []
-    for file in os.listdir(fs.output_network(p_hash)):
-        if fnmatch.fnmatch(file, "network_component_*.graphml"):
-            file_list.append(file)
-
-    # generate dict that maps cluster number to component number
-    cluster_component_dict = match_clusters_to_components(
-        p_hash, fs, file_list, samples_to_clusters
-    )
-
-    # save as pickle
-    with open(fs.network_mapping(p_hash), "wb") as mapping:
-        pickle.dump(cluster_component_dict, mapping)
-    return cluster_component_dict
-
-
-def match_clusters_to_components(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    file_list: list,
-    samples_to_clusters: dict,
-) -> dict:
-    """
-    [Generate a dictionary mapping clusters to network components based on
-    matching their shared samples]
-    :param p_hash: [project hash]
-    :param fs: [project filestore]
-    :param file_list: [list of network component files]
-    :param samples_to_clusters: [dict of sample ids to cluster labels]
-    :return dict: [dict of cluster labels to network component numbers]
-    """
-    cluster_component_dict = {}
-    # Match each cluster with the component with which it shares the most
-    # samples - keep a tally on how many matches the current winner has
-    # TODO: Really, PopPUNK should only return one component per sample,
-    # which should match the corresponding cluster - this appears to be
-    # an issue with PopPUNK. Simplify this logic when this is fixed
-    # in PopPUNK.
-    cluster_sample_counts = {}
-    for component_filename in file_list:
-        component_number = re.findall(R"\d+", component_filename)[0]
-        component_xml = ET.parse(
-            fs.network_output_component(p_hash, component_number)
-        ).getroot()
-        sample_nodes = component_xml.findall(NODE_SCHEMA)
-        component_cluster_counts = {}
-        # for every sample in the component, increment its cluster's
-        # count in component_cluster_counts
-        for sample_node in sample_nodes:
-            sample_id = sample_node.text
-            if sample_id in samples_to_clusters.keys():
-                cluster = samples_to_clusters[sample_id]
-                if cluster not in component_cluster_counts.keys():
-                    component_cluster_counts[cluster] = 0
-                component_cluster_counts[cluster] += 1
-
-        # For every cluster we have samples for in this component
-        # update the cluster component mapping, if this component
-        # has more matching samples than the current value (or
-        # if this is the first matching component)
-        for cluster, count in component_cluster_counts.items():
-            if (
-                cluster not in cluster_sample_counts.keys()
-                or count > cluster_sample_counts[cluster]
-            ):
-                cluster_component_dict[cluster] = component_number
-                cluster_sample_counts[cluster] = count
-
-    return cluster_component_dict
 
 
 def get_cluster_num(cluster: str) -> str:
@@ -166,40 +53,6 @@ def cluster_nums_from_assign(assign_result: dict) -> list:
     return list(result)
 
 
-def delete_component_files(
-    cluster_component_dict: dict,
-    fs: PoppunkFileStore,
-    assign_result: dict,
-    p_hash: str,
-) -> None:
-    """
-    [poppunk generates >1100 component graph files. We only need to store those
-    files from the clusters our queries belong to.]
-
-    :param cluster_component_dict: [dictionary that maps cluster number
-        to component number]
-    :param fs: [PoppunkFilestore with paths to component files]
-    :param assign_result: [result from clustering, needed here to define
-        which clusters we want to keep]
-    :param p_hash: [project hash]
-    """
-    components = []
-    for cluster_no in cluster_nums_from_assign(assign_result):
-        components.append(cluster_component_dict[cluster_no])
-
-    # delete redundant component files
-    keep_filenames = list(
-        map(lambda x: f"network_component_{x}.graphml", components)
-    )
-    keep_filenames.append("network_cytoscape.csv")
-    keep_filenames.append("network_cytoscape.graphml")
-    keep_filenames.append("cluster_component_dict.pickle")
-    dir = fs.output_network(p_hash)
-    # remove files not in keep_filenames
-    for item in list(set(os.listdir(dir)) - set(keep_filenames)):
-        os.remove(os.path.join(dir, item))
-
-
 def replace_filehashes(folder: str, filename_dict: dict) -> None:
     """
     [Since the analyses run with filehashes rather than filenames (because we
@@ -214,9 +67,9 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
         corresponding filenames (values) of all query samples.]
     """
     file_list = []
-    for root, dirs, files in os.walk(folder):
+    for root, _dirs, files in os.walk(folder):
         for file in files:
-            if file != "cluster_component_dict.pickle":
+            if not file.endswith(".h5"):
                 file_list.append(os.path.join(root, file))
     with fileinput.input(files=(file_list), inplace=True) as input:
         for line in input:
@@ -285,45 +138,81 @@ def get_external_clusters_from_file(
     previous_query_clustering_file: str,
     hashes_list: list,
     external_clusters_prefix: str,
-) -> dict:
+) -> tuple[dict[str, str], list[str]]:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
     file and returns a dictionary of sample hash to external cluster name. If
     there are multiple external clusters listed for a sample, the lowest
-    cluster number is returned]
+    cluster number is returned. If any samples are found but do  not
+    have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return dict: [dict of sample hash to lowest numbered-cluster for that
-        sample]
+    :return tuple: [dictionary of sample hash to external cluster name,
+        list of sample hashes that were not found]
     """
-    # copy hashes list to keep track of hashes we still need to find samples
-    # for
-    remaining_hashes = hashes_list[:]
-    result = {}
-    with open(previous_query_clustering_file) as f:
-        reader = csv.reader(f, delimiter=",")
-        for row in reader:
-            # We expect two columns in the external clusters csv: the
-            # first contains the sample id (which will be the hash in
-            # the case of our uploaded samples), and the second contains
-            # all the external cluster numbers for the sample, separated
-            # by semicolons
-            sample_id = row[0]
-            if sample_id in remaining_hashes:
-                # Add lowest numeric cluster to dictionary
-                if len(row) > 1:
-                    cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = (
-                        f"{external_clusters_prefix}{cluster_no}"
-                    )
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, hashes_list
+    )
+    filtered_df = df[samples_mask]
 
-                # Remove sample id from remaining hashes to find
-                remaining_hashes.remove(sample_id)
+    # Split into found and not found based on NaN values
+    found_mask = filtered_df["Cluster"].notna()
+    not_found_hashes = filtered_df[~found_mask]["sample"].tolist()
 
-                # Break if no hashes left to find
-                if len(remaining_hashes) == 0:
-                    break
-    return result
+    # Process only rows with valid clusters
+    valid_clusters = filtered_df[found_mask]
+    cluster_numbers = valid_clusters["Cluster"].apply(get_lowest_cluster)
+
+    hash_to_cluster_mapping = (
+        external_clusters_prefix + cluster_numbers.astype(str)
+    )
+    hash_to_cluster_mapping.index = valid_clusters["sample"]
+
+    return hash_to_cluster_mapping.to_dict(), not_found_hashes
+
+
+def update_external_clusters_csv(
+    previous_query_clustering_file: str,
+    q_names: list,
+    external_clusters_to_update: dict,
+) -> None:
+    """
+    [Update the external clusters CSV file with the clusters of the samples
+    that were not found in the external clusters file.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param q_names: [List of sample names
+    that were not
+    found in the external clusters file]
+    :param external_clusters_to_update: [Dictionary mapping
+    sample names to external cluster names]
+    """
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, q_names
+    )
+    df.loc[samples_mask, "Cluster"] = [
+        get_cluster_num(external_clusters_to_update[sample_id])
+        for sample_id in q_names
+    ]
+    df.to_csv(previous_query_clustering_file, index=False)
+
+
+def get_df_sample_mask(
+    previous_query_clustering_file: str, samples: str
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Read a CSV file and create a boolean mask for matching sample names.
+
+    :param previous_query_clustering_file: [Path to CSV file
+        containing sample data
+        samples: List of sample names to match]
+    :param samples: [List of sample names to match]
+    :return tuple: [DataFrame containing sample data,
+        boolean mask for matching samples]
+    """
+    df = pd.read_csv(previous_query_clustering_file, dtype=str)
+    return df, df["sample"].isin(samples)

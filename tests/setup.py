@@ -39,11 +39,11 @@ name_mapping = {
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
 
-db_fs = DatabaseFileStore('./storage/dbs/GPS_v8_ref',
-                          "GPS_v8_external_clusters.csv")
+db_fs = DatabaseFileStore('./storage/dbs/GPS_v9_ref',
+                          "GPS_v9_external_clusters.csv")
 args = get_args()
 species = "Streptococcus pneumoniae"
-species_db_name = "GPS_v8_ref"
+species_db_name = "GPS_v9_ref"
 
 
 def do_assign_clusters(p_hash: str):
@@ -57,14 +57,14 @@ def do_assign_clusters(p_hash: str):
         p_hash,
         fs,
         db_fs,
+        db_fs,
         args,
         species)
 
 
 def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
-    visualise.network_internal(expected_assign_result,
-                               p_hash,
+    visualise.network_internal(p_hash,
                                fs,
                                db_fs,
                                args,

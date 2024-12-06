@@ -71,17 +71,20 @@ def test_run_poppunk_pneumo(client, qtbot):
     qtbot.waitUntil(microreact_status_finished, timeout=100000)
     assert os.path.exists(storage + p_hash +
                           "/microreact_3/microreact_3_core_NJ.nwk")
+    assert os.path.exists(storage + p_hash +
+                          "/microreact_3/microreact_3_core_NJ.nwk")
 
     def network_status_finished():
         status = client.get("/status/" + p_hash)
         assert read_data(status)['network'] == 'finished'
 
     qtbot.waitUntil(network_status_finished, timeout=100000)
-    assert os.path.exists(storage + p_hash +
-                          "/network/network_cytoscape.graphml")
-    assert os.path.exists(storage + p_hash +
-                          "/network/cluster_component_dict.pickle")
-
+    assert os.path.exists(
+        storage + p_hash + "/network/network_component_3.graphml"
+    )
+    assert os.path.exists(
+        storage + p_hash + "/network/network_component_60.graphml"
+    )
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
@@ -147,9 +150,8 @@ def test_results_zip(client):
         'projectHash': p_hash,
         'cluster': 'GPSC1',
         'type': type})
-    assert 'network_component_38.graphml'.encode('utf-8') in response.data
+    assert 'network_component_1.graphml'.encode('utf-8') in response.data
     assert 'network_cytoscape.csv'.encode('utf-8') in response.data
-    assert 'network_cytoscape.graphml'.encode('utf-8') in response.data
 
 
 def test_get_network_graphs(client):
@@ -231,11 +233,9 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
         assert read_data(status)["network"] == "finished"
 
     qtbot.waitUntil(network_status_finished, timeout=100000)
+
     assert os.path.exists(
-        output_folder + p_hash + "/network/network_cytoscape.graphml"
-    )
-    assert os.path.exists(
-        output_folder + p_hash + "/network/cluster_component_dict.pickle"
+        output_folder + p_hash + "/network/network_component_18.graphml"
     )
 
     # check can load project data from client
