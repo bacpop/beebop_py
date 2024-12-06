@@ -196,8 +196,10 @@ def handle_external_clusters(
         config.external_clusters_prefix,
     )
     if not_found_query_names:
-        queries_names, queries_clusters, not_found_query_clusters = filter_queries(
-            queries_names, queries_clusters, not_found_query_names
+        queries_names, queries_clusters, not_found_query_clusters = (
+            filter_queries(
+                queries_names, queries_clusters, not_found_query_names
+            )
         )
         output_full_tmp = config.fs.output_tmp(config.p_hash)
         not_found_query_names_new, not_found_query_clusters_new = (
@@ -241,15 +243,19 @@ def handle_not_found_queries(
     """
     [Handles queries that were not found in the
     initial external clusters file.
-    This function processes the sketches of the queries that were not found for external clusters from the reference db,
-    assigns clusters to them from the full db, and then summarizes the clusters. It also
+    This function processes the sketches of the queries that were not found
+    for external clusters from the reference db,
+    assigns clusters to them from the full db, and then
+    summarizes the clusters. It also
     handles all file manipulations needed]
 
     :param config: [ClusteringConfig with all necessary information]
-    :param sketches_dict: [dictionary with filehash (key) and sketch (value)]
+    :param sketches_dict: [dictionary
+        with filehash (key) and sketch (value)]
     :param not_found_query_names: [list of sample hashes that were not found]
     :param output_full_tmp: [path to temporary output directory]
-    :param not_found_query_clusters: [set of clusters assigned to initial not found samples]
+    :param not_found_query_clusters: [set of clusters assigned to
+        initial not found samples]
     :return tuple[list, list]: [list initial not found sample hashes,
         list of clusters assigned to initial not found samples]
     """
@@ -280,6 +286,7 @@ def handle_not_found_queries(
 
     return query_names, query_clusters
 
+
 def handle_files_manipulation(
     config: ClusteringConfig,
     output_full_tmp: str,
@@ -288,13 +295,16 @@ def handle_files_manipulation(
     """
     [Handles file manipulations for queries that were not found in the
     initial external clusters file.
-    This function copies include files from the full assign output directory
-    to the output directory, deletes include files for queries that were not found,
+    This function copies include files from the
+    full assign output directory
+    to the output directory, deletes include files for queries
+    that were not found,
     and merges the partial query graph files.]
-    
+
     :param config: [ClusteringConfig with all necessary information]
     :param output_full_tmp: [path to temporary output directory]
-    :param not_found_query_clusters: [set of clusters assigned to initial not found samples]
+    :param not_found_query_clusters: [set of clusters assigned
+        to initial not found samples]
     """
     delete_include_files(
         config.fs,
@@ -302,7 +312,11 @@ def handle_files_manipulation(
         not_found_query_clusters,
     )
     copy_include_files(output_full_tmp, config.out_dir)
-    merge_txt_files(config.fs.partial_query_graph(config.p_hash), config.fs.partial_query_graph_tmp(config.p_hash))
+    merge_txt_files(
+        config.fs.partial_query_graph(config.p_hash),
+        config.fs.partial_query_graph_tmp(config.p_hash),
+    )
+
 
 def update_external_clusters(
     config: ClusteringConfig,
@@ -316,8 +330,10 @@ def update_external_clusters(
     using the full database.
     This function reads the external clusters from the
     new previous query clustering file
-    and updates the initial external clusters file on ref db with the clusters for samples
-    that were initially not found, and have now been assigned by the current query with the full database.]
+    and updates the initial external clusters
+    file on ref db with the clusters for samples
+    that were initially not found, and have now been
+    assigned by the current query with the full database.]
 
     :param config: [ClusteringConfig
         with all necessary information]
@@ -399,10 +415,11 @@ def filter_queries(
 
     :param queries_names: [list of sample hashes]
     :param queries_clusters: [list of sample PopPUNK clusters]
-    :param not_found: [list of sample hashes that were not found]
-    :param config: [ClusteringConfig with all necessary information]
+    :param not_found: [list of sample hashes
+        that were not found]
     :return tuple[list[str], list[str], set[str]]: [filtered sample hashes,
-        filtered sample PopPUNK clusters, set of clusters assigned to not found samples]
+        filtered sample PopPUNK clusters,
+            set of clusters assigned to not found samples]
     """
     filtered_names = [name for name in queries_names if name not in not_found]
     filtered_clusters = [
@@ -410,8 +427,12 @@ def filter_queries(
         for name, cluster in zip(queries_names, queries_clusters)
         if name not in not_found
     ]
-    
-    return filtered_names, filtered_clusters, set(queries_clusters) - set(filtered_clusters)
+
+    return (
+        filtered_names,
+        filtered_clusters,
+        set(queries_clusters) - set(filtered_clusters),
+    )
 
 
 def delete_include_files(

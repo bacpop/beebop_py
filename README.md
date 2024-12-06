@@ -107,3 +107,24 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 ```
 TESTING=True poetry run pytest
 ```
+
+### Diagrams
+
+- There is a .drawio graph in the `diagrams` folder illustrating the process of running a analysis. This includes
+all the files created and how they are used in each job. You can open and view the diagram at [draw.io](https://draw.io).
+
+## Use/Deploy specific version of PopPUNK
+
+To use a specific version, commit or branch of PopPUNK in a beebop_py deployment, you can update `POPPUNK_VERSION` in `common`.
+
+The new dev images built with `/docker/build --with-dev` will have a *-dev* postfix.
+
+### Local Development
+
+You can build the image with `/docker/build --with-dev`, this new image can now be used by Beebop.
+
+### Deployment
+
+A pull request can be created so GHA pushes the images to the docker hub. Add `--with-dev` to the build & push commands `pipeline.yaml`.
+**Ensure to remove the `--with-dev` flag before merging the PR.**
+Then on the `beebop-deploy` the api image can be updated with the new dev image.
