@@ -227,7 +227,10 @@ class DatabaseFileStore:
     Filestore that provides paths to the database
     """
     def __init__(
-        self, full_path: str, external_clusters_file: Optional[str] = None
+        self,
+        full_path: str,
+        external_clusters_file: Optional[str] = None,
+        db_metadata_file: Optional[str] = None,
     ):
         """
         :param full_path: [path to database]
@@ -242,5 +245,10 @@ class DatabaseFileStore:
         self.external_clustering = (
             str(PurePath("beebop", "resources", external_clusters_file))
             if external_clusters_file
+            else None
+        )
+        self.metadata = (
+            str(PurePath("beebop", "resources", db_metadata_file))
+            if db_metadata_file
             else None
         )
