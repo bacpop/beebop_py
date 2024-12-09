@@ -256,6 +256,7 @@ def run_poppunk_internal(sketches: dict,
     full_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.fulldb}",
         species_args.external_clusters_file,
+        species_args.db_metadata_file,
     )
 
     # store json sketches in storage, and store an initial output_cluster file
