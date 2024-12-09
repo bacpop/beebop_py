@@ -101,7 +101,7 @@ class PoppunkWrapper:
             previous_distances=None,
             network_file=self.fs.network_file(self.p_hash),
             gpu_graph=self.args.visualise.gpu_graph,
-            info_csv=self.args.visualise.info_csv,
+            info_csv=self.db_fs.metadata,
             rapidnj=shutil.which('rapidnj'),
             api_key=None,
             tree=self.args.visualise.tree,
