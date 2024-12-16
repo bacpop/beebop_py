@@ -23,4 +23,4 @@ jobs:
       - name: Build docker image
         run: ./docker/build --with-dev # TODO: remove --with-dev before merge
       - name: Push docker image
-        run: ./docker/push 
+        run: ./docker/push --with-dev # TODO: remove --with-dev before merge
