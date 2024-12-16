@@ -412,7 +412,7 @@ def get_network_graphs(p_hash) -> json:
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        cluster_result = get_clusters_internal(p_hash, storage_location)
+        cluster_result = get_cluster_assignments(p_hash, storage_location)
         graphmls = {}
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
@@ -496,9 +496,9 @@ def get_results(result_type) -> json:
                                                 storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location: str) -> dict:
+def get_cluster_assignments(p_hash: str, storage_location: str) -> dict:
     """
-    [returns cluster assignment results ]
+    [returns cluster assignment results]
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
@@ -518,7 +518,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     :param storage_location: [storage location]
     :return json: [response object with cluster results stored in 'data']
     """
-    cluster_result = get_clusters_internal(p_hash, storage_location)
+    cluster_result = get_cluster_assignments(p_hash, storage_location)
     cluster_dict = {value['hash']: value for value in cluster_result.values()}
     failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
@@ -622,7 +622,7 @@ def get_project(p_hash) -> json:
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
-        clusters_result = get_clusters_internal(p_hash, storage_location)
+        clusters_result = get_cluster_assignments(p_hash, storage_location)
         failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
         fs = PoppunkFileStore(storage_location)
