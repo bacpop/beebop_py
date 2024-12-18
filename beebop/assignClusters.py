@@ -208,7 +208,7 @@ def handle_external_clusters(
                 sketches_dict,
                 not_found_query_names,
                 output_full_tmp,
-                not_found_query_clusters
+                not_found_query_clusters,
             )
         )
         queries_names.extend(not_found_query_names_new)
@@ -269,13 +269,11 @@ def handle_not_found_queries(
     assign_query_clusters(
         config, config.full_db_fs, not_found_query_names, output_full_tmp
     )
-    query_names, query_clusters, _, _, _, _, _ = (
-        summarise_clusters(
-            output_full_tmp,
-            config.species,
-            config.full_db_fs.db,
-            not_found_query_names,
-        )
+    query_names, query_clusters, _, _, _, _, _ = summarise_clusters(
+        output_full_tmp,
+        config.species,
+        config.full_db_fs.db,
+        not_found_query_names,
     )
 
     handle_files_manipulation(
@@ -347,15 +345,17 @@ def update_external_clusters(
     not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(
         config.p_hash
     )
+
+    update_external_clusters_csv(
+        previous_query_clustering,
+        not_found_prev_querying,
+        not_found_query_names,
+    )
+    
     external_clusters_not_found, _ = get_external_clusters_from_file(
         not_found_prev_querying,
         not_found_query_names,
         config.external_clusters_prefix,
-    )
-    update_external_clusters_csv(
-        previous_query_clustering,
-        not_found_query_names,
-        external_clusters_not_found,
     )
     external_clusters.update(external_clusters_not_found)
 
@@ -399,9 +399,7 @@ def copy_include_files(output_full_tmp: str, outdir: str) -> None:
             merge_txt_files(dest_file, source_file)
             os.remove(source_file)
         else:
-            os.rename(
-                source_file, dest_file
-            )
+            os.rename(source_file, dest_file)
 
 
 def filter_queries(

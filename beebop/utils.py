@@ -84,10 +84,10 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
 
 
 def create_subgraphs(
-    fs: PoppunkFileStore, p_hash: str, filename_dict: dict
+    network_folder: str, filename_dict: dict
 ) -> None:
     """
-    [Create subgraphs for the network visualisation. These are what 
+    [Create subgraphs for the network visualisation. These are what
     will be sent back to the user to see.
     The subgraphs are created
     by selecting a maximum number nodes, prioritizing query nodes and adding
@@ -95,18 +95,14 @@ def create_subgraphs(
     nodes are highlighted in the network graph by adding a ref or query status
     to the .graphml files.]
 
-    :param fs: [filestore to locate output files]
-    :param p_hash: [project hash to find right project folder]
+    :param network_folder: [path to the network folder]
     :param filename_dict: [dict that maps filehashes(keys) toclear
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
     """
     query_names = list(filename_dict.values())
-    file_list = glob.glob(
-        fs.output_network(p_hash) + "/network_component_*.graphml"
-    )
 
-    for path in file_list:
+    for path in get_component_filenames(network_folder):
         SubGraph = build_subgraph(path, query_names)
 
         add_query_ref_to_graph(SubGraph, query_names)
@@ -116,16 +112,25 @@ def create_subgraphs(
             path.replace("network_component", "pruned_network_component"),
         )
 
+def get_component_filenames(network_folder: str) -> list[str]:
+    """
+    [Get all network component filenames in the network folder.]
+
+    :param network_folder: [path to the network folder]
+    :return list: [list of all network component filenames]
+    """
+    return glob.glob(network_folder + "/network_component_*.graphml")
+
 def build_subgraph(path: str, query_names: list) -> nx.Graph:
     """
     [Build a subgraph from a network graph, prioritizing query nodes and
     adding neighbor nodes until the maximum number of nodes is reached.]
-    
+
     :param path: [path to the network graph]
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 30 # maximum number of nodes in the subgraph
+    MAX_NODES = 30  # maximum number of nodes in the subgraph
     Graph = nx.read_graphml(path)
 
     # get query nodes
@@ -152,6 +157,7 @@ def build_subgraph(path: str, query_names: list) -> nx.Graph:
 
     return Graph.subgraph(sub_graph_nodes)
 
+
 def add_query_ref_to_graph(graph: nx.Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
@@ -161,7 +167,7 @@ def add_query_ref_to_graph(graph: nx.Graph, query_names: list) -> None:
     this information must be added to the .graphml file.
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
-    
+
     :param graph: [networkx graph object]
     :param query_names: [list of query sample names]
     """
@@ -170,6 +176,7 @@ def add_query_ref_to_graph(graph: nx.Graph, query_names: list) -> None:
             graph.nodes[node]["ref_query"] = "query"
         else:
             graph.nodes[node]["ref_query"] = "ref"
+
 
 def get_lowest_cluster(clusters_str: str) -> int:
     """
@@ -183,6 +190,28 @@ def get_lowest_cluster(clusters_str: str) -> int:
     clusters = map(int, clusters_str.split(";"))
     return min(clusters)
 
+def replace_merged_component_filenames(network_folder: str) -> None:
+    """
+    [Replace the filenames of merged network components with the lowest
+    cluster number. These lowest numbers correspond to the external 
+    cluster we use/display]
+    
+    :param network_folder: [path to the network folder]
+    """
+    for file_path in get_component_filenames(network_folder):
+        if ";" in file_path:
+            filename = os.path.basename(file_path)
+            cluster_nums_str = re.search(r'network_component_([^.]+)\.graphml', filename).group(1) # extracts component string "1;2;3"
+            cluster_num = get_lowest_cluster(cluster_nums_str)  
+            
+            new_path = os.path.join(network_folder, f"network_component_{cluster_num}.graphml")
+            
+            # Handle potential file conflict
+            if not os.path.exists(new_path) or new_path == file_path:
+                os.rename(file_path, new_path)
+            else:
+                print(f"Warning: {new_path} already exists, skipping rename of {file_path}")
+    
 
 def get_external_clusters_from_file(
     previous_query_clustering_file: str,
@@ -224,10 +253,24 @@ def get_external_clusters_from_file(
     return hash_to_cluster_mapping.to_dict(), not_found_hashes
 
 
+def get_external_cluster_nums(
+    previous_query_clustering_file: str, hashes_list: list
+) -> dict[str, str]:
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, hashes_list
+    )
+    filtered_df = df[samples_mask]
+
+    sample_to_full_cluster_map = filtered_df["Cluster"].astype(str)
+    sample_to_full_cluster_map.index = filtered_df["sample"]
+
+    return sample_to_full_cluster_map.to_dict()
+
+
 def update_external_clusters_csv(
-    previous_query_clustering_file: str,
+    dest_query_clustering_file: str,
+    source_query_clustering_file: str,
     q_names: list,
-    external_clusters_to_update: dict,
 ) -> None:
     """
     [Update the external clusters CSV file with the clusters of the samples
@@ -242,13 +285,16 @@ def update_external_clusters_csv(
     sample names to external cluster names]
     """
     df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, q_names
+        dest_query_clustering_file, q_names
     )
+    sample_cluster_num_mapping = get_external_cluster_nums(
+        source_query_clustering_file, q_names
+    )
+    
     df.loc[samples_mask, "Cluster"] = [
-        get_cluster_num(external_clusters_to_update[sample_id])
-        for sample_id in q_names
+        sample_cluster_num_mapping[sample_id] for sample_id in q_names
     ]
-    df.to_csv(previous_query_clustering_file, index=False)
+    df.to_csv(dest_query_clustering_file, index=False)
 
 
 def get_df_sample_mask(

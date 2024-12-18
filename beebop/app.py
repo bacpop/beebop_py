@@ -88,7 +88,6 @@ def generate_zip(fs: PoppunkFileStore,
         path_folder = fs.output_microreact(p_hash, cluster_num)
         add_files(memory_file, path_folder)
     elif type == 'network':
-        # TODO: fix to get if file is like 909;1;2.. just get straight from csv file matched
         path_folder = fs.output_network(p_hash)
         file_list = (f'network_component_{cluster_num}.graphml',
                      'network_cytoscape.csv')

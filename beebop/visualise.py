@@ -2,7 +2,7 @@ from rq import get_current_job, Queue
 from rq.job import Dependency
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import replace_filehashes, create_subgraphs
+from beebop.utils import replace_filehashes, create_subgraphs, replace_merged_component_filenames
 from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
@@ -206,6 +206,8 @@ def network_internal(
     """
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
     wrapper.create_network()
-
-    replace_filehashes(fs.output_network(p_hash), name_mapping)
-    create_subgraphs(fs, p_hash, name_mapping)
+    
+    network_folder = fs.output_network(p_hash)
+    replace_merged_component_filenames(network_folder)
+    replace_filehashes(network_folder, name_mapping)
+    create_subgraphs(network_folder, name_mapping)
