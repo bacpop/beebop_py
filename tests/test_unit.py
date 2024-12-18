@@ -736,7 +736,7 @@ def test_add_query_ref_status():
         "filehash2": "filename2",
         "filehash3": "filename3",
     }
-    utils.add_query_ref_status(fs, p_hash, filename_dict)
+    utils.create_subgraphs(fs, p_hash, filename_dict)
     path = fs.network_output_component(p_hash, 5)
     print(path)
     xml = ET.parse(path)

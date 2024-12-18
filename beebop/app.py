@@ -416,7 +416,7 @@ def get_network_graphs(p_hash) -> json:
         graphmls = {}
         for cluster_info in cluster_result.values():
             cluster = cluster_info["cluster"]
-            path = fs.network_output_component(
+            path = fs.pruned_network_output_component(
                 p_hash, get_cluster_num(cluster)
             )
             with open(path, "r") as graphml_file:

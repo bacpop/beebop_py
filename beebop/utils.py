@@ -7,6 +7,7 @@ import fileinput
 import glob
 import pandas as pd
 from beebop.filestore import PoppunkFileStore
+import networkx as nx
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -82,9 +83,76 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def add_query_ref_status(
+def create_subgraphs(
     fs: PoppunkFileStore, p_hash: str, filename_dict: dict
 ) -> None:
+    """
+    [Create subgraphs for the network visualisation. These are what 
+    will be sent back to the user to see.
+    The subgraphs are created
+    by selecting a maximum number nodes, prioritizing query nodes and adding
+    neighbor nodes until the maximum number of nodes is reached. The query
+    nodes are highlighted in the network graph by adding a ref or query status
+    to the .graphml files.]
+
+    :param fs: [filestore to locate output files]
+    :param p_hash: [project hash to find right project folder]
+    :param filename_dict: [dict that maps filehashes(keys) toclear
+        corresponding filenames (values) of all query samples. We only need
+        the filenames here.]
+    """
+    query_names = list(filename_dict.values())
+    file_list = glob.glob(
+        fs.output_network(p_hash) + "/network_component_*.graphml"
+    )
+
+    for path in file_list:
+        SubGraph = build_subgraph(path, query_names)
+
+        add_query_ref_to_graph(SubGraph, query_names)
+
+        nx.write_graphml(
+            SubGraph,
+            path.replace("network_component", "pruned_network_component"),
+        )
+
+def build_subgraph(path: str, query_names: list) -> nx.Graph:
+    """
+    [Build a subgraph from a network graph, prioritizing query nodes and
+    adding neighbor nodes until the maximum number of nodes is reached.]
+    
+    :param path: [path to the network graph]
+    :param query_names: [list of query sample names]
+    :return nx.Graph: [subgraph]
+    """
+    MAX_NODES = 30 # maximum number of nodes in the subgraph
+    Graph = nx.read_graphml(path)
+
+    # get query nodes
+    query_nodes = {
+        node for (node, id) in Graph.nodes(data="id") if id in query_names
+    }
+
+    # get neighbor nodes of query nodes
+    neighbor_nodes = set()
+    for node in query_nodes:
+        neighbor_nodes.update(Graph.neighbors(node))
+
+    # remove query nodes from neighbor nodes
+    neighbor_nodes = neighbor_nodes - query_nodes
+
+    # create final set of nodes, prioritizing query nodes
+    sub_graph_nodes = set()
+    sub_graph_nodes.update(query_nodes)
+
+    # add neighbor nodes until we reach the maximum number of nodes
+    remaining_capacity = MAX_NODES - len(sub_graph_nodes)
+    if remaining_capacity > 0:
+        sub_graph_nodes.update(list(neighbor_nodes)[:remaining_capacity])
+
+    return Graph.subgraph(sub_graph_nodes)
+
+def add_query_ref_to_graph(graph: nx.Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -93,33 +161,15 @@ def add_query_ref_status(
     this information must be added to the .graphml file.
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
-
-    :param fs: [filestore to locate output files]
-    :param p_hash: [project hash to find right project folder]
-    :param filename_dict: [dict that maps filehashes(keys) toclear
-        corresponding filenames (values) of all query samples. We only need
-        the filenames here.]
+    
+    :param graph: [networkx graph object]
+    :param query_names: [list of query sample names]
     """
-    # list of query filenames
-    query_names = list(filename_dict.values())
-    # list of all component graph filenames
-    file_list = glob.glob(
-        fs.output_network(p_hash) + "/network_component_*.graphml"
-    )
-    for path in file_list:
-        xml_tree = ET.parse(path)
-        graph = xml_tree.getroot()
-        nodes = graph.findall(".//{http://graphml.graphdrawing.org/xmlns}node")
-        for node in nodes:
-            name = node.find("./").text
-            child = ET.Element("data")
-            child.set("key", "ref_query")
-            child.text = "query" if name in query_names else "ref"
-            node.append(child)
-        ET.indent(xml_tree, space="  ", level=0)
-        with open(path, "wb") as f:
-            xml_tree.write(f, encoding="utf-8")
-
+    for node, id in graph.nodes(data="id"):
+        if id in query_names:
+            graph.nodes[node]["ref_query"] = "query"
+        else:
+            graph.nodes[node]["ref_query"] = "ref"
 
 def get_lowest_cluster(clusters_str: str) -> int:
     """

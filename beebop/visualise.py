@@ -2,7 +2,7 @@ from rq import get_current_job, Queue
 from rq.job import Dependency
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import replace_filehashes, add_query_ref_status
+from beebop.utils import replace_filehashes, create_subgraphs
 from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
@@ -182,9 +182,7 @@ def network(
     # get results from previous job
     current_job = get_current_job(Redis())
     assign_result = current_job.dependency.result
-    network_internal(
-        p_hash, fs, db_fs, args, name_mapping, species
-    )
+    network_internal(p_hash, fs, db_fs, args, name_mapping, species)
     return assign_result
 
 
@@ -210,4 +208,4 @@ def network_internal(
     wrapper.create_network()
 
     replace_filehashes(fs.output_network(p_hash), name_mapping)
-    add_query_ref_status(fs, p_hash, name_mapping)
+    create_subgraphs(fs, p_hash, name_mapping)
