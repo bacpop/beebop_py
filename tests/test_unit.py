@@ -154,7 +154,7 @@ def test_microreact(mocker):
     visualise.microreact(
         p_hash,
         fs,
-        setup.db_fs,
+        setup.full_db_fs,
         args,
         setup.name_mapping,
         setup.species,
@@ -162,7 +162,7 @@ def test_microreact(mocker):
         {},
     )
 
-    time.sleep(30)  # wait for jobs to finish
+    time.sleep(60)  # wait for jobs to finish
 
     assert os.path.exists(
         fs.output_microreact(p_hash, 16) + "/microreact_16_core_NJ.nwk"
@@ -267,7 +267,7 @@ def test_network(mocker):
 
     setup.do_assign_clusters(p_hash)
     visualise.network(
-        p_hash, fs, setup.db_fs, args, setup.name_mapping, setup.species
+        p_hash, fs, setup.full_db_fs, args, setup.name_mapping, setup.species
     )
 
     for cluster in external_to_poppunk_clusters.keys():
@@ -624,15 +624,16 @@ def test_send_zip_internal(client):
         filename2 = "microreact_24_perplexity20.0_accessory_mandrake.dot"
         assert filename1.encode("utf-8") in response.data
         assert filename2.encode("utf-8") in response.data
+        
         project_hash = "test_network_zip"
-        cluster = "GPSC1"
+        cluster = "GPSC38"
         type = "network"
         response = app.send_zip_internal(
             project_hash, type, cluster, storage_location
         )
         response.direct_passthrough = False
         assert "network_cytoscape.csv".encode("utf-8") in response.data
-        assert "network_component_1.graphml".encode("utf-8") in response.data
+        assert "network_component_38.graphml".encode("utf-8") in response.data
 
 
 def test_hex_to_decimal():
