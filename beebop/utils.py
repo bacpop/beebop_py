@@ -7,6 +7,7 @@ import fileinput
 import glob
 import pandas as pd
 from beebop.filestore import PoppunkFileStore
+from networkx import read_graphml, write_graphml, Graph
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -82,9 +83,82 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def add_query_ref_status(
-    fs: PoppunkFileStore, p_hash: str, filename_dict: dict
-) -> None:
+def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
+    """
+    [Create subgraphs for the network visualisation. These are what
+    will be sent back to the user to see.
+    The subgraphs are created
+    by selecting a maximum number nodes, prioritizing query nodes and adding
+    neighbor nodes until the maximum number of nodes is reached. The query
+    nodes are highlighted in the network graph by adding a ref or query status
+    to the .graphml files.]
+
+    :param network_folder: [path to the network folder]
+    :param filename_dict: [dict that maps filehashes(keys) toclear
+        corresponding filenames (values) of all query samples. We only need
+        the filenames here.]
+    """
+    query_names = list(filename_dict.values())
+
+    for path in get_component_filenames(network_folder):
+        SubGraph = build_subgraph(path, query_names)
+
+        add_query_ref_to_graph(SubGraph, query_names)
+
+        write_graphml(
+            SubGraph,
+            path.replace("network_component", "pruned_network_component"),
+        )
+
+
+def get_component_filenames(network_folder: str) -> list[str]:
+    """
+    [Get all network component filenames in the network folder.]
+
+    :param network_folder: [path to the network folder]
+    :return list: [list of all network component filenames]
+    """
+    return glob.glob(network_folder + "/network_component_*.graphml")
+
+
+def build_subgraph(path: str, query_names: list) -> Graph:
+    """
+    [Build a subgraph from a network graph, prioritizing query nodes and
+    adding neighbor nodes until the maximum number of nodes is reached.]
+
+    :param path: [path to the network graph]
+    :param query_names: [list of query sample names]
+    :return nx.Graph: [subgraph]
+    """
+    MAX_NODES = 30  # arbitrary number based on performance
+    Graph = read_graphml(path)
+
+    # get query nodes
+    query_nodes = {
+        node for (node, id) in Graph.nodes(data="id") if id in query_names
+    }
+
+    # get neighbor nodes of query nodes
+    neighbor_nodes = set()
+    for node in query_nodes:
+        neighbor_nodes.update(Graph.neighbors(node))
+
+    # remove query nodes from neighbor nodes
+    neighbor_nodes = neighbor_nodes - query_nodes
+
+    # create final set of nodes, prioritizing query nodes
+    sub_graph_nodes = set()
+    sub_graph_nodes.update(query_nodes)
+
+    # add neighbor nodes until we reach the maximum number of nodes
+    remaining_capacity = MAX_NODES - len(sub_graph_nodes)
+    if remaining_capacity > 0:
+        sub_graph_nodes.update(list(neighbor_nodes)[:remaining_capacity])
+
+    return Graph.subgraph(sub_graph_nodes)
+
+
+def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -94,31 +168,14 @@ def add_query_ref_status(
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
 
-    :param fs: [filestore to locate output files]
-    :param p_hash: [project hash to find right project folder]
-    :param filename_dict: [dict that maps filehashes(keys) toclear
-        corresponding filenames (values) of all query samples. We only need
-        the filenames here.]
+    :param graph: [networkx graph object]
+    :param query_names: [list of query sample names]
     """
-    # list of query filenames
-    query_names = list(filename_dict.values())
-    # list of all component graph filenames
-    file_list = glob.glob(
-        fs.output_network(p_hash) + "/network_component_*.graphml"
-    )
-    for path in file_list:
-        xml_tree = ET.parse(path)
-        graph = xml_tree.getroot()
-        nodes = graph.findall(".//{http://graphml.graphdrawing.org/xmlns}node")
-        for node in nodes:
-            name = node.find("./").text
-            child = ET.Element("data")
-            child.set("key", "ref_query")
-            child.text = "query" if name in query_names else "ref"
-            node.append(child)
-        ET.indent(xml_tree, space="  ", level=0)
-        with open(path, "wb") as f:
-            xml_tree.write(f, encoding="utf-8")
+    for node, id in graph.nodes(data="id"):
+        if id in query_names:
+            graph.nodes[node]["ref_query"] = "query"
+        else:
+            graph.nodes[node]["ref_query"] = "ref"
 
 
 def get_lowest_cluster(clusters_str: str) -> int:
@@ -132,6 +189,38 @@ def get_lowest_cluster(clusters_str: str) -> int:
     """
     clusters = map(int, clusters_str.split(";"))
     return min(clusters)
+
+
+def replace_merged_component_filenames(network_folder: str) -> None:
+    """
+    [Replace the filenames of merged network components with the lowest
+    cluster number. These lowest numbers correspond to the external
+    cluster we use/display]
+
+    :param network_folder: [path to the network folder]
+    """
+    for file_path in get_component_filenames(network_folder):
+        if ";" in file_path:
+            filename = os.path.basename(file_path)
+            cluster_nums_str = re.search(
+                r"network_component_([^.]+)\.graphml", filename
+            ).group(
+                1
+            )  # extracts component string "1;2;3"
+            cluster_num = get_lowest_cluster(cluster_nums_str)
+
+            new_path = os.path.join(
+                network_folder, f"network_component_{cluster_num}.graphml"
+            )
+
+            # Handle potential file conflict
+            if not os.path.exists(new_path) or new_path == file_path:
+                os.rename(file_path, new_path)
+            else:
+                print(
+                    "Warning: " + f"{new_path} already exists, "
+                    f"skipping rename of {file_path}"
+                )
 
 
 def get_external_clusters_from_file(
@@ -153,10 +242,9 @@ def get_external_clusters_from_file(
     :return tuple: [dictionary of sample hash to external cluster name,
         list of sample hashes that were not found]
     """
-    df, samples_mask = get_df_sample_mask(
+    filtered_df = get_df_filtered_by_samples(
         previous_query_clustering_file, hashes_list
     )
-    filtered_df = df[samples_mask]
 
     # Split into found and not found based on NaN values
     found_mask = filtered_df["Cluster"].notna()
@@ -174,31 +262,69 @@ def get_external_clusters_from_file(
     return hash_to_cluster_mapping.to_dict(), not_found_hashes
 
 
+def get_external_cluster_nums(
+    previous_query_clustering_file: str, hashes_list: list
+) -> dict[str, str]:
+    """
+    [Get external cluster numbers for samples in the external clusters file.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return dict: [Dictionary mapping sample names to external cluster names]
+    """
+    filtered_df = get_df_filtered_by_samples(
+        previous_query_clustering_file, hashes_list
+    )
+
+    sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
+    sample_cluster_num_mapping.index = filtered_df["sample"]
+
+    return sample_cluster_num_mapping.to_dict()
+
+
+def get_df_filtered_by_samples(previous_query_clustering_file: str,
+                               hashes_list: list) -> pd.DataFrame:
+    """
+    [Filter a DataFrame by sample names.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return pd.DataFrame: [DataFrame containing sample data]
+    """
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, hashes_list
+    )
+    return df[samples_mask]
+
+
 def update_external_clusters_csv(
-    previous_query_clustering_file: str,
+    dest_query_clustering_file: str,
+    source_query_clustering_file: str,
     q_names: list,
-    external_clusters_to_update: dict,
 ) -> None:
     """
     [Update the external clusters CSV file with the clusters of the samples
     that were not found in the external clusters file.]
 
-    :param previous_query_clustering_file: [Path to CSV file
-    containing sample data]
-    :param q_names: [List of sample names
-    that were not
-    found in the external clusters file]
-    :param external_clusters_to_update: [Dictionary mapping
-    sample names to external cluster names]
+    :param dest_query_clustering_file: [Path to CSV file
+    containing sample data to copy into]
+    :param source_query_clustering_file: [Path to CSV file
+    containing sample data to copy from]
+    :param q_names: [List of sample names to match]
     """
     df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, q_names
+        dest_query_clustering_file, q_names
     )
+    sample_cluster_num_mapping = get_external_cluster_nums(
+        source_query_clustering_file, q_names
+    )
+
     df.loc[samples_mask, "Cluster"] = [
-        get_cluster_num(external_clusters_to_update[sample_id])
-        for sample_id in q_names
+        sample_cluster_num_mapping[sample_id] for sample_id in q_names
     ]
-    df.to_csv(previous_query_clustering_file, index=False)
+    df.to_csv(dest_query_clustering_file, index=False)
 
 
 def get_df_sample_mask(

@@ -21,4 +21,5 @@ TAG_LATEST="${REGISTRY}/${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
 # development image
 TAG_DEV_SHA="${REGISTRY}/${TAG_SHA}-${PACKAGE_DEV}"
 TAG_DEV_BRANCH="${REGISTRY}/${TAG_BRANCH}-${PACKAGE_DEV}"
-POPPUNK_VERSION=v2.6.7 # can be version, branch or commit
+# TODO: revert
+POPPUNK_VERSION=network_relabelling # can be version, branch or commit
