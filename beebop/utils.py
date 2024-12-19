@@ -265,6 +265,14 @@ def get_external_clusters_from_file(
 def get_external_cluster_nums(
     previous_query_clustering_file: str, hashes_list: list
 ) -> dict[str, str]:
+    """
+    [Get external cluster numbers for samples in the external clusters file.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return dict: [Dictionary mapping sample names to external cluster names]
+    """
     filtered_df = get_df_filtered_by_samples(
         previous_query_clustering_file, hashes_list
     )
@@ -277,6 +285,14 @@ def get_external_cluster_nums(
 
 def get_df_filtered_by_samples(previous_query_clustering_file: str,
                                hashes_list: list) -> pd.DataFrame:
+    """
+    [Filter a DataFrame by sample names.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return pd.DataFrame: [DataFrame containing sample data]
+    """
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, hashes_list
     )
@@ -292,13 +308,11 @@ def update_external_clusters_csv(
     [Update the external clusters CSV file with the clusters of the samples
     that were not found in the external clusters file.]
 
-    :param previous_query_clustering_file: [Path to CSV file
-    containing sample data]
-    :param q_names: [List of sample names
-    that were not
-    found in the external clusters file]
-    :param external_clusters_to_update: [Dictionary mapping
-    sample names to external cluster names]
+    :param dest_query_clustering_file: [Path to CSV file
+    containing sample data to copy into]
+    :param source_query_clustering_file: [Path to CSV file
+    containing sample data to copy from]
+    :param q_names: [List of sample names to match]
     """
     df, samples_mask = get_df_sample_mask(
         dest_query_clustering_file, q_names
