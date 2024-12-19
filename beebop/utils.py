@@ -83,9 +83,7 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def create_subgraphs(
-    network_folder: str, filename_dict: dict
-) -> None:
+def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
     """
     [Create subgraphs for the network visualisation. These are what
     will be sent back to the user to see.
@@ -112,6 +110,7 @@ def create_subgraphs(
             path.replace("network_component", "pruned_network_component"),
         )
 
+
 def get_component_filenames(network_folder: str) -> list[str]:
     """
     [Get all network component filenames in the network folder.]
@@ -120,6 +119,7 @@ def get_component_filenames(network_folder: str) -> list[str]:
     :return list: [list of all network component filenames]
     """
     return glob.glob(network_folder + "/network_component_*.graphml")
+
 
 def build_subgraph(path: str, query_names: list) -> Graph:
     """
@@ -130,7 +130,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 30  # change if needed depending on performance of the network visualization
+    MAX_NODES = 30  # arbitrary number based on performance
     Graph = read_graphml(path)
 
     # get query nodes
@@ -190,28 +190,38 @@ def get_lowest_cluster(clusters_str: str) -> int:
     clusters = map(int, clusters_str.split(";"))
     return min(clusters)
 
+
 def replace_merged_component_filenames(network_folder: str) -> None:
     """
     [Replace the filenames of merged network components with the lowest
-    cluster number. These lowest numbers correspond to the external 
+    cluster number. These lowest numbers correspond to the external
     cluster we use/display]
-    
+
     :param network_folder: [path to the network folder]
     """
     for file_path in get_component_filenames(network_folder):
         if ";" in file_path:
             filename = os.path.basename(file_path)
-            cluster_nums_str = re.search(r'network_component_([^.]+)\.graphml', filename).group(1) # extracts component string "1;2;3"
-            cluster_num = get_lowest_cluster(cluster_nums_str)  
-            
-            new_path = os.path.join(network_folder, f"network_component_{cluster_num}.graphml")
-            
+            cluster_nums_str = re.search(
+                r"network_component_([^.]+)\.graphml", filename
+            ).group(
+                1
+            )  # extracts component string "1;2;3"
+            cluster_num = get_lowest_cluster(cluster_nums_str)
+
+            new_path = os.path.join(
+                network_folder, f"network_component_{cluster_num}.graphml"
+            )
+
             # Handle potential file conflict
             if not os.path.exists(new_path) or new_path == file_path:
                 os.rename(file_path, new_path)
             else:
-                print(f"Warning: {new_path} already exists, skipping rename of {file_path}")
-    
+                print(
+                    f"Warning: {new_path} already exists,
+                    skipping rename of {file_path}"
+                )
+
 
 def get_external_clusters_from_file(
     previous_query_clustering_file: str,
@@ -232,7 +242,9 @@ def get_external_clusters_from_file(
     :return tuple: [dictionary of sample hash to external cluster name,
         list of sample hashes that were not found]
     """
-    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
+    filtered_df = get_df_filtered_by_samples(
+        previous_query_clustering_file, hashes_list
+    )
 
     # Split into found and not found based on NaN values
     found_mask = filtered_df["Cluster"].notna()
@@ -253,18 +265,23 @@ def get_external_clusters_from_file(
 def get_external_cluster_nums(
     previous_query_clustering_file: str, hashes_list: list
 ) -> dict[str, str]:
-    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
+    filtered_df = get_df_filtered_by_samples(
+        previous_query_clustering_file, hashes_list
+    )
 
     sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
     sample_cluster_num_mapping.index = filtered_df["sample"]
 
     return sample_cluster_num_mapping.to_dict()
 
-def get_df_filtered_by_samples(previous_query_clustering_file: str, hashes_list: list) -> pd.DataFrame:
+
+def get_df_filtered_by_samples(previous_query_clustering_file: str,
+                               hashes_list: list) -> pd.DataFrame:
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, hashes_list
     )
     return df[samples_mask]
+
 
 def update_external_clusters_csv(
     dest_query_clustering_file: str,
@@ -289,7 +306,7 @@ def update_external_clusters_csv(
     sample_cluster_num_mapping = get_external_cluster_nums(
         source_query_clustering_file, q_names
     )
-    
+
     df.loc[samples_mask, "Cluster"] = [
         sample_cluster_num_mapping[sample_id] for sample_id in q_names
     ]

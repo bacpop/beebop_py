@@ -351,7 +351,7 @@ def update_external_clusters(
         not_found_prev_querying,
         not_found_query_names,
     )
-    
+
     external_clusters_not_found, _ = get_external_clusters_from_file(
         not_found_prev_querying,
         not_found_query_names,
