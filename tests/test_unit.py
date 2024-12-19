@@ -710,27 +710,27 @@ def test_add_files():
 
 
 def test_replace_filehashes(tmp_path):
-    
+
     folder = tmp_path / "replace_filehashes"
     folder.mkdir()
-    
+
     # Create test files with hash content
     test_data = {
         "file1": "filehash1",
         "file2": "filehash2",
-        "file3": "filehash3"
+        "file3": "filehash3",
     }
     for filename, content in test_data.items():
         (folder / filename).write_text(content)
-        
+
     filename_dict = {
         "filehash1": "filename1",
         "filehash2": "filename2",
         "filehash3": "filename3",
     }
-    
+
     utils.replace_filehashes(str(folder), filename_dict)
-    
+
     # Verify results
     for filename, original_hash in test_data.items():
         expected_name = filename_dict[original_hash]
