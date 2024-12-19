@@ -624,7 +624,7 @@ def test_send_zip_internal(client):
         filename2 = "microreact_24_perplexity20.0_accessory_mandrake.dot"
         assert filename1.encode("utf-8") in response.data
         assert filename2.encode("utf-8") in response.data
-        
+
         project_hash = "test_network_zip"
         cluster = "GPSC38"
         type = "network"
