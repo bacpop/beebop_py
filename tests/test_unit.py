@@ -33,7 +33,7 @@ from beebop.poppunkWrapper import PoppunkWrapper
 
 import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-
+import networkx as nx
 
 fs = setup.fs
 args = setup.args
@@ -729,32 +729,6 @@ def test_replace_filehashes():
         assert "filehash2" not in comp7_text
 
 
-def test_add_query_ref_status():
-    p_hash = "results_modifications"
-    filename_dict = {
-        "filehash1": "filename1",
-        "filehash2": "filename2",
-        "filehash3": "filename3",
-    }
-    utils.create_subgraphs(fs, p_hash, filename_dict)
-    path = fs.network_output_component(p_hash, 5)
-    print(path)
-    xml = ET.parse(path)
-    graph = xml.getroot()
-
-    def get_node_status(node_no):
-        node = graph.find(
-            f".//{{http://graphml.graphdrawing.org/xmlns}}"
-            f"node[@id='n{node_no}']"
-        )
-        return node.find(
-            "./{http://graphml.graphdrawing.org/xmlns}data[@key='ref_query']"
-        ).text
-
-    assert get_node_status(21) == "query"
-    assert get_node_status(22) == "query"
-    assert get_node_status(20) == "ref"
-
 
 @patch("beebop.poppunkWrapper.assign_query_hdf5")
 def test_poppunk_wrapper_assign_cluster(mock_assign):
@@ -969,21 +943,24 @@ def test_get_df_sample_mask(sample_clustering_csv):
     assert mask.tolist() == [True, False, True, False, False]
     assert sum(mask) == 2
 
-
-def test_update_external_clusters_csv(sample_clustering_csv):
+@patch("beebop.utils.get_external_cluster_nums")
+def test_update_external_clusters_csv(mock_get_external_cluster_nums, sample_clustering_csv):
     not_found_samples = ["sample1", "sample3"]
-    new_clusters = {"sample1": "GPSC69", "sample3": "GPSC420"}
-
+    sample_cluster_num_mapping = {"sample1": "11", "sample3": "69;191"}
+    source_query_clustering = "tmp_query_clustering.csv"
+    mock_get_external_cluster_nums.return_value = sample_cluster_num_mapping
     utils.update_external_clusters_csv(
-        sample_clustering_csv, not_found_samples, new_clusters
+        sample_clustering_csv,source_query_clustering, not_found_samples,
     )
 
     df = pd.read_csv(sample_clustering_csv)
-    assert df.loc[df["sample"] == "sample1", "Cluster"].values[0] == "69"
+    
+    mock_get_external_cluster_nums.assert_called_once_with(source_query_clustering, not_found_samples)
+    assert df.loc[df["sample"] == "sample1", "Cluster"].values[0] == "11"
     assert (
         df.loc[df["sample"] == "sample2", "Cluster"].values[0] == "309;20;101"
     )  # Unchanged
-    assert df.loc[df["sample"] == "sample3", "Cluster"].values[0] == "420"
+    assert df.loc[df["sample"] == "sample3", "Cluster"].values[0] == "69;191"
     assert (
         df.loc[df["sample"] == "sample4", "Cluster"].values[0] == "40"
     )  # Unchanged
@@ -1229,7 +1206,7 @@ def test_update_external_clusters(
         config.external_clusters_prefix,
     )
     mock_update_external_clusters.assert_called_once_with(
-        previous_query_clustering, not_found, new_external_clusters
+        previous_query_clustering, "tmp_previous_query_clustering", not_found
     )
 
     assert external_clusters == {
@@ -1412,3 +1389,114 @@ def test_save_external_to_poppunk_clusters(tmp_path):
             "GPSC69": "1",
             "GPSC420": "2",
         }
+
+def test_get_component_filenames(tmp_path):
+    network_folder = tmp_path / "network"
+    network_folder.mkdir()
+    
+    # Create matching files
+    expected_files = [
+        network_folder / "network_component_1;88.graphml",
+        network_folder / "network_component_2.graphml"
+    ]
+    for f in expected_files:
+        f.touch()
+        
+    # Create non-matching files
+    (network_folder / "other_file.txt").touch()
+    (network_folder / "network_other.graphml").touch()
+    
+    result = utils.get_component_filenames(str(network_folder))
+    
+    assert len(result) == 2
+    assert sorted(result) == sorted([str(f) for f in expected_files])
+
+def test_get_df_filtered_by_samples(sample_clustering_csv):
+    """Test getting mask for existing samples"""
+    samples = ["sample1", "sample3"]
+
+    filtered_df = utils.get_df_filtered_by_samples(sample_clustering_csv, samples)
+
+    # Check DataFrame
+    assert isinstance(filtered_df, pd.DataFrame)
+    assert len(filtered_df) == 2
+    assert list(filtered_df["sample"]) == ["sample1", "sample3"]
+
+@patch("beebop.utils.build_subgraph")
+@patch("beebop.utils.write_graphml")
+@patch("beebop.utils.add_query_ref_to_graph")
+@patch("beebop.utils.get_component_filenames")
+def test_create_subgraphs(mock_get_component_filenames, mock_add_query_ref_to_graph, mock_write_graphml, mock_build_subgraph):
+    mock_get_component_filenames.return_value = [
+        "network_component_1.graphml",
+    ]
+    mock_subgraph = Mock()
+    mock_build_subgraph.return_value = mock_subgraph
+    filename_dict = {
+        "filehash1": "filename1",
+        "filehash2": "filename2",
+    }
+    query_names = list(filename_dict.values())
+    
+    utils.create_subgraphs("network_folder", filename_dict)
+    
+    mock_build_subgraph.assert_called_once_with("network_component_1.graphml", query_names)
+    mock_add_query_ref_to_graph.assert_called_once_with(mock_subgraph, query_names)
+    mock_write_graphml.assert_called_once_with(mock_subgraph, "pruned_network_component_1.graphml")
+
+@patch("beebop.utils.read_graphml")
+def test_build_subgraph(mock_read_graphml):
+    graph = nx.complete_graph(50) # 50 nodes fully conected
+    query_names = ["sample1", "sample2", "sample3"]
+    graph.nodes[45]["id"] = "sample2"
+    mock_read_graphml.return_value = graph
+    
+    subgraph = utils.build_subgraph("network_component_1.graphml", query_names)
+
+    assert len(subgraph.nodes) == 30 # max number
+    assert subgraph.has_node(45) == True
+
+def test_add_query_ref_to_graph():
+    graph = nx.complete_graph(10) # 10 nodes fully conected
+    query_names = ["sample1", "sample2", "sample3"]
+    graph.nodes[0]["id"] = "sample2"
+    
+    utils.add_query_ref_to_graph(graph, query_names)
+    
+    assert graph.nodes[0]["ref_query"] == "query"
+    for i in range(1, 10):
+        assert graph.nodes[i]["ref_query"] == "ref"
+
+def create_test_files(network_folder, filenames):
+    """Helper to create test files in the network folder"""
+    for filename in filenames:
+        filepath = os.path.join(network_folder, filename)
+        with open(filepath, "w") as f:
+            f.write("test content")
+            
+def test_replace_merged_component_filenames(tmp_path):
+    network_dir = tmp_path / "network"
+    network_dir.mkdir()
+    network_folder = str(network_dir)
+    create_test_files(network_folder, [
+        "network_component_10.graphml",
+        "network_component_15;5;25.graphml",
+        "network_component_6;4;2.graphml",
+        "network_component_2.graphml",
+    ])
+    
+    utils.replace_merged_component_filenames(network_folder)
+    
+    assert os.path.exists(os.path.join(network_folder, "network_component_10.graphml"))
+    assert os.path.exists(os.path.join(network_folder, "network_component_5.graphml")) 
+    assert os.path.exists(os.path.join(network_folder, "network_component_2.graphml"))
+
+def test_get_external_cluster_nums(sample_clustering_csv):
+    samples = ["sample1", "sample2"]
+    
+    result = utils.get_external_cluster_nums(sample_clustering_csv, samples)
+    
+    assert result == {
+        "sample1": "10",
+        "sample2": "309;20;101",
+    }

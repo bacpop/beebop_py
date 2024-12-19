@@ -7,7 +7,7 @@ import fileinput
 import glob
 import pandas as pd
 from beebop.filestore import PoppunkFileStore
-import networkx as nx
+from networkx import read_graphml, write_graphml, Graph
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -107,7 +107,7 @@ def create_subgraphs(
 
         add_query_ref_to_graph(SubGraph, query_names)
 
-        nx.write_graphml(
+        write_graphml(
             SubGraph,
             path.replace("network_component", "pruned_network_component"),
         )
@@ -121,7 +121,7 @@ def get_component_filenames(network_folder: str) -> list[str]:
     """
     return glob.glob(network_folder + "/network_component_*.graphml")
 
-def build_subgraph(path: str, query_names: list) -> nx.Graph:
+def build_subgraph(path: str, query_names: list) -> Graph:
     """
     [Build a subgraph from a network graph, prioritizing query nodes and
     adding neighbor nodes until the maximum number of nodes is reached.]
@@ -130,8 +130,8 @@ def build_subgraph(path: str, query_names: list) -> nx.Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 30  # maximum number of nodes in the subgraph
-    Graph = nx.read_graphml(path)
+    MAX_NODES = 30  # change if needed depending on performance of the network visualization
+    Graph = read_graphml(path)
 
     # get query nodes
     query_nodes = {
@@ -158,7 +158,7 @@ def build_subgraph(path: str, query_names: list) -> nx.Graph:
     return Graph.subgraph(sub_graph_nodes)
 
 
-def add_query_ref_to_graph(graph: nx.Graph, query_names: list) -> None:
+def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -232,10 +232,7 @@ def get_external_clusters_from_file(
     :return tuple: [dictionary of sample hash to external cluster name,
         list of sample hashes that were not found]
     """
-    df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, hashes_list
-    )
-    filtered_df = df[samples_mask]
+    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
 
     # Split into found and not found based on NaN values
     found_mask = filtered_df["Cluster"].notna()
@@ -256,16 +253,18 @@ def get_external_clusters_from_file(
 def get_external_cluster_nums(
     previous_query_clustering_file: str, hashes_list: list
 ) -> dict[str, str]:
+    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
+
+    sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
+    sample_cluster_num_mapping.index = filtered_df["sample"]
+
+    return sample_cluster_num_mapping.to_dict()
+
+def get_df_filtered_by_samples(previous_query_clustering_file: str, hashes_list: list) -> pd.DataFrame:
     df, samples_mask = get_df_sample_mask(
         previous_query_clustering_file, hashes_list
     )
-    filtered_df = df[samples_mask]
-
-    sample_to_full_cluster_map = filtered_df["Cluster"].astype(str)
-    sample_to_full_cluster_map.index = filtered_df["sample"]
-
-    return sample_to_full_cluster_map.to_dict()
-
+    return df[samples_mask]
 
 def update_external_clusters_csv(
     dest_query_clustering_file: str,
