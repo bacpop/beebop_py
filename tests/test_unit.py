@@ -709,25 +709,34 @@ def test_add_files():
     assert "7622_5_91.fa".encode("utf-8") not in contents2
 
 
-def test_replace_filehashes():
-    p_hash = "results_modifications"
-    folder = fs.output_network(p_hash)
+def test_replace_filehashes(tmp_path):
+    
+    folder = tmp_path / "replace_filehashes"
+    folder.mkdir()
+    
+    # Create test files with hash content
+    test_data = {
+        "file1": "filehash1",
+        "file2": "filehash2",
+        "file3": "filehash3"
+    }
+    for filename, content in test_data.items():
+        (folder / filename).write_text(content)
+        
     filename_dict = {
         "filehash1": "filename1",
         "filehash2": "filename2",
         "filehash3": "filename3",
     }
-    utils.replace_filehashes(folder, filename_dict)
-    with open(fs.network_output_component(p_hash, 5), "r") as comp5:
-        comp5_text = comp5.read()
-        assert "filename1" in comp5_text
-        assert "filename3" in comp5_text
-        assert "filehash1" not in comp5_text
-        assert "filehash3" not in comp5_text
-    with open(fs.network_output_component(p_hash, 7), "r") as comp7:
-        comp7_text = comp7.read()
-        assert "filename2" in comp7_text
-        assert "filehash2" not in comp7_text
+    
+    utils.replace_filehashes(str(folder), filename_dict)
+    
+    # Verify results
+    for filename, original_hash in test_data.items():
+        expected_name = filename_dict[original_hash]
+        content = (folder / filename).read_text()
+        assert expected_name in content
+        assert original_hash not in content
 
 
 @patch("beebop.poppunkWrapper.assign_query_hdf5")
