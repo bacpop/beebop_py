@@ -218,8 +218,8 @@ def replace_merged_component_filenames(network_folder: str) -> None:
                 os.rename(file_path, new_path)
             else:
                 print(
-                    f"Warning: {new_path} already exists,
-                    skipping rename of {file_path}"
+                    "Warning: " + f"{new_path} already exists, "
+                    f"skipping rename of {file_path}"
                 )
 
 
