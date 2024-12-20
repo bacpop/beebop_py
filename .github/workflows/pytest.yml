@@ -32,7 +32,7 @@ jobs:
     - name: Download and extract GPS database
       working-directory: ./main
       run: |
-        ./scripts/download_databases
+        ./scripts/download_databases --refs
         
     - name: Set up Python 3.9
       uses: actions/setup-python@v2

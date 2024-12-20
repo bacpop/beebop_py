@@ -154,7 +154,7 @@ def test_microreact(mocker):
     visualise.microreact(
         p_hash,
         fs,
-        setup.full_db_fs,
+        setup.ref_db_fs,
         args,
         setup.name_mapping,
         setup.species,
@@ -267,7 +267,7 @@ def test_network(mocker):
 
     setup.do_assign_clusters(p_hash)
     visualise.network(
-        p_hash, fs, setup.full_db_fs, args, setup.name_mapping, setup.species
+        p_hash, fs, setup.ref_db_fs, args, setup.name_mapping, setup.species
     )
 
     for cluster in external_to_poppunk_clusters.keys():

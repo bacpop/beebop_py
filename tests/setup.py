@@ -71,7 +71,7 @@ def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
     visualise.network_internal(p_hash,
                                fs,
-                               full_db_fs,
+                               ref_db_fs,
                                args,
                                name_mapping,
                                species)
