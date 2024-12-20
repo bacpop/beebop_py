@@ -108,7 +108,7 @@ class PoppunkWrapper:
             ),
             previous_mst=None,
             previous_distances=None,
-            network_file=self.fs.network_file(self.p_hash),
+            network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
             rapidnj=shutil.which("rapidnj"),
@@ -120,6 +120,7 @@ class PoppunkWrapper:
             recalculate_distances=self.args.visualise.recalculate_distances,
             use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash),
+            extend_query_graph=True
         )
 
     def create_network(self) -> None:
@@ -152,7 +153,7 @@ class PoppunkWrapper:
             ),
             previous_mst=None,
             previous_distances=None,
-            network_file=self.fs.network_file(self.p_hash),
+            network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
             rapidnj=shutil.which("rapidnj"),
@@ -164,4 +165,5 @@ class PoppunkWrapper:
             recalculate_distances=self.args.visualise.recalculate_distances,
             use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash),
+            extend_query_graph=True
         )
