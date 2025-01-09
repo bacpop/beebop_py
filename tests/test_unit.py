@@ -1489,6 +1489,18 @@ def test_build_subgraph(mock_read_graphml):
     assert len(subgraph.nodes) == 30  # max number
 
 
+@patch("beebop.utils.read_graphml")
+@patch("beebop.utils.add_neighbor_nodes")
+def test_build_subgraph_no_prune(mock_add_neighbor_nodes, mock_read_graphml):
+    graph = nx.complete_graph(10)  # 50 nodes fully conected
+    query_names = ["sample1", "sample2", "sample3"]
+    mock_read_graphml.return_value = graph
+    
+    graph = utils.build_subgraph("network_component_1.graphml", query_names)
+    
+    assert len(graph.nodes) == 10  
+    mock_add_neighbor_nodes.assert_not_called()
+
 def test_add_query_ref_to_graph():
     graph = nx.complete_graph(10)  # 10 nodes fully conected
     query_names = ["sample1", "sample2", "sample3"]

@@ -42,9 +42,6 @@ name_mapping = {
 ref_db_fs = DatabaseFileStore(
     "./storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv"
 )
-full_db_fs = DatabaseFileStore(
-    "./storage/dbs/GPS_v9", "GPS_v9_external_clusters.csv"
-)
 
 args = get_args()
 species = "Streptococcus pneumoniae"

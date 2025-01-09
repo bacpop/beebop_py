@@ -133,7 +133,8 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     """
     MAX_NODES = 30  # arbitrary number based on performance
     graph = read_graphml(path)
-
+    if MAX_NODES >= len(graph.nodes()):
+        return graph
     # get query nodes
     query_nodes = {
         node for (node, id) in graph.nodes(data="id") if id in query_names
