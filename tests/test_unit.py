@@ -1545,3 +1545,21 @@ def test_get_external_cluster_nums(sample_clustering_csv):
         "sample1": "10",
         "sample2": "309;20;101",
     }
+
+def test_add_neighbor_nodes_max_more_than_available():
+    graph_nodes = {1}
+    neighbours = {2, 3, 4, 5}
+    max_nodes = 10
+    
+    utils.add_neighbor_nodes(graph_nodes, neighbours, max_nodes)
+    
+    assert graph_nodes == {1, 2, 3, 4, 5}
+
+def test_add_neighbor_nodes_max_less_than_available():
+    graph_nodes = {1}
+    neighbours = {2, 3, 4, 5, 6, 7, 8, 9, 10}
+    max_nodes = 3
+    
+    utils.add_neighbor_nodes(graph_nodes, neighbours, max_nodes)
+    
+    assert len(graph_nodes) == 4

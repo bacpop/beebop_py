@@ -154,11 +154,31 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
-        sub_graph_nodes.update(
-            random.sample(list(neighbor_nodes), remaining_capacity)
+        add_neighbor_nodes(
+            sub_graph_nodes, neighbor_nodes, remaining_capacity
         )
 
     return graph.subgraph(sub_graph_nodes)
+
+
+def add_neighbor_nodes(
+    graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
+) -> None:
+    """
+    [Add neighbor nodes to the set of nodes until the maximum number of nodes is
+    reached. Randomly select nodes to add if there are more neighbor nodes than
+    can be added.]
+
+    :param graph_nodes: [set of nodes to add to]
+    :param neighbor_nodes: [set of neighbor nodes to add]
+    :param max_nodes_to_add: [maximum number of nodes to add]
+    """
+    if max_nodes_to_add >= len(neighbor_nodes):
+        graph_nodes.update(neighbor_nodes)
+    else:
+        graph_nodes.update(
+            random.sample(list(neighbor_nodes), max_nodes_to_add)
+        )
 
 
 def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
