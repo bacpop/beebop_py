@@ -8,6 +8,7 @@ import glob
 import pandas as pd
 from beebop.filestore import PoppunkFileStore
 from networkx import read_graphml, write_graphml, Graph
+import random
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -94,19 +95,19 @@ def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
     to the .graphml files.]
 
     :param network_folder: [path to the network folder]
-    :param filename_dict: [dict that maps filehashes(keys) toclear
+    :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
     """
     query_names = list(filename_dict.values())
 
     for path in get_component_filenames(network_folder):
-        SubGraph = build_subgraph(path, query_names)
+        sub_graph = build_subgraph(path, query_names)
 
-        add_query_ref_to_graph(SubGraph, query_names)
+        add_query_ref_to_graph(sub_graph, query_names)
 
         write_graphml(
-            SubGraph,
+            sub_graph,
             path.replace("network_component", "pruned_network_component"),
         )
 
@@ -131,17 +132,17 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :return nx.Graph: [subgraph]
     """
     MAX_NODES = 30  # arbitrary number based on performance
-    Graph = read_graphml(path)
+    graph = read_graphml(path)
 
     # get query nodes
     query_nodes = {
-        node for (node, id) in Graph.nodes(data="id") if id in query_names
+        node for (node, id) in graph.nodes(data="id") if id in query_names
     }
 
     # get neighbor nodes of query nodes
     neighbor_nodes = set()
     for node in query_nodes:
-        neighbor_nodes.update(Graph.neighbors(node))
+        neighbor_nodes.update(graph.neighbors(node))
 
     # remove query nodes from neighbor nodes
     neighbor_nodes = neighbor_nodes - query_nodes
@@ -153,9 +154,9 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
-        sub_graph_nodes.update(list(neighbor_nodes)[:remaining_capacity])
+        sub_graph_nodes.update(random.sample(list(neighbor_nodes), remaining_capacity))
 
-    return Graph.subgraph(sub_graph_nodes)
+    return graph.subgraph(sub_graph_nodes)
 
 
 def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:

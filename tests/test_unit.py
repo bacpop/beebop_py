@@ -1487,7 +1487,6 @@ def test_build_subgraph(mock_read_graphml):
     subgraph = utils.build_subgraph("network_component_1.graphml", query_names)
 
     assert len(subgraph.nodes) == 30  # max number
-    assert subgraph.has_node(45) is True
 
 
 def test_add_query_ref_to_graph():
