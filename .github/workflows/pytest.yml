@@ -95,6 +95,7 @@ jobs:
       uses: snok/install-poetry@v1
       with:
         virtualenvs-create: false
+        version: 2.0.0
 
     - name: Install dependencies
       working-directory: ./main

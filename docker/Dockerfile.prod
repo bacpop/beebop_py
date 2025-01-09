@@ -6,7 +6,7 @@ RUN conda config --append channels bioconda
 RUN conda install python=3.10
 RUN conda install -c bioconda poppunk=2.7.2
 
-RUN pip install poetry==1.8.3
+RUN pip install poetry=2.0.0
 COPY  *.toml *.lock /
 RUN poetry config virtualenvs.create false \
     && poetry install
