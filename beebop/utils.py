@@ -153,8 +153,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
-        sub_graph_nodes.update(
-            list(neighbor_nodes)[:remaining_capacity])
+        sub_graph_nodes.update(list(neighbor_nodes)[:remaining_capacity])
 
     return Graph.subgraph(sub_graph_nodes)
 
