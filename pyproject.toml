@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Python API for beebop"
 authors = ["muppi1993 <clara.gronemeyer20@imperial.ac.uk>"]
 readme = "README.md"
-package-mode=false
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"
@@ -27,7 +26,7 @@ pytest-xvfb = "^2.0.0"
 docsig = "^0.23.0"
 Pygments = "^2.13.0"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^6.4.1"}
 
 [build-system]
