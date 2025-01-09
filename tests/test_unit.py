@@ -1546,3 +1546,10 @@ def test_get_external_cluster_nums(sample_clustering_csv):
         "sample1": "10",
         "sample2": "309;20;101",
     }
+
+def test_set_metadata_database_filestore():
+    metadata_file = "metadata.csv"
+    
+    db_fs = DatabaseFileStore("./storage/dbs/GPS_v9_ref", db_metadata_file=metadata_file)
+    
+    assert db_fs.metadata == str(PurePath("beebop", "resources", metadata_file))
