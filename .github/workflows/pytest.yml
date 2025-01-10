@@ -68,24 +68,19 @@ jobs:
 #      run: conda install poppunk
 #  currently the latest poppunk release is missing some functions required for beebop. For now installing from source:
 
-    - name: Get poppunk source code
-      uses: actions/checkout@v3
-      with:
-        repository:  bacpop/PopPUNK 
-        ref: fix-json-serialisation
-        path: poppunk
-
     - name: install poppunk & dependencies
-      working-directory: ./poppunk
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
-        conda install -c conda-forge mamba
-        mamba install -y -c conda-forge -y graph-tool mandrake 
-        mamba install -y pandas requests networkx scikit-learn pp-sketchlib biopython treeswift rapidnj hdbscan tqdm && mamba clean -afy
-        sudo apt-get update && sudo apt-get install -y build-essential cmake libeigen3-dev libhdf5-dev libopenblas-dev
-        pip3 install --upgrade setuptools
-        pip3 install dlib
+        conda install graph-tool
+        conda install mandrake
+        conda install rapidnj
+        sudo apt-get update
+        sudo apt-get install libeigen3-dev libegl1 build-essential  cmake
+        sudo apt-get install libopenblas-dev
+        sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+        pip install joblib==1.1.0
+        conda install -c bioconda pp-sketchlib=2.0.0
         pip3 install git+https://github.com/bacpop/PopPUNK@network_relabelling#egg=PopPUNK
 # TODO revert above branch before merge and update version
     - name: Install Poetry
