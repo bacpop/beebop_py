@@ -125,6 +125,7 @@ def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
     os.makedirs(outdir)
     return outdir
 
+
 def create_sketches_dict(hashes_list: list, fs: PoppunkFileStore) -> dict:
     """
     [Create a dictionary of sketches for all query samples]

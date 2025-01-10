@@ -1004,10 +1004,13 @@ def test_setup_output_directory():
 
     assert outdir == fs.output(hash)
 
+
 @patch("os.makedirs")
 @patch("os.path.exists")
 @patch("shutil.rmtree")
-def test_setup_output_directory_removes_existing_directory(mock_rmtree, mock_exists, mock_makedirs):
+def test_setup_output_directory_removes_existing_directory(
+    mock_rmtree, mock_exists, mock_makedirs
+):
     # Test when the directory already exists
     mock_exists.return_value = True
     mock_filestore = Mock()
