@@ -166,8 +166,9 @@ def add_neighbor_nodes(
     graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
 ) -> None:
     """
-    [Add neighbor nodes to the set of nodes until the maximum number of nodes is
-    reached. Randomly select nodes to add if there are more neighbor nodes than
+    [Add neighbor nodes to the set of nodes until the
+    maximum number of nodes is reached.
+    Randomly select nodes to add if there are more neighbor nodes than
     can be added.]
 
     :param graph_nodes: [set of nodes to add to]
