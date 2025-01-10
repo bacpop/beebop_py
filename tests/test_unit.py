@@ -1570,6 +1570,8 @@ def test_set_metadata_database_filestore():
     assert db_fs.metadata == str(
         PurePath("beebop", "resources", metadata_file)
     )
+
+
 def test_add_neighbor_nodes_max_more_than_available():
     graph_nodes = {1}
     neighbours = {2, 3, 4, 5}
