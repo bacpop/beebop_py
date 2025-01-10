@@ -34,15 +34,15 @@ jobs:
       run: |
         ./scripts/download_databases --refs
         
-    - name: Set up Python 3.9
+    - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.9"
+        python-version: "3.10"
 
     - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v2.1.1
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: 3.9
+        python-version: "3.10"
         activate-environment: beebop_py
         channels: bioconda, conda-forge
 
@@ -90,7 +90,7 @@ jobs:
         pip install joblib==1.1.0
         conda install -c bioconda pp-sketchlib=2.0.0
         pip3 install git+https://github.com/bacpop/PopPUNK@network_relabelling#egg=PopPUNK
-# TODO revert above branch before merge
+# TODO revert above branch before merge and update version
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
