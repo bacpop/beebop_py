@@ -84,6 +84,8 @@ jobs:
         mamba install -y -c conda-forge -y graph-tool mandrake 
         mamba install -y pandas requests networkx scikit-learn pp-sketchlib biopython treeswift rapidnj hdbscan tqdm && mamba clean -afy
         sudo apt-get update && sudo apt-get install -y build-essential cmake libeigen3-dev libhdf5-dev libopenblas-dev
+        pip3 install --upgrade setuptools
+        pip3 install dlib
         pip3 install git+https://github.com/bacpop/PopPUNK@network_relabelling#egg=PopPUNK
 # TODO revert above branch before merge and update version
     - name: Install Poetry
