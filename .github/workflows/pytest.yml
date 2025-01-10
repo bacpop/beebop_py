@@ -74,10 +74,7 @@ jobs:
         repository:  bacpop/PopPUNK 
         ref: fix-json-serialisation
         path: poppunk
-    
-    - name: Set CONDA_OVERRIDE_ARCHSPEC
-      run: echo "export CONDA_OVERRIDE_ARCHSPEC=skylake" >> $CONDA/etc/profile.d/conda.sh
-    
+
     - name: install poppunk & dependencies
       working-directory: ./poppunk
       run: |
