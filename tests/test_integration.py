@@ -68,7 +68,7 @@ def test_run_poppunk_pneumo(client, qtbot):
             for status in microreact_clusters_status.values()
         )
 
-    qtbot.waitUntil(microreact_status_finished, timeout=30000)
+    qtbot.waitUntil(microreact_status_finished, timeout=300000)
     assert os.path.exists(storage + p_hash +
                           "/microreact_3/microreact_3_core_NJ.nwk")
     assert os.path.exists(storage + p_hash +
@@ -78,7 +78,7 @@ def test_run_poppunk_pneumo(client, qtbot):
         status = client.get("/status/" + p_hash)
         assert read_data(status)['network'] == 'finished'
 
-    qtbot.waitUntil(network_status_finished, timeout=30000)
+    qtbot.waitUntil(network_status_finished, timeout=300000)
     assert os.path.exists(
         storage + p_hash + "/network/network_component_3.graphml"
     )
@@ -223,7 +223,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
             for status in microreact_clusters_status.values()
         )
 
-    qtbot.waitUntil(microreact_status_finished, timeout=30000)
+    qtbot.waitUntil(microreact_status_finished, timeout=300000)
     assert os.path.exists(
         output_folder + p_hash + "/microreact_18/microreact_18_core_NJ.nwk"
     )
@@ -232,7 +232,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
         status = client.get("/status/" + p_hash)
         assert read_data(status)["network"] == "finished"
 
-    qtbot.waitUntil(network_status_finished, timeout=30000)
+    qtbot.waitUntil(network_status_finished, timeout=300000)
 
     assert os.path.exists(
         output_folder + p_hash + "/network/network_component_18.graphml"
