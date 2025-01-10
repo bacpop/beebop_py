@@ -50,7 +50,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 To install PopPUNK, follow these steps:
 
 
-First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
+First, create a new conda environment: `conda create --name beebop_py python=3.10` and activate it with `conda activate beebop_py`
 
 
 Then install PopPUNK to your computer - either the latest version:
@@ -78,7 +78,6 @@ The `graph-tool` and `mandrake` packages must be installed from `conda-forge`:
 ```
 conda install -c conda-forge graph-tool mandrake
 ```
-
 
 ##### Other dependencies
 To install all other required dependencies go into the beebop_py project folder and run (having the conda environment 'beebop_py' activated)
