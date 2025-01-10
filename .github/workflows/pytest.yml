@@ -79,7 +79,6 @@ jobs:
       working-directory: ./poppunk
       run: |
         source $CONDA/etc/profile.d/conda.sh
-        conda env config vars set CONDA_OVERRIDE_ARCHSPEC=skylake -n beebop_py
         conda activate beebop_py
         conda install graph-tool
         conda install mandrake
