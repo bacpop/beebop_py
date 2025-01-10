@@ -11,6 +11,7 @@ import zipfile
 import json
 import requests
 import pickle
+from datetime import datetime
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -570,7 +571,8 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
 
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
-
+    
+    json_microreact["meta"]["name"] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     # generate URL from microreact API
     headers = {"Content-type": "application/json; charset=UTF-8",
                "Access-Token": api_token}
