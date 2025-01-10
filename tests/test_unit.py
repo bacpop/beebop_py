@@ -1004,6 +1004,24 @@ def test_setup_output_directory():
 
     assert outdir == fs.output(hash)
 
+@patch("os.makedirs")
+@patch("os.path.exists")
+@patch("shutil.rmtree")
+def test_setup_output_directory_removes_existing_directory(mock_rmtree, mock_exists, mock_makedirs):
+    # Test when the directory already exists
+    mock_exists.return_value = True
+    mock_filestore = Mock()
+    mock_directory = "/mock/output/directory"
+    mock_filestore.output.return_value = mock_directory
+
+    result = assignClusters.setup_output_directory(mock_filestore, "mock_hash")
+
+    mock_filestore.output.assert_called_once_with("mock_hash")
+    mock_exists.assert_called_once_with(mock_directory)
+    mock_rmtree.assert_called_once_with(mock_directory)
+    mock_makedirs.assert_called_once_with(mock_directory)
+    assert result == mock_directory
+
 
 def test_create_sketches_dict():
     sketches = {
