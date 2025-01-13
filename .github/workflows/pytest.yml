@@ -111,6 +111,12 @@ jobs:
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
+    
+    - name: Override args.json full dbs to refs
+      working-directory: ./main
+      run: |
+        sudo apt-get install jq
+        jq '.species."Streptococcus pneumoniae".fulldb = "GPS_v9_ref" | .species."Streptococcus agalactiae".fulldb = "GBS_refs"' args.json > args.json.tmp && mv args.json.tmp args.json
 
     - name: Test with pytest
       env:
