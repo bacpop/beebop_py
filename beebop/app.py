@@ -494,10 +494,12 @@ def get_results(result_type) -> json:
                                                 storage_location)
 
 
-def get_cluster_assignments(p_hash: str, storage_location: str) -> dict[int, dict[str, str]]:
+def get_cluster_assignments(
+    p_hash: str, storage_location: str
+) -> dict[int, dict[str, str]]:
     """
     [returns cluster assignment results.
-    Return of type: 
+    Return of type:
     {idx: {hash: hash, cluster: cluster, raw_cluster_num: raw_cluster_num}}]
 
     :param p_hash: [project hash]
@@ -505,7 +507,7 @@ def get_cluster_assignments(p_hash: str, storage_location: str) -> dict[int, dic
     :return dict: [cluster results]
     """
     fs = PoppunkFileStore(storage_location)
-    with open(fs.output_cluster(p_hash), 'rb') as f:
+    with open(fs.output_cluster(p_hash), "rb") as f:
         cluster_result = pickle.load(f)
         return cluster_result
 

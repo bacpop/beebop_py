@@ -102,18 +102,32 @@ def get_clusters(
             queries_clusters,
         )
     else:
-        result = assign_clusters_to_result(
-            zip(
-                queries_names,
-                [
-                    {"cluster": cluster, "raw_cluster_num": cluster}
-                    for cluster in queries_clusters
-                ],
-            )
-        )
+        result = get_internal_clusters_result(queries_names, queries_clusters)
 
     save_result(config, result)
     return result
+
+
+def get_internal_clusters_result(
+    queries_names: list[str], queries_clusters: list[str]
+) -> dict:
+    """
+    [Get internal clusters result]
+
+    :param queries_names: [list of sample hashes]
+    :param queries_clusters: [list of sample PopPUNK clusters]
+    :return dict: [dict with index (key)
+        and sample hash with cluster and raw cluster number (value)]
+    """
+    return assign_clusters_to_result(
+        zip(
+            queries_names,
+            [
+                {"cluster": cluster, "raw_cluster_num": cluster}
+                for cluster in queries_clusters
+            ],
+        )
+    )
 
 
 def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
@@ -499,7 +513,7 @@ def save_result(config: ClusteringConfig, result: dict) -> None:
 def save_external_to_poppunk_clusters(
     queries_names: list,
     queries_clusters: list,
-    external_clusters: dict,
+    external_clusters: dict[str, dict[str, str]],
     p_hash: str,
     fs: PoppunkFileStore,
 ) -> None:

@@ -222,19 +222,21 @@ def get_external_clusters_from_file(
     external_clusters_prefix: str,
 ) -> tuple[dict[str, dict[str, str]], list[str]]:
     """
-    [Finds sample hashes defined by hashes_list in the given external clusters
-    file and returns a dictionary of sample hash to external cluster name & 
-    raw external cluster number. If
+    [Finds sample hashes defined by hashes_list in
+    the given external clusters
+    file and returns a dictionary of sample hash to
+    external cluster name & raw external cluster number. If
     there is a merged clusters for a sample, the lowest
-    cluster number is used for cluster. If any samples are found but do  not
+    cluster number is used for cluster. If any samples are found
+    but do  not
     have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return tuple: [dictionary of sample hash to external cluster name 
-    & raw external cluster number, 
+    :return tuple: [dictionary of sample hash to
+    external cluster name & raw external cluster number,
     list of sample hashes not found in the external]
     """
     filtered_df = get_df_filtered_by_samples(
@@ -249,10 +251,13 @@ def get_external_clusters_from_file(
     valid_clusters = filtered_df[found_mask]
     hash_cluster_info = {
         sample: {
-            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "cluster":
+                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
             "raw_cluster_num": cluster,
         }
-        for sample, cluster in zip(valid_clusters["sample"], valid_clusters["Cluster"])
+        for sample, cluster in zip(
+            valid_clusters["sample"], valid_clusters["Cluster"]
+        )
     }
 
     return hash_cluster_info, not_found_hashes
