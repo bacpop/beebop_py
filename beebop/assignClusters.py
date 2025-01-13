@@ -112,15 +112,17 @@ def get_clusters(
 
 def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
     """
-    [Create output directory that stores all files from PopPUNK assign job]
+    [Create output directory that stores all files from PopPUNK assign job.
+    If the directory already exists, it is removed and recreated]
 
     :param fs: [PoppunkFileStore with paths to input files]
     :param p_hash: [project hash]
     :return str: [path to output directory]
     """
     outdir = fs.output(p_hash)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+    if os.path.exists(outdir):
+        shutil.rmtree(outdir)
+    os.makedirs(outdir)
     return outdir
 
 
