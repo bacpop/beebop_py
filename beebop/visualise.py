@@ -5,7 +5,6 @@ from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import (
     replace_filehashes,
     create_subgraphs,
-    replace_merged_component_filenames,
 )
 from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -212,6 +211,5 @@ def network_internal(
     wrapper.create_network()
 
     network_folder = fs.output_network(p_hash)
-    replace_merged_component_filenames(network_folder)
     replace_filehashes(network_folder, name_mapping)
     create_subgraphs(network_folder, name_mapping)

@@ -216,56 +216,26 @@ def get_lowest_cluster(clusters_str: str) -> int:
     return min(clusters)
 
 
-def replace_merged_component_filenames(network_folder: str) -> None:
-    """
-    [Replace the filenames of merged network components with the lowest
-    cluster number. These lowest numbers correspond to the external
-    cluster we use/display]
-
-    :param network_folder: [path to the network folder]
-    """
-    for file_path in get_component_filenames(network_folder):
-        if ";" in file_path:
-            filename = os.path.basename(file_path)
-            cluster_nums_str = re.search(
-                r"network_component_([^.]+)\.graphml", filename
-            ).group(
-                1
-            )  # extracts component string "1;2;3"
-            cluster_num = get_lowest_cluster(cluster_nums_str)
-
-            new_path = os.path.join(
-                network_folder, f"network_component_{cluster_num}.graphml"
-            )
-
-            # Handle potential file conflict
-            if not os.path.exists(new_path) or new_path == file_path:
-                os.rename(file_path, new_path)
-            else:
-                print(
-                    "Warning: " + f"{new_path} already exists, "
-                    f"skipping rename of {file_path}"
-                )
-
-
 def get_external_clusters_from_file(
     previous_query_clustering_file: str,
     hashes_list: list,
     external_clusters_prefix: str,
-) -> tuple[dict[str, str], list[str]]:
+) -> tuple[dict[str, dict[str, str]], list[str]]:
     """
     [Finds sample hashes defined by hashes_list in the given external clusters
-    file and returns a dictionary of sample hash to external cluster name. If
-    there are multiple external clusters listed for a sample, the lowest
-    cluster number is returned. If any samples are found but do  not
+    file and returns a dictionary of sample hash to external cluster name & 
+    raw external cluster number. If
+    there is a merged clusters for a sample, the lowest
+    cluster number is used for cluster. If any samples are found but do  not
     have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return tuple: [dictionary of sample hash to external cluster name,
-        list of sample hashes that were not found]
+    :return tuple: [dictionary of sample hash to external cluster name 
+    & raw external cluster number, 
+    list of sample hashes not found in the external]
     """
     filtered_df = get_df_filtered_by_samples(
         previous_query_clustering_file, hashes_list
@@ -277,14 +247,15 @@ def get_external_clusters_from_file(
 
     # Process only rows with valid clusters
     valid_clusters = filtered_df[found_mask]
-    cluster_numbers = valid_clusters["Cluster"].apply(get_lowest_cluster)
+    hash_cluster_info = {
+        sample: {
+            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "raw_cluster_num": cluster,
+        }
+        for sample, cluster in zip(valid_clusters["sample"], valid_clusters["Cluster"])
+    }
 
-    hash_to_cluster_mapping = (
-        external_clusters_prefix + cluster_numbers.astype(str)
-    )
-    hash_to_cluster_mapping.index = valid_clusters["sample"]
-
-    return hash_to_cluster_mapping.to_dict(), not_found_hashes
+    return hash_cluster_info, not_found_hashes
 
 
 def get_external_cluster_nums(

@@ -103,7 +103,13 @@ def get_clusters(
         )
     else:
         result = assign_clusters_to_result(
-            zip(queries_names, queries_clusters)
+            zip(
+                queries_names,
+                [
+                    {"cluster": cluster, "raw_cluster_num": cluster}
+                    for cluster in queries_clusters
+                ],
+            )
         )
 
     save_result(config, result)
@@ -458,7 +464,7 @@ def assign_clusters_to_result(
     """
     [Assign clusters to the result dictionary,
         where the key is the index and the value is a dictionary
-        with the sample hash and the cluster number]
+        with the sample hash, cluster, raw_cluster_num]
 
     :param query_cluster_mapping: [dictionary items or zip object
         with sample hash and cluster number]
@@ -466,8 +472,12 @@ def assign_clusters_to_result(
         and sample hash and cluster number (value)]
     """
     result = {}
-    for i, (name, cluster) in enumerate(query_cluster_mapping):
-        result[i] = {"hash": name, "cluster": cluster}
+    for i, (hash, cluster_info) in enumerate(query_cluster_mapping):
+        result[i] = {
+            "hash": hash,
+            "cluster": cluster_info["cluster"],
+            "raw_cluster_num": cluster_info["raw_cluster_num"],
+        }
     return result
 
 
@@ -508,7 +518,7 @@ def save_external_to_poppunk_clusters(
     """
     external_to_poppunk_clusters = {}
     for i, name in enumerate(queries_names):
-        external_to_poppunk_clusters[external_clusters[name]] = str(
+        external_to_poppunk_clusters[external_clusters[name]["cluster"]] = str(
             queries_clusters[i]
         )
     with open(fs.external_to_poppunk_clusters(p_hash), "wb") as f:
