@@ -991,9 +991,13 @@ def test_get_external_clusters_from_file(sample_clustering_csv):
     )
 
     assert not_found == ["sample5"]
-    assert external_clusters == {
-        "sample1": "PRE10",
-        "sample2": "PRE20",  # lowest cluster number
+    assert external_clusters["sample1"] == {
+        "cluster": "PRE10",
+        "raw_cluster_num": "10",
+    }
+    assert external_clusters["sample2"] == {
+        "cluster": "PRE20",
+        "raw_cluster_num": "309;20;101",
     }
 
 
@@ -1003,6 +1007,27 @@ def test_setup_output_directory():
     outdir = assignClusters.setup_output_directory(fs, hash)
 
     assert outdir == fs.output(hash)
+
+
+@patch("os.makedirs")
+@patch("os.path.exists")
+@patch("shutil.rmtree")
+def test_setup_output_directory_removes_existing_directory(
+    mock_rmtree, mock_exists, mock_makedirs
+):
+    # Test when the directory already exists
+    mock_exists.return_value = True
+    mock_filestore = Mock()
+    mock_directory = "/mock/output/directory"
+    mock_filestore.output.return_value = mock_directory
+
+    result = assignClusters.setup_output_directory(mock_filestore, "mock_hash")
+
+    mock_filestore.output.assert_called_once_with("mock_hash")
+    mock_exists.assert_called_once_with(mock_directory)
+    mock_rmtree.assert_called_once_with(mock_directory)
+    mock_makedirs.assert_called_once_with(mock_directory)
+    assert result == mock_directory
 
 
 def test_create_sketches_dict():
@@ -1052,8 +1077,8 @@ def test_assign_query_clusters(mocker, config):
 
 def test_handle_external_clusters_all_found(mocker, config):
     external_clusters, not_found = {
-        "sample1": "GPSC69",
-        "sample2": "GPSC420",
+        "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
+        "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420"},
     }, []
     mocker.patch(
         "beebop.assignClusters.get_external_clusters_from_file",
@@ -1071,8 +1096,8 @@ def test_handle_external_clusters_all_found(mocker, config):
     )
 
     assert res == {
-        0: {"hash": "sample1", "cluster": "GPSC69"},
-        1: {"hash": "sample2", "cluster": "GPSC420"},
+        0: {"hash": "sample1", "cluster": "GPSC69", "raw_cluster_num": "69"},
+        1: {"hash": "sample2", "cluster": "GPSC420", "raw_cluster_num": "420"},
     }
     mock_save_clusters.assert_called_once_with(
         ["sample1", "sample2"],
@@ -1088,8 +1113,8 @@ def test_handle_external_clusters_with_not_found(mocker, config):
     q_clusters = [1, 2, 1000]
     not_found_q_clusters = {1234, 6969}
     external_clusters, not_found = {
-        "sample1": "GPSC69",
-        "sample2": "GPSC420",
+        "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
+        "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420"},
     }, ["sample3"]
     mocker.patch(
         "beebop.assignClusters.get_external_clusters_from_file",
@@ -1134,8 +1159,8 @@ def test_handle_external_clusters_with_not_found(mocker, config):
 
     # check return calls
     assert res == {
-        0: {"hash": "sample1", "cluster": "GPSC69"},
-        1: {"hash": "sample2", "cluster": "GPSC420"},
+        0: {"hash": "sample1", "cluster": "GPSC69", "raw_cluster_num": "69"},
+        1: {"hash": "sample2", "cluster": "GPSC420", "raw_cluster_num": "420"},
     }
     mock_save_clusters.assert_called_once_with(
         q_names, q_clusters, external_clusters, config.p_hash, config.fs
@@ -1342,8 +1367,8 @@ def test_delete_include_files(tmp_path):
 
 def test_assign_clusters_to_result_dict_items():
     query_cluster_mapping = {
-        "sample1": "GPSC69",
-        "sample2": "GPSC420",
+        "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
+        "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420"},
     }
 
     result = assignClusters.assign_clusters_to_result(
@@ -1351,22 +1376,29 @@ def test_assign_clusters_to_result_dict_items():
     )
 
     assert result == {
-        0: {"hash": "sample1", "cluster": "GPSC69"},
-        1: {"hash": "sample2", "cluster": "GPSC420"},
+        0: {"hash": "sample1", "cluster": "GPSC69", "raw_cluster_num": "69"},
+        1: {"hash": "sample2", "cluster": "GPSC420", "raw_cluster_num": "420"},
     }
 
 
 def test_assign_clusters_to_result_zip():
-    assign_qnames = ["sample1", "sample2"]
-    assign_clusters = [1, 2]
+    queries_names = ["sample1", "sample2"]
+    queries_clusters = [5, 10]
+    cluster_info = [
+        {"cluster": cluster, "raw_cluster_num": cluster}
+        for cluster in queries_clusters
+    ]
 
     result = assignClusters.assign_clusters_to_result(
-        zip(assign_qnames, assign_clusters)
+        zip(
+            queries_names,
+            cluster_info,
+        )
     )
 
     assert result == {
-        0: {"hash": "sample1", "cluster": 1},
-        1: {"hash": "sample2", "cluster": 2},
+        0: {"hash": "sample1", "cluster": 5, "raw_cluster_num": 5},
+        1: {"hash": "sample2", "cluster": 10, "raw_cluster_num": 10},
     }
 
 
@@ -1386,10 +1418,15 @@ def test_save_result(tmp_path, config):
         assert assign_result == pickle.load(f)
 
 
-def test_save_external_to_poppunk_clusters(tmp_path):
+def test_stest_save_external_to_poppunk_clusters(
+    tmp_path,
+):
     q_names = ["sample1", "sample2"]
     q_clusters = [1, 2]
-    external_clusters = {"sample1": "GPSC69", "sample2": "GPSC420"}
+    external_clusters = {
+        "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
+        "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420;908"},
+    }
     fs = Mock()
     external_clusters_path = tmp_path / "external_clusters.pkl"
     fs.external_to_poppunk_clusters.return_value = str(external_clusters_path)
@@ -1522,33 +1559,6 @@ def create_test_files(network_folder, filenames):
             f.write("test content")
 
 
-def test_replace_merged_component_filenames(tmp_path):
-    network_dir = tmp_path / "network"
-    network_dir.mkdir()
-    network_folder = str(network_dir)
-    create_test_files(
-        network_folder,
-        [
-            "network_component_10.graphml",
-            "network_component_15;5;25.graphml",
-            "network_component_6;4;2.graphml",
-            "network_component_2.graphml",
-        ],
-    )
-
-    utils.replace_merged_component_filenames(network_folder)
-
-    assert os.path.exists(
-        os.path.join(network_folder, "network_component_10.graphml")
-    )
-    assert os.path.exists(
-        os.path.join(network_folder, "network_component_5.graphml")
-    )
-    assert os.path.exists(
-        os.path.join(network_folder, "network_component_2.graphml")
-    )
-
-
 def test_get_external_cluster_nums(sample_clustering_csv):
     samples = ["sample1", "sample2"]
 
@@ -1590,3 +1600,51 @@ def test_add_neighbor_nodes_max_less_than_available():
     utils.add_neighbor_nodes(graph_nodes, neighbours, max_nodes)
 
     assert len(graph_nodes) == 4
+
+
+def test_get_internal_clusters_result():
+    queries_names = ["sample1", "sample2"]
+    queries_clusters = [5, 10]
+
+    res = assignClusters.get_internal_clusters_result(
+        queries_names, queries_clusters
+    )
+
+    assert res == {
+        0: {"hash": "sample1", "cluster": 5, "raw_cluster_num": 5},
+        1: {"hash": "sample2", "cluster": 10, "raw_cluster_num": 10},
+    }
+
+
+@patch("os.path.exists")
+def test_setup_db_file_stores_both_dbs_exist(mock_exists):
+    """Test when both reference and full databases exist"""
+    mock_exists.return_value = True
+
+    species_args = Mock()
+    species_args.refdb = "ref_database"
+    species_args.fulldb = "full_database"
+    species_args.external_clusters_file = "clusters.csv"
+
+    ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
+
+    # Verify correct paths used
+    assert ref_db_fs.db == f"{app.dbs_location}/ref_database"
+    assert full_db_fs.db == f"{app.dbs_location}/full_database"
+
+
+@patch("os.path.exists")
+def test_setup_db_file_stores_fulldb_missing(mock_exists):
+    """Test fallback to refdb when fulldb doesn't exist"""
+    mock_exists.return_value = False
+
+    species_args = Mock()
+    species_args.refdb = "ref_database"
+    species_args.fulldb = "full_database"
+    species_args.external_clusters_file = "clusters.csv"
+
+    ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
+
+    # Verify ref database path used
+    assert ref_db_fs.db == f"{app.dbs_location}/ref_database"
+    assert full_db_fs.db == f"{app.dbs_location}/ref_database"

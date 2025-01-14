@@ -219,7 +219,6 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
         assert read_data(status)["network"] == "finished"
 
     qtbot.waitUntil(network_status_finished, timeout=300000)
-
     assert os.path.exists(
         output_folder + p_hash + "/network/network_component_18.graphml"
     )
@@ -233,10 +232,10 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
             for status in microreact_clusters_status.values()
         )
 
+    qtbot.waitUntil(microreact_status_finished, timeout=300000)
     assert os.path.exists(
         output_folder + p_hash + "/microreact_18/microreact_18_core_NJ.nwk"
     )
-    qtbot.waitUntil(microreact_status_finished, timeout=300000)
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
