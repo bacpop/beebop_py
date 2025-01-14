@@ -49,7 +49,7 @@ RUN apt-get update && \
 RUN pip install git+https://github.com/bacpop/PopPUNK@${POPPUNK_VERSION}#egg=PopPUNK 
 
 # Poetry setup
-RUN pip install poetry
+RUN pip install poetry==1.8.3
 COPY *.toml *.lock /
 RUN poetry config virtualenvs.create false && \
     poetry install

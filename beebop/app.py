@@ -248,15 +248,7 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-    # pass in both full and refs to assign
-    ref_db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.refdb}",
-        species_args.external_clusters_file,
-    )
-    full_db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.fulldb}",
-        species_args.external_clusters_file,
-    )
+    ref_db_fs, full_db_fs = setup_db_file_stores(species_args)
 
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
@@ -330,6 +322,34 @@ def run_poppunk_internal(sketches: dict,
             }
         )
     )
+
+
+def setup_db_file_stores(
+    species_args: dict,
+) -> tuple[DatabaseFileStore, DatabaseFileStore]:
+    """
+    [Initializes the reference and full database file stores
+    with the given species arguments. If the full database
+    does not exist, fallback to reference database.]
+
+    :param species_args: [species arguments]
+    :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
+        database file stores]
+    """
+    ref_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.refdb}",
+        species_args.external_clusters_file,
+    )
+
+    if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
+        full_db_fs = DatabaseFileStore(
+            f"{dbs_location}/{species_args.fulldb}",
+            species_args.external_clusters_file,
+        )
+    else:
+        full_db_fs = ref_db_fs
+
+    return ref_db_fs, full_db_fs
 
 
 # get job status
@@ -410,16 +430,16 @@ def get_network_graphs(p_hash) -> json:
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        cluster_result = get_clusters_internal(p_hash, storage_location)
+        cluster_result = get_cluster_assignments(p_hash, storage_location)
         graphmls = {}
         for cluster_info in cluster_result.values():
-            cluster = cluster_info["cluster"]
-            path = fs.network_output_component(
-                p_hash, get_cluster_num(cluster)
+            raw_cluster_num = cluster_info["raw_cluster_num"]
+            path = fs.pruned_network_output_component(
+                p_hash, raw_cluster_num
             )
             with open(path, "r") as graphml_file:
                 graph = graphml_file.read()
-            graphmls[cluster] = graph
+            graphmls[cluster_info["cluster"]] = graph
         return jsonify(response_success(graphmls))
 
     except KeyError:
@@ -494,16 +514,20 @@ def get_results(result_type) -> json:
                                                 storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location: str) -> dict:
+def get_cluster_assignments(
+    p_hash: str, storage_location: str
+) -> dict[int, dict[str, str]]:
     """
-    [returns cluster assignment results ]
+    [returns cluster assignment results.
+    Return of type:
+    {idx: {hash: hash, cluster: cluster, raw_cluster_num: raw_cluster_num}}]
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
     :return dict: [cluster results]
     """
     fs = PoppunkFileStore(storage_location)
-    with open(fs.output_cluster(p_hash), 'rb') as f:
+    with open(fs.output_cluster(p_hash), "rb") as f:
         cluster_result = pickle.load(f)
         return cluster_result
 
@@ -516,7 +540,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     :param storage_location: [storage location]
     :return json: [response object with cluster results stored in 'data']
     """
-    cluster_result = get_clusters_internal(p_hash, storage_location)
+    cluster_result = get_cluster_assignments(p_hash, storage_location)
     cluster_dict = {value['hash']: value for value in cluster_result.values()}
     failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
@@ -620,7 +644,7 @@ def get_project(p_hash) -> json:
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
-        clusters_result = get_clusters_internal(p_hash, storage_location)
+        clusters_result = get_cluster_assignments(p_hash, storage_location)
         failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
         fs = PoppunkFileStore(storage_location)

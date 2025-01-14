@@ -102,25 +102,47 @@ def get_clusters(
             queries_clusters,
         )
     else:
-        result = assign_clusters_to_result(
-            zip(queries_names, queries_clusters)
-        )
+        result = get_internal_clusters_result(queries_names, queries_clusters)
 
     save_result(config, result)
     return result
 
 
+def get_internal_clusters_result(
+    queries_names: list[str], queries_clusters: list[str]
+) -> dict:
+    """
+    [Get internal clusters result]
+
+    :param queries_names: [list of sample hashes]
+    :param queries_clusters: [list of sample PopPUNK clusters]
+    :return dict: [dict with index (key)
+        and sample hash with cluster and raw cluster number (value)]
+    """
+    return assign_clusters_to_result(
+        zip(
+            queries_names,
+            [
+                {"cluster": cluster, "raw_cluster_num": cluster}
+                for cluster in queries_clusters
+            ],
+        )
+    )
+
+
 def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
     """
-    [Create output directory that stores all files from PopPUNK assign job]
+    [Create output directory that stores all files from PopPUNK assign job.
+    If the directory already exists, it is removed and recreated]
 
     :param fs: [PoppunkFileStore with paths to input files]
     :param p_hash: [project hash]
     :return str: [path to output directory]
     """
     outdir = fs.output(p_hash)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
+    if os.path.exists(outdir):
+        shutil.rmtree(outdir)
+    os.makedirs(outdir)
     return outdir
 
 
@@ -208,7 +230,7 @@ def handle_external_clusters(
                 sketches_dict,
                 not_found_query_names,
                 output_full_tmp,
-                not_found_query_clusters
+                not_found_query_clusters,
             )
         )
         queries_names.extend(not_found_query_names_new)
@@ -269,13 +291,11 @@ def handle_not_found_queries(
     assign_query_clusters(
         config, config.full_db_fs, not_found_query_names, output_full_tmp
     )
-    query_names, query_clusters, _, _, _, _, _ = (
-        summarise_clusters(
-            output_full_tmp,
-            config.species,
-            config.full_db_fs.db,
-            not_found_query_names,
-        )
+    query_names, query_clusters, _, _, _, _, _ = summarise_clusters(
+        output_full_tmp,
+        config.species,
+        config.full_db_fs.db,
+        not_found_query_names,
     )
 
     handle_files_manipulation(
@@ -347,15 +367,17 @@ def update_external_clusters(
     not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(
         config.p_hash
     )
+
+    update_external_clusters_csv(
+        previous_query_clustering,
+        not_found_prev_querying,
+        not_found_query_names,
+    )
+
     external_clusters_not_found, _ = get_external_clusters_from_file(
         not_found_prev_querying,
         not_found_query_names,
         config.external_clusters_prefix,
-    )
-    update_external_clusters_csv(
-        previous_query_clustering,
-        not_found_query_names,
-        external_clusters_not_found,
     )
     external_clusters.update(external_clusters_not_found)
 
@@ -399,9 +421,7 @@ def copy_include_files(output_full_tmp: str, outdir: str) -> None:
             merge_txt_files(dest_file, source_file)
             os.remove(source_file)
         else:
-            os.rename(
-                source_file, dest_file
-            )
+            os.rename(source_file, dest_file)
 
 
 def filter_queries(
@@ -458,7 +478,7 @@ def assign_clusters_to_result(
     """
     [Assign clusters to the result dictionary,
         where the key is the index and the value is a dictionary
-        with the sample hash and the cluster number]
+        with the sample hash, cluster, raw_cluster_num]
 
     :param query_cluster_mapping: [dictionary items or zip object
         with sample hash and cluster number]
@@ -466,8 +486,12 @@ def assign_clusters_to_result(
         and sample hash and cluster number (value)]
     """
     result = {}
-    for i, (name, cluster) in enumerate(query_cluster_mapping):
-        result[i] = {"hash": name, "cluster": cluster}
+    for i, (hash, cluster_info) in enumerate(query_cluster_mapping):
+        result[i] = {
+            "hash": hash,
+            "cluster": cluster_info["cluster"],
+            "raw_cluster_num": cluster_info["raw_cluster_num"],
+        }
     return result
 
 
@@ -489,7 +513,7 @@ def save_result(config: ClusteringConfig, result: dict) -> None:
 def save_external_to_poppunk_clusters(
     queries_names: list,
     queries_clusters: list,
-    external_clusters: dict,
+    external_clusters: dict[str, dict[str, str]],
     p_hash: str,
     fs: PoppunkFileStore,
 ) -> None:
@@ -508,7 +532,7 @@ def save_external_to_poppunk_clusters(
     """
     external_to_poppunk_clusters = {}
     for i, name in enumerate(queries_names):
-        external_to_poppunk_clusters[external_clusters[name]] = str(
+        external_to_poppunk_clusters[external_clusters[name]["cluster"]] = str(
             queries_clusters[i]
         )
     with open(fs.external_to_poppunk_clusters(p_hash), "wb") as f:
