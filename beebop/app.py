@@ -334,6 +334,8 @@ def setup_db_file_stores(
     does not exist, fallback to reference database.]
 
     :param species_args: [species arguments]
+    :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
+        database file stores]
     """
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
