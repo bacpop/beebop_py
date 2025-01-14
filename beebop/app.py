@@ -327,7 +327,13 @@ def run_poppunk_internal(sketches: dict,
 def setup_db_file_stores(
     species_args: dict,
 ) -> tuple[DatabaseFileStore, DatabaseFileStore]:
-    """ """
+    """
+    [Initializes the reference and full database file stores
+    with the given species arguments. If the full database
+    does not exist, fallback to reference database.]
+
+    :param species_args: [species arguments]
+    """
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
