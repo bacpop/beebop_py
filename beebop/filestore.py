@@ -185,13 +185,6 @@ class PoppunkFileStore:
             self.external_previous_query_clustering_path(p_hash)
         )
 
-    def distances(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to distances file]
-        """
-        return str(PurePath(self.output(p_hash), p_hash).with_suffix(".dists"))
-
     def microreact_json(self, p_hash, cluster) -> str:
         """
         :param p_hash: [project hash]
