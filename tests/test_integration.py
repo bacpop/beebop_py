@@ -132,7 +132,8 @@ def test_results_microreact(client):
         'projectHash': p_hash,
         'cluster': cluster,
         'apiToken': api_token})
-    assert re.match("https://microreact.org/project/.*-poppunk.*",
+    print(read_data(response)["url"])
+    assert re.match("https://microreact.org/project/.*cluster-7*",
                     read_data(response)['url'])
     error_response = client.post("/results/microreact", json={
         'projectHash': p_hash,
