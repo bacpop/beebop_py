@@ -31,6 +31,7 @@ def hex_to_decimal(sketches_dict) -> None:
             ):
                 sample[key] = list(map(lambda x: int(x, 16), value))
 
+
 def get_clusters(
     hashes_list: list,
     p_hash: str,

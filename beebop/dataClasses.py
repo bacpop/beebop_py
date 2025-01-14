@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Any
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 
+
 @dataclass
 class ClusteringConfig:
     species: str
@@ -13,6 +14,7 @@ class ClusteringConfig:
     ref_db_fs: DatabaseFileStore
     db_funcs: dict[str, Any]
     out_dir: str
+
 
 @dataclass
 class Qc:
@@ -28,7 +30,8 @@ class Qc:
     no_remove: bool
     length_range: list[int]
     upper_n: Optional[int]
-    
+
+
 @dataclass
 class SpeciesConfig:
     refdb: str
