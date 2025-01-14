@@ -1602,3 +1602,37 @@ def test_get_internal_clusters_result():
         0: {"hash": "sample1", "cluster": 5, "raw_cluster_num": 5},
         1: {"hash": "sample2", "cluster": 10, "raw_cluster_num": 10},
     }
+
+
+@patch("os.path.exists")
+def test_setup_db_file_stores_both_dbs_exist(mock_exists):
+    """Test when both reference and full databases exist"""
+    mock_exists.return_value = True
+
+    species_args = Mock()
+    species_args.refdb = "ref_database"
+    species_args.fulldb = "full_database"
+    species_args.external_clusters_file = "clusters.csv"
+
+    ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
+
+    # Verify correct paths used
+    assert ref_db_fs.db == f"{app.dbs_location}/ref_database"
+    assert full_db_fs.db == f"{app.dbs_location}/full_database"
+
+
+@patch("os.path.exists")
+def test_setup_db_file_stores_fulldb_missing(mock_exists):
+    """Test fallback to refdb when fulldb doesn't exist"""
+    mock_exists.return_value = False
+
+    species_args = Mock()
+    species_args.refdb = "ref_database"
+    species_args.fulldb = "full_database"
+    species_args.external_clusters_file = "clusters.csv"
+
+    ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
+
+    # Verify ref database path used
+    assert ref_db_fs.db == f"{app.dbs_location}/ref_database"
+    assert full_db_fs.db == f"{app.dbs_location}/ref_database"

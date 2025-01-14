@@ -248,15 +248,7 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-    # pass in both full and refs to assign
-    ref_db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.refdb}",
-        species_args.external_clusters_file,
-    )
-    full_db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.fulldb}",
-        species_args.external_clusters_file,
-    )
+    ref_db_fs, full_db_fs = setup_db_file_stores(species_args)
 
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
@@ -330,6 +322,26 @@ def run_poppunk_internal(sketches: dict,
             }
         )
     )
+
+
+def setup_db_file_stores(
+    species_args: dict,
+) -> tuple[DatabaseFileStore, DatabaseFileStore]:
+    """ """
+    ref_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.refdb}",
+        species_args.external_clusters_file,
+    )
+
+    if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
+        full_db_fs = DatabaseFileStore(
+            f"{dbs_location}/{species_args.fulldb}",
+            species_args.external_clusters_file,
+        )
+    else:
+        full_db_fs = ref_db_fs
+
+    return ref_db_fs, full_db_fs
 
 
 # get job status
