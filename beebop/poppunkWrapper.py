@@ -86,7 +86,7 @@ class PoppunkWrapper:
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.fs.distances(self.p_hash),
+            distances=self.db_fs.distances,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_microreact(self.p_hash, cluster),
@@ -131,7 +131,7 @@ class PoppunkWrapper:
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.fs.distances(self.p_hash),
+            distances=self.db_fs.distances,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_network(self.p_hash),
