@@ -11,8 +11,7 @@ from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import shutil
-from typing import Optional, Any
-from dataclasses import dataclass
+from beebop.dataClasses import ClusteringConfig
 
 
 def hex_to_decimal(sketches_dict) -> None:
@@ -31,20 +30,6 @@ def hex_to_decimal(sketches_dict) -> None:
                 and re.match("0x.*", value[0])
             ):
                 sample[key] = list(map(lambda x: int(x, 16), value))
-
-
-@dataclass
-class ClusteringConfig:
-    species: str
-    p_hash: str
-    args: dict
-    external_clusters_prefix: Optional[str]
-    fs: PoppunkFileStore
-    full_db_fs: DatabaseFileStore
-    ref_db_fs: DatabaseFileStore
-    db_funcs: dict[str, Any]
-    out_dir: str
-
 
 def get_clusters(
     hashes_list: list,

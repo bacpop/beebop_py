@@ -29,6 +29,7 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop import utils
+from beebop import dataClasses
 from beebop.poppunkWrapper import PoppunkWrapper
 
 import beebop.schemas
@@ -78,7 +79,7 @@ def sample_clustering_csv(tmp_path):
 
 @pytest.fixture
 def config():
-    return assignClusters.ClusteringConfig(
+    return dataClasses.ClusteringConfig(
         "species",
         "p_hash",
         {},

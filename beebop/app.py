@@ -19,6 +19,7 @@ from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_args, get_cluster_num
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
+from beebop.dataClasses import SpeciesConfig
 schemas = beebop.schemas.Schema()
 
 redis_host = os.environ.get("REDIS_HOST")
@@ -327,7 +328,7 @@ def run_poppunk_internal(sketches: dict,
 
 
 def setup_db_file_stores(
-    species_args: Any,
+    species_args: SpeciesConfig,
 ) -> tuple[DatabaseFileStore, DatabaseFileStore]:
     """
     [Initializes the reference and full database file stores
