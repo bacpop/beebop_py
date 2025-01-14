@@ -1625,6 +1625,7 @@ def test_setup_db_file_stores_both_dbs_exist(mock_exists):
     species_args.refdb = "ref_database"
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
+    species_args.db_metadata_file = "metadata.csv"
 
     ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
 
@@ -1642,6 +1643,7 @@ def test_setup_db_file_stores_fulldb_missing(mock_exists):
     species_args.refdb = "ref_database"
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
+    species_args.db_metadata_file = "metadata.csv"
 
     ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
 

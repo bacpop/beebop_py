@@ -12,6 +12,7 @@ import json
 import requests
 import pickle
 from datetime import datetime
+from typing import Any
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -326,7 +327,7 @@ def run_poppunk_internal(sketches: dict,
 
 
 def setup_db_file_stores(
-    species_args: dict,
+    species_args: Any,
 ) -> tuple[DatabaseFileStore, DatabaseFileStore]:
     """
     [Initializes the reference and full database file stores
