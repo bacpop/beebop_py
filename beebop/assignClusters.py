@@ -72,7 +72,6 @@ def get_clusters(
     :param species: [Type of species]
     :return dict: [dict with filehash (key) and cluster number (value)]
     """
-    out_dir = setup_output_directory(fs, p_hash)
     db_funcs = setupDBFuncs(args=args.assign)
     config = ClusteringConfig(
         species,
@@ -83,7 +82,7 @@ def get_clusters(
         full_db_fs,
         ref_db_fs,
         db_funcs,
-        out_dir,
+        fs.output(p_hash),
     )
 
     sketches_dict = create_sketches_dict(hashes_list, config.fs)
@@ -128,22 +127,6 @@ def get_internal_clusters_result(
             ],
         )
     )
-
-
-def setup_output_directory(fs: PoppunkFileStore, p_hash: str) -> str:
-    """
-    [Create output directory that stores all files from PopPUNK assign job.
-    If the directory already exists, it is removed and recreated]
-
-    :param fs: [PoppunkFileStore with paths to input files]
-    :param p_hash: [project hash]
-    :return str: [path to output directory]
-    """
-    outdir = fs.output(p_hash)
-    if os.path.exists(outdir):
-        shutil.rmtree(outdir)
-    os.makedirs(outdir)
-    return outdir
 
 
 def create_sketches_dict(hashes_list: list, fs: PoppunkFileStore) -> dict:

@@ -456,7 +456,7 @@ def test_get_project_returns_samples_before_clusters_assigned(mock_fetch):
     mock_get_status = Mock()
     mock_get_status.return_value = "waiting"
     mock_fetch.return_value.get_status = mock_get_status
-    fs.ensure_output_dir_exists(hash)
+    fs.setup_output_directory(hash)
     sample_hash_1 = "24280624a730ada7b5bccea16306765c"
     sample_hash_2 = "7e5ddeb048075ac23ab3672769bda17d"
     initial_output = {
@@ -1004,9 +1004,9 @@ def test_get_external_clusters_from_file(sample_clustering_csv):
 def test_setup_output_directory():
     hash = "unit_test_get_clusters_internal"
 
-    outdir = assignClusters.setup_output_directory(fs, hash)
+    fs.setup_output_directory(hash)
 
-    assert outdir == fs.output(hash)
+    assert os.path.exists(fs.output(hash))
 
 
 @patch("os.makedirs")
@@ -1017,17 +1017,14 @@ def test_setup_output_directory_removes_existing_directory(
 ):
     # Test when the directory already exists
     mock_exists.return_value = True
-    mock_filestore = Mock()
-    mock_directory = "/mock/output/directory"
-    mock_filestore.output.return_value = mock_directory
+    dir = fs.output("mock_hash")
 
-    result = assignClusters.setup_output_directory(mock_filestore, "mock_hash")
+    fs.setup_output_directory("mock_hash")
 
-    mock_filestore.output.assert_called_once_with("mock_hash")
-    mock_exists.assert_called_once_with(mock_directory)
-    mock_rmtree.assert_called_once_with(mock_directory)
-    mock_makedirs.assert_called_once_with(mock_directory)
-    assert result == mock_directory
+    mock_exists.assert_called_once_with(dir)
+    mock_rmtree.assert_called_once_with(dir)
+    mock_makedirs.assert_called_once_with(dir)
+    assert os.path.exists(dir)
 
 
 def test_create_sketches_dict():

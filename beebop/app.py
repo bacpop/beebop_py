@@ -260,7 +260,7 @@ def run_poppunk_internal(sketches: dict,
         initial_output[i] = {
             "hash": key
         }
-    fs.ensure_output_dir_exists(p_hash)
+    fs.setup_output_directory(p_hash)
     with open(fs.output_cluster(p_hash), 'wb') as f:
         pickle.dump(initial_output, f)
     # check connection to redis
