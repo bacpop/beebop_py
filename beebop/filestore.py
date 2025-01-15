@@ -83,7 +83,6 @@ class PoppunkFileStore:
 
         :param fs: [PoppunkFileStore with paths to input files]
         :param p_hash: [project hash]
-        :return str: [path to output directory]
         """
         outdir = self.output(p_hash)
         if os.path.exists(outdir):
