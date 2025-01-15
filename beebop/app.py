@@ -260,7 +260,7 @@ def run_poppunk_internal(sketches: dict,
         initial_output[i] = {
             "hash": key
         }
-    # setup output directory and save hashes    
+    # setup output directory and save hashes
     fs.setup_output_directory(p_hash)
     with open(fs.output_cluster(p_hash), 'wb') as f:
         pickle.dump(initial_output, f)
