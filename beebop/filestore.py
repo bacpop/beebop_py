@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import PurePath
 from typing import Optional
+import shutil
 
 
 class FileStore:
@@ -75,13 +76,19 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
-    def ensure_output_dir_exists(self, p_hash) -> None:
+    def setup_output_directory(self, p_hash: str) -> None:
         """
+        [Create output directory that stores all files from PopPUNK assign job.
+        If the directory already exists, it is removed and recreated]
+
+        :param fs: [PoppunkFileStore with paths to input files]
         :param p_hash: [project hash]
+        :return str: [path to output directory]
         """
         outdir = self.output(p_hash)
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        os.makedirs(outdir)
 
     def output_qc_report(self, p_hash) -> str:
         """
