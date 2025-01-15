@@ -81,7 +81,6 @@ class PoppunkFileStore:
         [Create output directory that stores all files from PopPUNK assign job.
         If the directory already exists, it is removed and recreated]
 
-        :param fs: [PoppunkFileStore with paths to input files]
         :param p_hash: [project hash]
         """
         outdir = self.output(p_hash)
