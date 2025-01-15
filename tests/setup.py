@@ -61,6 +61,7 @@ species_db_name = "GPS_v9_ref"
 
 
 def do_assign_clusters(p_hash: str):
+    fs.setup_output_directory(p_hash)
     hashes_list = [
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
