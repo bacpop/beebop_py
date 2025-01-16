@@ -85,3 +85,22 @@ def do_network_internal(p_hash: str):
                                args,
                                name_mapping,
                                species)
+
+amr_for_metadata_csv = [
+    {
+        "ID": "02ff334f17f17d775b9ecd69046ed296",
+        "Penicillin Resistance": "Highly unlikely",
+        "Chloramphenicol Resistance": "Unsure",
+        "Erythromycin Resistance": "Highly unlikely",
+        "Tetracycline Resistance": "Almost certainly",
+        "Cotrim Resistance": "Highly likely",
+    },
+    {
+        "ID": "9c00583e2f24fed5e3c6baa87a4bfa4c",
+        "Penicillin Resistance": "Highly unlikely",
+        "Chloramphenicol Resistance": "Highly unlikely",
+        "Erythromycin Resistance": "Highly unlikely",
+        "Tetracycline Resistance": "Highly unlikely",
+        "Cotrim Resistance": "Unlikely",
+    },
+]
