@@ -199,7 +199,9 @@ def test_microreact_per_cluster(mock_replace_filehashes):
 
 @patch("beebop.visualise.replace_filehashes")
 @patch("os.remove")
-def test_microreact_per_cluster_last_cluster(mock_remove, mock_replace_filehashes):
+def test_microreact_per_cluster_last_cluster(
+    mock_remove, mock_replace_filehashes
+):
     p_hash = "unit_test_microreact_internal"
     cluster = "GPSC16"
     wrapper = Mock()
@@ -211,7 +213,7 @@ def test_microreact_per_cluster_last_cluster(mock_remove, mock_replace_filehashe
         wrapper,
         setup.name_mapping,
         external_to_poppunk_clusters,
-        True # is_last_cluster_to_process
+        True,  # is_last_cluster_to_process
     )
 
     wrapper.create_microreact.assert_called_with("16", "9")
@@ -248,6 +250,7 @@ def test_queue_microreact_jobs(mocker):
                 wrapper,
                 setup.name_mapping,
                 external_to_poppunk_clusters,
+                mocker.ANY,
             ),
             job_timeout=60,
             depends_on=mocker.ANY,
@@ -311,6 +314,7 @@ def test_network_internal():
             fs.output_network(p_hash)
             + f"/network_component_{cluster_num}.graphml"
         )
+
 
 @patch("beebop.app.add_amr_to_metadata")
 def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
@@ -379,9 +383,12 @@ def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
         read_redis("beebop:hash:job:network", project_hash, redis)
         == job_ids["network"]
     )
-    
+
     mock_add_amr_metadata.assert_called_once_with(
-        fs, project_hash, [{"ID": "ID1", "AMR": "AMR1"}], setup.ref_db_fs.metadata
+        fs,
+        project_hash,
+        [{"ID": "ID1", "AMR": "AMR1"}],
+        setup.ref_db_fs.metadata,
     )
 
 
@@ -1680,7 +1687,9 @@ def test_setup_db_file_stores_fulldb_missing(mock_exists):
 
 def test_add_amr_to_metadata_no_init_metadata(tmp_path):
     fs = Mock()
-    fs.tmp_output_metadata.return_value = str(tmp_path / "tmp_output_metadata.csv")
+    fs.tmp_output_metadata.return_value = str(
+        tmp_path / "tmp_output_metadata.csv"
+    )
     amr_metadata = [
         {"ID": "sample1", "AMR": "AMR1"},
         {"ID": "sample2", "AMR": "AMR2"},
@@ -1690,15 +1699,18 @@ def test_add_amr_to_metadata_no_init_metadata(tmp_path):
     app.add_amr_to_metadata(fs, p_hash, amr_metadata)
 
     res = pd.read_csv(tmp_path / "tmp_output_metadata.csv")
+    print(res)
     fs.tmp_output_metadata.assert_called_once_with(p_hash)
     len(res) == 2
-    assert res.loc["ID"].tolist() == ["sample1", "sample2"]
-    assert res.loc["AMR"].tolist() == ["AMR1", "AMR2"]
+    assert res["ID"].tolist() == ["sample1", "sample2"]
+    assert res["AMR"].tolist() == ["AMR1", "AMR2"]
 
 
 def test_add_amr_to_metadata_init_metadata(tmp_path):
     fs = Mock()
-    fs.tmp_output_metadata.return_value = str(tmp_path / "tmp_output_metadata.csv")
+    fs.tmp_output_metadata.return_value = str(
+        tmp_path / "tmp_output_metadata.csv"
+    )
     metadata = pd.DataFrame(
         {
             "ID": ["sample1", "sample2"],
@@ -1722,41 +1734,39 @@ def test_add_amr_to_metadata_init_metadata(tmp_path):
     assert res["ID"].tolist() == ["sample1", "sample2", "sample3", "sample4"]
     assert res["AMR"].tolist() == ["AMR1", "AMR2", "AMR3", "AMR4"]
 
+
 def test_update_microreact_json():
     json_microreact = {
-        "meta": {
-            "name": "Old Title"
-        },
-        "tables": {
-            "table-1": {
-                "columns": [{"field": "ID"}]
-            }
-        }
+        "meta": {"name": "Old Title"},
+        "tables": {"table-1": {"columns": [{"field": "ID"}]}},
     }
     cluster_num = "123"
 
     app.update_microreact_json(json_microreact, cluster_num)
 
     # Check title gets updated with correct format
-    assert json_microreact["meta"]["name"].startswith(f"Cluster {cluster_num} - ")
-    assert ":" in json_microreact["meta"]["name"] # Check datetime got added
-    
+    assert json_microreact["meta"]["name"].startswith(
+        f"Cluster {cluster_num} - "
+    )
+    assert ":" in json_microreact["meta"]["name"]  # Check datetime got added
+
     # Check expected columns were added
     expected_columns = [
         {"field": "ID"},
         {"field": "Status", "width": 103, "sort": "asc"},
         {"field": "Penicillin Resistance", "width": 183},
-        {"field": "Chloramphenicol Resistance", "width": 233}, 
+        {"field": "Chloramphenicol Resistance", "width": 233},
         {"field": "Erythromycin Resistance", "width": 209},
         {"field": "Tetracycline Resistance", "width": 202},
-        {"field": "Cotrim Resistance", "width": 169}
+        {"field": "Cotrim Resistance", "width": 169},
     ]
 
     assert json_microreact["tables"]["table-1"]["columns"] == expected_columns
 
+
 def test_tmp_output_metadata(tmp_path):
     fs = PoppunkFileStore(tmp_path)
-    
+
     result = fs.tmp_output_metadata("hash")
-    
+
     assert result == str(PurePath(fs.tmp("hash"), "metadata.csv"))

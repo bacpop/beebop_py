@@ -351,9 +351,9 @@ def add_amr_to_metadata(
     metadata_file: str = None,
 ) -> None:
     """
-    [Create new metadata file with AMR metadata 
+    [Create new metadata file with AMR metadata
     and existing metadata csv file]
-    
+
     :param fs: [PoppunkFileStore with paths to in-/outputs]
     :param p_hash: [project hash]
     :param amr_metadata: [AMR metadata]
@@ -671,10 +671,11 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
                 Response text: {r.text}."""
             })), 500
 
+
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
     """
     [Updates the title of the microreact json file.]
-    
+
     :param json_microreact: [microreact json]
     :param cluster_num: [cluster number]
     """
@@ -682,7 +683,7 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
     json_microreact["meta"][
         "name"
     ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-    
+
     # default columns to show with widths sorted by queries first
     default_cols_to_add = [
         {"field": "Status", "width": 103, "sort": "asc"},
@@ -693,6 +694,7 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
         {"field": "Cotrim Resistance", "width": 169},
     ]
     json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add
+
 
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:

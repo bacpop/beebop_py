@@ -6,7 +6,7 @@ from tests import hdf5_to_json
 import json
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 from beebop.utils import get_args
-
+import pandas as pd
 schemas = beebop.schemas.Schema()
 
 
@@ -61,7 +61,12 @@ species_db_name = "GPS_v9_ref"
 
 
 def do_assign_clusters(p_hash: str):
+    # setup output directory
     fs.setup_output_directory(p_hash)
+    # setup metadata csv file for microreact
+    pd.DataFrame(amr_for_metadata_csv).to_csv(
+        fs.tmp_output_metadata(p_hash), index=False
+    )
     hashes_list = [
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
@@ -85,6 +90,7 @@ def do_network_internal(p_hash: str):
                                args,
                                name_mapping,
                                species)
+
 
 amr_for_metadata_csv = [
     {

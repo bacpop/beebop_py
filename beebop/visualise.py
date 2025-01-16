@@ -11,6 +11,7 @@ from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 import os
 
+
 def microreact(
     p_hash: str,
     fs: PoppunkFileStore,
@@ -146,9 +147,10 @@ def microreact_per_cluster(
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
     :param external_to_poppunk_clusters: [dict of external to poppunk
-        clusters, used to identify the include file to pass to poppunk]
-    :param is_last_cluster_to_process: [Boolean flag to indicate if this is the last
-        cluster to process]
+        clusters, used to identify the include file
+        to pass to poppunk]
+    :param is_last_cluster_to_process: [Boolean flag to indicate if
+    this is the last cluster to process]
     """
 
     cluster_no = get_cluster_num(assign_cluster)
@@ -158,7 +160,7 @@ def microreact_per_cluster(
         internal_cluster = assign_cluster
 
     wrapper.create_microreact(cluster_no, internal_cluster)
-    
+
     replace_filehashes(fs.output_microreact(p_hash, cluster_no), name_mapping)
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))
