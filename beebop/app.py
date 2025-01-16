@@ -11,12 +11,15 @@ import zipfile
 import json
 import requests
 import pickle
+from datetime import datetime
+from typing import Any
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_args, get_cluster_num
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
+from beebop.dataClasses import SpeciesConfig
 schemas = beebop.schemas.Schema()
 
 redis_host = os.environ.get("REDIS_HOST")
@@ -326,7 +329,7 @@ def run_poppunk_internal(sketches: dict,
 
 
 def setup_db_file_stores(
-    species_args: dict,
+    species_args: SpeciesConfig,
 ) -> tuple[DatabaseFileStore, DatabaseFileStore]:
     """
     [Initializes the reference and full database file stores
@@ -340,12 +343,14 @@ def setup_db_file_stores(
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
+        species_args.db_metadata_file,
     )
 
     if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
         full_db_fs = DatabaseFileStore(
             f"{dbs_location}/{species_args.fulldb}",
             species_args.external_clusters_file,
+            species_args.db_metadata_file,
         )
     else:
         full_db_fs = ref_db_fs
@@ -595,6 +600,9 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
 
+    json_microreact["meta"][
+        "name"
+    ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     # generate URL from microreact API
     headers = {"Content-type": "application/json; charset=UTF-8",
                "Access-Token": api_token}

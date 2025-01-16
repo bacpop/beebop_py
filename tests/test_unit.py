@@ -29,6 +29,7 @@ from beebop import versions
 from beebop import assignClusters
 from beebop import visualise
 from beebop import utils
+from beebop import dataClasses
 from beebop.poppunkWrapper import PoppunkWrapper
 
 import beebop.schemas
@@ -78,7 +79,7 @@ def sample_clustering_csv(tmp_path):
 
 @pytest.fixture
 def config():
-    return assignClusters.ClusteringConfig(
+    return dataClasses.ClusteringConfig(
         "species",
         "p_hash",
         {},
@@ -1567,6 +1568,18 @@ def test_get_external_cluster_nums(sample_clustering_csv):
     }
 
 
+def test_set_metadata_database_filestore():
+    metadata_file = "metadata.csv"
+
+    db_fs = DatabaseFileStore(
+        "./storage/dbs/GPS_v9_ref", db_metadata_file=metadata_file
+    )
+
+    assert db_fs.metadata == str(
+        PurePath("beebop", "resources", metadata_file)
+    )
+
+
 def test_add_neighbor_nodes_max_more_than_available():
     graph_nodes = {1}
     neighbours = {2, 3, 4, 5}
@@ -1610,6 +1623,7 @@ def test_setup_db_file_stores_both_dbs_exist(mock_exists):
     species_args.refdb = "ref_database"
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
+    species_args.db_metadata_file = "metadata.csv"
 
     ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
 
@@ -1627,6 +1641,7 @@ def test_setup_db_file_stores_fulldb_missing(mock_exists):
     species_args.refdb = "ref_database"
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
+    species_args.db_metadata_file = "metadata.csv"
 
     ref_db_fs, full_db_fs = app.setup_db_file_stores(species_args)
 

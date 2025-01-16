@@ -45,6 +45,7 @@
             "fulldb": "GPS_v9",
             "external_cluster_prefix": "GPSC",
             "external_clusters_file": "GPS_v9_external_clusters.csv",
+            "db_metadata_file": "GPS_metadata.csv",
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,
@@ -65,6 +66,7 @@
             "fulldb": "GBS_full",
             "external_cluster_prefix": null,
             "external_clusters_file": null,
+            "db_metadata_file": null,
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,
