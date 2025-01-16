@@ -17,6 +17,29 @@
     "species": {
       "type": "string"
     },
+    "amrForMetadataCsv": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ID": { "type": "string" },
+          "Penicillin Resistance": { "type": "string" },
+          "Chloramphenicol Resistance": { "type": "string" },
+          "Erythromycin Resistance": { "type": "string" },
+          "Tetracycline Resistance": { "type": "string" },
+          "Cotrim Resistance": { "type": "string" }
+        },
+        "required": [
+          "ID",
+          "Penicillin Resistance",
+          "Chloramphenicol Resistance",
+          "Erythromycin Resistance",
+          "Tetracycline Resistance",
+          "Cotrim Resistance"
+        ],
+        "additionalProperties": false
+      }
+    },
     "sketches": {
       "type": "object",
       "patternProperties": {
@@ -58,7 +81,7 @@
             },
             "patternProperties": {
               "^[0-9]+$": {
-              "$ref": "#/definitions/int64HexArray"
+                "$ref": "#/definitions/int64HexArray"
               }
             }
           },

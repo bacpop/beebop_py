@@ -285,6 +285,16 @@ class PoppunkFileStore:
             )
         )
 
+    def tmp_output_metadata(self, p_hash: str) -> str:
+        """
+        [Generates the path to the metadata csv file 
+        for the given project hash.]
+
+        :param p_hash: [project hash]
+        :return str: [path to metadata file]
+        """
+        return str(PurePath(self.tmp(p_hash), f"metadata.csv"))
+
 
 class DatabaseFileStore:
     """

@@ -12,7 +12,7 @@ import json
 import requests
 import pickle
 from datetime import datetime
-from typing import Any
+import pandas as pd
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -20,6 +20,7 @@ from beebop.utils import get_args, get_cluster_num
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
 from beebop.dataClasses import SpeciesConfig
+
 schemas = beebop.schemas.Schema()
 
 redis_host = os.environ.get("REDIS_HOST")
@@ -194,8 +195,8 @@ def get_species_kmers(species_db_name: str) -> dict:
     }
 
 
-@app.route('/poppunk', methods=['POST'])
-@expects_json(schemas.sketches)
+@app.route("/poppunk", methods=["POST"])
+@expects_json(schemas.run_poppunk)
 def run_poppunk() -> json:
     """
     [run poppunks assing_query() and generate_visualisations().
@@ -208,17 +209,30 @@ def run_poppunk() -> json:
     p_hash = request.json['projectHash']
     name_mapping = request.json['names']
     species = request.json["species"]
+    amr_metadata = request.json["amrForMetadataCsv"]
     q = Queue(connection=redis)
-    return run_poppunk_internal(sketches, p_hash, name_mapping,
-                                storage_location, redis, q, species)
+    return run_poppunk_internal(
+        sketches,
+        p_hash,
+        name_mapping,
+        storage_location,
+        redis,
+        q,
+        species,
+        amr_metadata,
+    )
 
 
-def run_poppunk_internal(sketches: dict,
-                         p_hash: str,
-                         name_mapping: dict,
-                         storage_location: str,
-                         redis: Redis,
-                         q: Queue, species: str) -> json:
+def run_poppunk_internal(
+    sketches: dict,
+    p_hash: str,
+    name_mapping: dict,
+    storage_location: str,
+    redis: Redis,
+    q: Queue,
+    species: str,
+    amr_metadata: list[dict],
+) -> json:
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
@@ -233,6 +247,7 @@ def run_poppunk_internal(sketches: dict,
     :param redis: [Redis instance]
     :param q: [redis queue]
     :param species: [type of species to be analyzed]
+    :amr_metadata: [AMR metadata for query samples]
     :return json: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
@@ -299,6 +314,7 @@ def run_poppunk_internal(sketches: dict,
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
+    add_amr_to_metadata(fs, p_hash, amr_metadata, ref_db_fs.metadata)
     # delete all previous microreact cluster job results for this project
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
     job_microreact = q.enqueue(
@@ -325,6 +341,32 @@ def run_poppunk_internal(sketches: dict,
                 "network": job_network.id,
             }
         )
+    )
+
+
+def add_amr_to_metadata(
+    fs: PoppunkFileStore,
+    p_hash: str,
+    amr_metadata: list[dict],
+    metadata_file: str = None,
+) -> None:
+    """
+    [Create new metadata file with AMR metadata 
+    and existing metadata csv file]
+    
+    :param fs: [PoppunkFileStore with paths to in-/outputs]
+    :param p_hash: [project hash]
+    :param amr_metadata: [AMR metadata]
+    :param metadata_file: [db metadata csv file]
+    """
+    if metadata_file is None:
+        metadata = None
+    else:
+        metadata = pd.read_csv(metadata_file)
+    amr_df = pd.DataFrame(amr_metadata)
+
+    pd.concat([metadata, amr_df], ignore_index=True).to_csv(
+        fs.tmp_output_metadata(p_hash), index=False
     )
 
 
@@ -600,9 +642,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
 
-    json_microreact["meta"][
-        "name"
-    ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    update_microreact_json(json_microreact, cluster_num)
     # generate URL from microreact API
     headers = {"Content-type": "application/json; charset=UTF-8",
                "Access-Token": api_token}
@@ -631,6 +671,28 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
                 Response text: {r.text}."""
             })), 500
 
+def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
+    """
+    [Updates the title of the microreact json file.]
+    
+    :param json_microreact: [microreact json]
+    :param cluster_num: [cluster number]
+    """
+    # update title
+    json_microreact["meta"][
+        "name"
+    ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    
+    # default columns to show with widths sorted by queries first
+    default_cols_to_add = [
+        {"field": "Status", "width": 103, "sort": "asc"},
+        {"field": "Penicillin Resistance", "width": 183},
+        {"field": "Chloramphenicol Resistance", "width": 233},
+        {"field": "Erythromycin Resistance", "width": 209},
+        {"field": "Tetracycline Resistance", "width": 202},
+        {"field": "Cotrim Resistance", "width": 169},
+    ]
+    json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add
 
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:
