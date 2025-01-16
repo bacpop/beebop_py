@@ -385,10 +385,9 @@ def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
     )
 
     mock_add_amr_metadata.assert_called_once_with(
-        fs,
+        results_fs,
         project_hash,
-        [{"ID": "ID1", "AMR": "AMR1"}],
-        setup.ref_db_fs.metadata,
+        [{"ID": "ID1", "AMR": "AMR1"}]
     )
 
 
