@@ -247,7 +247,7 @@ def run_poppunk_internal(
     :param redis: [Redis instance]
     :param q: [redis queue]
     :param species: [type of species to be analyzed]
-    :amr_metadata: [AMR metadata for query samples]
+    :param amr_metadata: [AMR metadata for query samples]
     :return json: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
