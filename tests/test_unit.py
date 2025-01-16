@@ -316,8 +316,7 @@ def test_network_internal():
         )
 
 
-@patch("beebop.app.add_amr_to_metadata")
-def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
+def test_run_poppunk_internal(qtbot):
     fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get(
@@ -340,7 +339,7 @@ def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
         redis,
         queue,
         setup.species,
-        [{"ID": "ID1", "AMR": "AMR1"}]
+        []
     )
     job_ids = read_data(response)["data"]
     # stores sketches in storage
@@ -382,12 +381,6 @@ def test_run_poppunk_internal(mock_add_amr_metadata, qtbot):
     assert (
         read_redis("beebop:hash:job:network", project_hash, redis)
         == job_ids["network"]
-    )
-
-    mock_add_amr_metadata.assert_called_once_with(
-        results_fs,
-        project_hash,
-        [{"ID": "ID1", "AMR": "AMR1"}]
     )
 
 
