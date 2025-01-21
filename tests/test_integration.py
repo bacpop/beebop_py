@@ -36,7 +36,8 @@ def test_run_poppunk_pneumo(client, qtbot):
         'projectHash': p_hash,
         'sketches': sketches,
         'names': name_mapping,
-        'species': setup.species
+        'species': setup.species,
+        "amrForMetadataCsv": setup.amr_for_metadata_csv
         })
     assert response.status_code == 200
     # retrieve job status
@@ -192,6 +193,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
             "sketches": {sketch_hash: sketch},
             "names": name_mapping,
             "species": "Streptococcus agalactiae",
+            "amrForMetadataCsv": setup.amr_for_metadata_csv
         },
     )
 

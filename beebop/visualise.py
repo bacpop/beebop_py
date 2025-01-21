@@ -9,6 +9,7 @@ from beebop.utils import (
 from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
+import os
 
 
 def microreact(
@@ -95,7 +96,8 @@ def queue_microreact_jobs(
     q = Queue(connection=redis)
     queries_clusters = [item["cluster"] for item in assign_result.values()]
     previous_job = None
-    for assign_cluster in set(queries_clusters):
+    last_cluster_idx = len(queries_clusters) - 1
+    for idx, assign_cluster in enumerate(set(queries_clusters)):
         dependency = (
             Dependency(previous_job, allow_failure=True)
             if previous_job
@@ -110,6 +112,7 @@ def queue_microreact_jobs(
                 wrapper,
                 name_mapping,
                 external_to_poppunk_clusters,
+                (idx == last_cluster_idx)
             ),
             depends_on=dependency,
             **queue_kwargs,
@@ -124,12 +127,13 @@ def queue_microreact_jobs(
 
 
 def microreact_per_cluster(
-    assign_cluster,
-    p_hash,
-    fs,
-    wrapper,
-    name_mapping,
+    assign_cluster: str,
+    p_hash: str,
+    fs: PoppunkFileStore,
+    wrapper: PoppunkWrapper,
+    name_mapping: dict,
     external_to_poppunk_clusters: dict = None,
+    is_last_cluster_to_process: bool = False,
 ) -> None:
     """
     This function is called by the queue
@@ -143,7 +147,10 @@ def microreact_per_cluster(
     :param name_mapping: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
     :param external_to_poppunk_clusters: [dict of external to poppunk
-        clusters, used to identify the include file to pass to poppunk]
+        clusters, used to identify the include file
+        to pass to poppunk]
+    :param is_last_cluster_to_process: [Boolean flag to indicate if
+    this is the last cluster to process]
     """
 
     cluster_no = get_cluster_num(assign_cluster)
@@ -153,7 +160,10 @@ def microreact_per_cluster(
         internal_cluster = assign_cluster
 
     wrapper.create_microreact(cluster_no, internal_cluster)
+
     replace_filehashes(fs.output_microreact(p_hash, cluster_no), name_mapping)
+    if is_last_cluster_to_process:
+        os.remove(fs.tmp_output_metadata(p_hash))
 
 
 def network(
