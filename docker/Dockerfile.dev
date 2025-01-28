@@ -3,7 +3,7 @@ FROM continuumio/miniconda3
 # ensure conda does not install packages for the wrong architecture
 ENV CONDA_OVERRIDE_ARCHSPEC=skylake
 
-ARG POPPUNK_VERSION="v2.6.7"
+ARG POPPUNK_VERSION="v2.7.5"
 
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]

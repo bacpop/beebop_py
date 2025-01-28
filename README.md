@@ -60,7 +60,7 @@ pip3 install git+https://github.com/bacpop/PopPUNK#egg=PopPUNK
 
 ..or a specific version:
 ```
-pip3 install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK  # for PopPUNK v2.6.7. replace with desired version
+pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.5#egg=PopPUNK  # for PopPUNK v2.7.5. replace with desired version
 ```
 
 If there are problems installing PopPUNK, you may need to install one or more of the following packages with `sudo apt get install`:
