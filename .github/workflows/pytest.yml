@@ -89,8 +89,7 @@ jobs:
         sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
         pip install joblib==1.1.0
         conda install -c bioconda pp-sketchlib=2.0.0
-        pip3 install git+https://github.com/bacpop/PopPUNK@network_relabelling#egg=PopPUNK
-# TODO revert above branch before merge and update version
+        pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.5#egg=PopPUNK
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
