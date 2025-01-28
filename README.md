@@ -3,6 +3,13 @@
 # beebop_py
 ## Python API for beebop
 
+### Usage
+
+#### Databases
+
+To update the database being used for a species, update the `dbname` json property in `args.json`.
+Note: for development you may prefer to use the *ref* database to speed up PopPUNK runs.
+
 #### Adding a new species 
 
 The current species can be seen in `args.json` in the `species` object. To add a new species do the following:
@@ -13,7 +20,6 @@ The current species can be seen in `args.json` in the `species` object. To add a
 #### A note on Assign Cluster Quality Control
 The app assigns clusters with quality control (qc) on. This is to enable the `--run-qc` flag as per [here](https://poppunk.bacpop.org/qc.html).
 The arguments along with `--qc-run` can be found at `args.json` in the `qc_dict` json object. These are species dependent and can be changed as per the species requirements.
-### Usage
 
 #### Clone the repository
 ```
@@ -44,7 +50,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 To install PopPUNK, follow these steps:
 
 
-First, create a new conda environment: `conda create --name beebop_py python=3.9` and activate it with `conda activate beebop_pyonda activate beebop_py`
+First, create a new conda environment: `conda create --name beebop_py python=3.10` and activate it with `conda activate beebop_py`
 
 
 Then install PopPUNK to your computer - either the latest version:
@@ -54,7 +60,7 @@ pip3 install git+https://github.com/bacpop/PopPUNK#egg=PopPUNK
 
 ..or a specific version:
 ```
-pip3 install git+https://github.com/bacpop/PopPUNK@v2.6.7#egg=PopPUNK  # for PopPUNK v2.6.7. replace with desired version
+pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.5#egg=PopPUNK  # for PopPUNK v2.7.5. replace with desired version
 ```
 
 If there are problems installing PopPUNK, you may need to install one or more of the following packages with `sudo apt get install`:
@@ -72,7 +78,6 @@ The `graph-tool` and `mandrake` packages must be installed from `conda-forge`:
 ```
 conda install -c conda-forge graph-tool mandrake
 ```
-
 
 ##### Other dependencies
 To install all other required dependencies go into the beebop_py project folder and run (having the conda environment 'beebop_py' activated)
@@ -101,6 +106,11 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 ```
 TESTING=True poetry run pytest
 ```
+
+### Diagrams
+
+- There is a .drawio graph in the `diagrams` folder illustrating the process of running a analysis. This includes
+all the files created and how they are used in each job. You can open and view the diagram at [draw.io](https://draw.io).
 
 ## Use/Deploy specific version of PopPUNK
 

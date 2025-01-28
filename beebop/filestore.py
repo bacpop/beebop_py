@@ -2,12 +2,14 @@ import os
 import json
 from pathlib import PurePath
 from typing import Optional
+import shutil
 
 
 class FileStore:
     """
     General filestore to be used by PoppunkFileStore
     """
+
     def __init__(self, path):
         """
         :param path: path to folder
@@ -31,7 +33,7 @@ class FileStore:
         if not os.path.exists(src):
             raise Exception(f"Sketch for hash '{hash}' not found in storage")
         else:
-            with open(src, 'r') as fp:
+            with open(src, "r") as fp:
                 sketch = json.load(fp)
         return sketch
 
@@ -49,7 +51,7 @@ class FileStore:
         """
         dst = self.filename(hash)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        with open(dst, 'w') as fp:
+        with open(dst, "w") as fp:
             json.dump(sketch, fp)
 
 
@@ -57,13 +59,14 @@ class PoppunkFileStore:
     """
     Filestore that provides paths to poppunk in- and outputs
     """
+
     def __init__(self, storage_location):
         """
         :param storage_location: [path to storage location]
         """
         self.storage_location = storage_location
         self.input = FileStore(f"{storage_location}/json")
-        self.output_base = PurePath(storage_location, 'poppunk_output')
+        self.output_base = PurePath(storage_location, "poppunk_output")
         os.makedirs(self.output_base, exist_ok=True)
 
     def output(self, p_hash) -> str:
@@ -73,13 +76,17 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
-    def ensure_output_dir_exists(self, p_hash) -> None:
+    def setup_output_directory(self, p_hash: str) -> None:
         """
+        [Create output directory that stores all files from PopPUNK assign job.
+        If the directory already exists, it is removed and recreated]
+
         :param p_hash: [project hash]
         """
         outdir = self.output(p_hash)
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        os.makedirs(outdir)
 
     def output_qc_report(self, p_hash) -> str:
         """
@@ -100,8 +107,11 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to mapping between external and poppunk clusters]
         """
-        return str(PurePath(self.output(p_hash),
-                            "external_to_poppunk_clusters.pickle"))
+        return str(
+            PurePath(
+                self.output(p_hash), "external_to_poppunk_clusters.pickle"
+            )
+        )
 
     def output_microreact(self, p_hash, cluster) -> str:
         """
@@ -118,14 +128,20 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "network"))
 
+    def partial_query_graph(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to partial query graph]
+        """
+        return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
+
     def include_files(self, p_hash, cluster) -> str:
         """
         :param p_hash: [project hash]
         :param cluster: [cluster number]
         :return str: [path to include files]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"include{cluster}.txt"))
+        return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
 
     def network_file(self, p_hash) -> str:
         """
@@ -174,60 +190,122 @@ class PoppunkFileStore:
             self.external_previous_query_clustering_path(p_hash)
         )
 
-    def distances(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to distances file]
-        """
-        return str(PurePath(self.output(p_hash), p_hash).with_suffix(".dists"))
-
     def microreact_json(self, p_hash, cluster) -> str:
         """
         :param p_hash: [project hash]
         :param cluster: [cluster number]
         :return str: [path to microreact json file]
         """
-        return str(PurePath(self.output(p_hash),
-                            f"microreact_{cluster}",
-                            (f"microreact_{cluster}.microreact")
-                            ))
+        return str(
+            PurePath(
+                self.output(p_hash),
+                f"microreact_{cluster}",
+                (f"microreact_{cluster}.microreact"),
+            )
+        )
 
     def network_output_csv(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to network csv file]
         """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            "network_cytoscape.csv"))
+        return str(
+            PurePath(self.output(p_hash), "network", "network_cytoscape.csv")
+        )
 
     def network_output_component(self, p_hash, component_number) -> str:
         """
         :param p_hash: [project hash]
-        :param component_number: [component number, which is not to be
-            confused with cluster number!]
+        :param component_number: [component number,
+            which is the same as cluster number]
         :return str: [path to network component file]
         """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            f"network_component_{component_number}.graphml"))
+        return str(
+            PurePath(
+                self.output(p_hash),
+                "network",
+                f"network_component_{component_number}.graphml",
+            )
+        )
 
-    def network_mapping(self, p_hash) -> str:
+    def pruned_network_output_component(self, p_hash, component_number) -> str:
+        """
+        [Generates the path to the pruned network component file
+        for the given project hash and component number.]
+
+        :param p_hash: [project hash]
+        :param component_number: [component number,
+            which is the same as cluster number]
+        :return str: [path to pruned network component file]
+        """
+        return str(
+            PurePath(
+                self.output(p_hash),
+                "network",
+                f"pruned_network_component_{component_number}.graphml",
+            )
+        )
+
+    def tmp(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
-        :return str: [path to cluster/component mapping file]
+        :return str: [path to tmp folder]
         """
-        return str(PurePath(self.output(p_hash),
-                            "network",
-                            'cluster_component_dict.pickle'))
+        tmp_path = PurePath(self.output(p_hash), "tmp")
+        os.makedirs(tmp_path, exist_ok=True)
+        return str(tmp_path)
+
+    def output_tmp(self, p_hash) -> str:
+        """
+        Generates the path to the full assign output folder when using full db.
+
+        :param p_hash: [project hash]
+        :return str: [path to full assign output folder]
+        """
+        path = PurePath(self.tmp(p_hash), p_hash)
+        os.makedirs(path, exist_ok=True)
+        return str(path)
+
+    def partial_query_graph_tmp(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to partial query graph]
+        """
+        return str(PurePath(self.output_tmp(p_hash), f"{p_hash}_query.subset"))
+
+    def external_previous_query_clustering_tmp(self, p_hash) -> str:
+        """
+        :param p_hash (str): The hash value representing the query.
+        :return str: [The file path to the external]
+        """
+        return str(
+            PurePath(
+                self.output_tmp(p_hash),
+                f"{p_hash}_external_clusters.csv",
+            )
+        )
+
+    def tmp_output_metadata(self, p_hash: str) -> str:
+        """
+        [Generates the path to the metadata csv file
+        for the given project hash.]
+
+        :param p_hash: [project hash]
+        :return str: [path to metadata file]
+        """
+        return str(PurePath(self.tmp(p_hash), f"metadata.csv"))
 
 
 class DatabaseFileStore:
     """
     Filestore that provides paths to the database
     """
+
     def __init__(
-        self, full_path: str, external_clusters_file: Optional[str] = None
+        self,
+        full_path: str,
+        external_clusters_file: Optional[str] = None,
+        db_metadata_file: Optional[str] = None,
     ):
         """
         :param full_path: [path to database]
@@ -235,12 +313,19 @@ class DatabaseFileStore:
         self.db = full_path
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
-        self.distances = str(PurePath(self.db,
-                                      self.name).with_suffix('.dists'))
-        self.previous_clustering = str(PurePath(self.db,
-                                                f"{self.name}_clusters.csv"))
+        self.distances = str(
+            PurePath(self.db, self.name).with_suffix(".dists")
+        )
+        self.previous_clustering = str(
+            PurePath(self.db, f"{self.name}_clusters.csv")
+        )
         self.external_clustering = (
             str(PurePath("beebop", "resources", external_clusters_file))
             if external_clusters_file
+            else None
+        )
+        self.metadata = (
+            str(PurePath("beebop", "resources", db_metadata_file))
+            if db_metadata_file
             else None
         )

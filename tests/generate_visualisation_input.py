@@ -21,10 +21,10 @@ def hex_to_decimal(sketches_dict):
 storageLocation = './tests/files'
 p_hash = 'unit_test_visualisations'
 fs = PoppunkFileStore(storageLocation)
-fs.ensure_output_dir_exists(p_hash)
+fs.setup_output_directory(p_hash)
 outdir = fs.output(p_hash)
-db_fs = DatabaseFileStore("./storage/GPS_v8_ref",
-                          "GPS_v8_external_clusters.csv")
+db_fs = DatabaseFileStore("./storage/GPS_v9_ref",
+                          "GPS_v9_external_clusters.csv")
 args = get_args()
 qc_dict = {'run_qc': False}
 dbFuncs = setupDBFuncs(args=args.assign)

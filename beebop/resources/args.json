@@ -16,7 +16,9 @@
         "save_partial_query_graph": true,
         "min_kmer_count": 0,
         "exact_count": false,
-        "serial": false
+        "serial": false,
+        "stable": null,
+        "use_full_network": false
     },
     "visualise":{
         "threads":1,
@@ -34,13 +36,16 @@
         "mst_distances":"core",
         "overwrite":true,
         "display_cluster":null,
-        "gpu_graph":false
+        "gpu_graph":false,
+        "recalculate_distances": true
     },
     "species": {
         "Streptococcus pneumoniae": {
-            "dbname": "GPS_v8_ref",
+            "refdb": "GPS_v9_ref",
+            "fulldb": "GPS_v9",
             "external_cluster_prefix": "GPSC",
-            "external_clusters_file": "GPS_v8_external_clusters.csv",
+            "external_clusters_file": "GPS_v9_external_clusters.csv",
+            "db_metadata_file": "GPS_metadata.csv",
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,
@@ -57,9 +62,11 @@
             }
         },
         "Streptococcus agalactiae": {
-            "dbname": "GBS_refs",
+            "refdb": "GBS_refs",
+            "fulldb": "GBS_full",
             "external_cluster_prefix": null,
             "external_clusters_file": null,
+            "db_metadata_file": null,
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,

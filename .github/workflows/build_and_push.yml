@@ -21,6 +21,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       # add --with-dev to below commands to build & push the dev image
       - name: Build docker image
-        run: ./docker/build 
+        run: ./docker/build
       - name: Push docker image
-        run: ./docker/push 
+        run: ./docker/push

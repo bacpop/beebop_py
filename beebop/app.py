@@ -4,19 +4,23 @@ from waitress import serve
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Dependency
 import os
 from io import BytesIO
 import zipfile
 import json
 import requests
 import pickle
+from datetime import datetime
+import pandas as pd
 
 from beebop import versions, assignClusters, visualise
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_args, get_cluster_num
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
+from beebop.dataClasses import SpeciesConfig
+
 schemas = beebop.schemas.Schema()
 
 redis_host = os.environ.get("REDIS_HOST")
@@ -24,7 +28,7 @@ if not redis_host:
     redis_host = "127.0.0.1"
 app = Flask(__name__)
 redis = Redis(host=redis_host)
-job_timeout = 600
+job_timeout = 1200
 
 storage_location = os.environ.get('STORAGE_LOCATION')
 dbs_location = os.environ.get('DBS_LOCATION')
@@ -89,12 +93,8 @@ def generate_zip(fs: PoppunkFileStore,
         add_files(memory_file, path_folder)
     elif type == 'network':
         path_folder = fs.output_network(p_hash)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
-        component = cluster_component_mapping[cluster_num]
-        file_list = (f'network_component_{component}.graphml',
-                     'network_cytoscape.csv',
-                     'network_cytoscape.graphml')
+        file_list = (f'network_component_{cluster_num}.graphml',
+                     'network_cytoscape.csv')
         add_files(memory_file, path_folder, file_list)
     memory_file.seek(0)
     return memory_file
@@ -173,7 +173,7 @@ def get_species_config() -> json:
     """
     all_species_args = vars(get_args().species)
     species_config = {
-        species: get_species_kmers(args.dbname)
+        species: get_species_kmers(args.refdb)
         for species, args in all_species_args.items()
     }
     return jsonify(response_success(species_config))
@@ -195,8 +195,8 @@ def get_species_kmers(species_db_name: str) -> dict:
     }
 
 
-@app.route('/poppunk', methods=['POST'])
-@expects_json(schemas.sketches)
+@app.route("/poppunk", methods=["POST"])
+@expects_json(schemas.run_poppunk)
 def run_poppunk() -> json:
     """
     [run poppunks assing_query() and generate_visualisations().
@@ -209,17 +209,30 @@ def run_poppunk() -> json:
     p_hash = request.json['projectHash']
     name_mapping = request.json['names']
     species = request.json["species"]
+    amr_metadata = request.json["amrForMetadataCsv"]
     q = Queue(connection=redis)
-    return run_poppunk_internal(sketches, p_hash, name_mapping,
-                                storage_location, redis, q, species)
+    return run_poppunk_internal(
+        sketches,
+        p_hash,
+        name_mapping,
+        storage_location,
+        redis,
+        q,
+        species,
+        amr_metadata,
+    )
 
 
-def run_poppunk_internal(sketches: dict,
-                         p_hash: str,
-                         name_mapping: dict,
-                         storage_location: str,
-                         redis: Redis,
-                         q: Queue, species: str) -> json:
+def run_poppunk_internal(
+    sketches: dict,
+    p_hash: str,
+    name_mapping: dict,
+    storage_location: str,
+    redis: Redis,
+    q: Queue,
+    species: str,
+    amr_metadata: list[dict],
+) -> json:
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
@@ -234,6 +247,7 @@ def run_poppunk_internal(sketches: dict,
     :param redis: [Redis instance]
     :param q: [redis queue]
     :param species: [type of species to be analyzed]
+    :param amr_metadata: [AMR metadata for query samples]
     :return json: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
@@ -252,10 +266,7 @@ def run_poppunk_internal(sketches: dict,
             400,
         )
 
-    db_fs = DatabaseFileStore(
-        f"{dbs_location}/{species_args.dbname}",
-        species_args.external_clusters_file,
-    )
+    ref_db_fs, full_db_fs = setup_db_file_stores(species_args)
 
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
@@ -267,7 +278,8 @@ def run_poppunk_internal(sketches: dict,
         initial_output[i] = {
             "hash": key
         }
-    fs.ensure_output_dir_exists(p_hash)
+    # setup output directory and save hashes
+    fs.setup_output_directory(p_hash)
     with open(fs.output_cluster(p_hash), 'wb') as f:
         pickle.dump(initial_output, f)
     # check connection to redis
@@ -283,7 +295,8 @@ def run_poppunk_internal(sketches: dict,
                            hashes_list,
                            p_hash,
                            fs,
-                           db_fs,
+                           ref_db_fs,
+                           full_db_fs,
                            args,
                            species,
                            **queue_kwargs)
@@ -294,25 +307,31 @@ def run_poppunk_internal(sketches: dict,
     job_network = q.enqueue(visualise.network,
                             args=(p_hash,
                                   fs,
-                                  db_fs,
+                                  full_db_fs,
                                   args,
                                   name_mapping,
                                   species),
                             depends_on=job_assign, **queue_kwargs)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
     # microreact
+    add_amr_to_metadata(fs, p_hash, amr_metadata, ref_db_fs.metadata)
     # delete all previous microreact cluster job results for this project
     redis.delete(f"beebop:hash:job:microreact:{p_hash}")
-    job_microreact = q.enqueue(visualise.microreact,
-                               args=(p_hash,
-                                     fs,
-                                     db_fs,
-                                     args,
-                                     name_mapping,
-                                     species,
-                                     redis_host,
-                                     queue_kwargs),
-                               depends_on=job_network, **queue_kwargs)
+    job_microreact = q.enqueue(
+        visualise.microreact,
+        args=(
+            p_hash,
+            fs,
+            full_db_fs,
+            args,
+            name_mapping,
+            species,
+            redis_host,
+            queue_kwargs,
+        ),
+        depends_on=Dependency([job_assign, job_network], allow_failure=True),
+        **queue_kwargs,
+    )
     redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
     return jsonify(
         response_success(
@@ -323,6 +342,62 @@ def run_poppunk_internal(sketches: dict,
             }
         )
     )
+
+
+def add_amr_to_metadata(
+    fs: PoppunkFileStore,
+    p_hash: str,
+    amr_metadata: list[dict],
+    metadata_file: str = None,
+) -> None:
+    """
+    [Create new metadata file with AMR metadata
+    and existing metadata csv file]
+
+    :param fs: [PoppunkFileStore with paths to in-/outputs]
+    :param p_hash: [project hash]
+    :param amr_metadata: [AMR metadata]
+    :param metadata_file: [db metadata csv file]
+    """
+    if metadata_file is None:
+        metadata = None
+    else:
+        metadata = pd.read_csv(metadata_file)
+    amr_df = pd.DataFrame(amr_metadata)
+
+    pd.concat([metadata, amr_df], ignore_index=True).to_csv(
+        fs.tmp_output_metadata(p_hash), index=False
+    )
+
+
+def setup_db_file_stores(
+    species_args: SpeciesConfig,
+) -> tuple[DatabaseFileStore, DatabaseFileStore]:
+    """
+    [Initializes the reference and full database file stores
+    with the given species arguments. If the full database
+    does not exist, fallback to reference database.]
+
+    :param species_args: [species arguments]
+    :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
+        database file stores]
+    """
+    ref_db_fs = DatabaseFileStore(
+        f"{dbs_location}/{species_args.refdb}",
+        species_args.external_clusters_file,
+        species_args.db_metadata_file,
+    )
+
+    if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
+        full_db_fs = DatabaseFileStore(
+            f"{dbs_location}/{species_args.fulldb}",
+            species_args.external_clusters_file,
+            species_args.db_metadata_file,
+        )
+    else:
+        full_db_fs = ref_db_fs
+
+    return ref_db_fs, full_db_fs
 
 
 # get job status
@@ -394,7 +469,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
 
 
 @app.route("/results/networkGraphs/<p_hash>", methods=['GET'])
-def get_network_graph(p_hash) -> json:
+def get_network_graphs(p_hash) -> json:
     """
     [returns all network graphml files for a given project hash]
 
@@ -403,29 +478,43 @@ def get_network_graph(p_hash) -> json:
     """
     fs = PoppunkFileStore(storage_location)
     try:
-        cluster_result = get_clusters_internal(p_hash, storage_location)
-        with open(fs.network_mapping(p_hash), 'rb') as dict:
-            cluster_component_mapping = pickle.load(dict)
+        cluster_result = get_cluster_assignments(p_hash, storage_location)
         graphmls = {}
         for cluster_info in cluster_result.values():
-            cluster = cluster_info["cluster"]
-            component = \
-                cluster_component_mapping[get_cluster_num(cluster)]
-            path = fs.network_output_component(p_hash, component)
-            with open(path, 'r') as graphml_file:
+            raw_cluster_num = cluster_info["raw_cluster_num"]
+            path = fs.pruned_network_output_component(
+                p_hash, raw_cluster_num
+            )
+            with open(path, "r") as graphml_file:
                 graph = graphml_file.read()
-            graphmls[cluster] = graph
+            graphmls[cluster_info["cluster"]] = graph
         return jsonify(response_success(graphmls))
-    except (KeyError):
-        f = jsonify(error=response_failure({
-                "error": "Cluster not found",
-                "detail": "Cluster not found"
-                })), 500
+
+    except KeyError:
+        f = (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "Cluster not found",
+                        "detail": "Cluster not found",
+                    }
+                )
+            ),
+            500,
+        )
+
     except FileNotFoundError:
-        return jsonify(error=response_failure({
-            "error": "File not found",
-            "detail": "GraphML files not found"
-        })), 404
+        return (
+            jsonify(
+                error=response_failure(
+                    {
+                        "error": "File not found",
+                        "detail": "GraphML files not found",
+                    }
+                )
+            ),
+            404,
+        )
 
 
 # get job result
@@ -473,16 +562,20 @@ def get_results(result_type) -> json:
                                                 storage_location)
 
 
-def get_clusters_internal(p_hash: str, storage_location: str) -> dict:
+def get_cluster_assignments(
+    p_hash: str, storage_location: str
+) -> dict[int, dict[str, str]]:
     """
-    [returns cluster assignment results ]
+    [returns cluster assignment results.
+    Return of type:
+    {idx: {hash: hash, cluster: cluster, raw_cluster_num: raw_cluster_num}}]
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
     :return dict: [cluster results]
     """
     fs = PoppunkFileStore(storage_location)
-    with open(fs.output_cluster(p_hash), 'rb') as f:
+    with open(fs.output_cluster(p_hash), "rb") as f:
         cluster_result = pickle.load(f)
         return cluster_result
 
@@ -495,7 +588,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     :param storage_location: [storage location]
     :return json: [response object with cluster results stored in 'data']
     """
-    cluster_result = get_clusters_internal(p_hash, storage_location)
+    cluster_result = get_cluster_assignments(p_hash, storage_location)
     cluster_dict = {value['hash']: value for value in cluster_result.values()}
     failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
@@ -549,6 +642,7 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
     with open(path_json, 'rb') as microreact_file:
         json_microreact = json.load(microreact_file)
 
+    update_microreact_json(json_microreact, cluster_num)
     # generate URL from microreact API
     headers = {"Content-type": "application/json; charset=UTF-8",
                "Access-Token": api_token}
@@ -578,6 +672,30 @@ def generate_microreact_url_internal(microreact_api_new_url: str,
             })), 500
 
 
+def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
+    """
+    [Updates the title of the microreact json file.]
+
+    :param json_microreact: [microreact json]
+    :param cluster_num: [cluster number]
+    """
+    # update title
+    json_microreact["meta"][
+        "name"
+    ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+
+    # default columns to show with widths sorted by queries first
+    default_cols_to_add = [
+        {"field": "Status", "width": 103, "sort": "asc"},
+        {"field": "Penicillin Resistance", "width": 183},
+        {"field": "Chloramphenicol Resistance", "width": 233},
+        {"field": "Erythromycin Resistance", "width": 209},
+        {"field": "Tetracycline Resistance", "width": 202},
+        {"field": "Cotrim Resistance", "width": 169},
+    ]
+    json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add
+
+
 @app.route("/project/<p_hash>", methods=['GET'])
 def get_project(p_hash) -> json:
     """
@@ -599,7 +717,7 @@ def get_project(p_hash) -> json:
     if "error" in status:
         return jsonify(error=response_failure(status)), 500
     else:
-        clusters_result = get_clusters_internal(p_hash, storage_location)
+        clusters_result = get_cluster_assignments(p_hash, storage_location)
         failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
         fs = PoppunkFileStore(storage_location)

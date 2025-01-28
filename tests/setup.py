@@ -6,7 +6,7 @@ from tests import hdf5_to_json
 import json
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 from beebop.utils import get_args
-
+import pandas as pd
 schemas = beebop.schemas.Schema()
 
 
@@ -29,9 +29,21 @@ storage_location = "./tests/results"
 fs = PoppunkFileStore(storage_location)
 
 expected_assign_result = {
-     0: {'cluster': 'GPSC16', 'hash': '02ff334f17f17d775b9ecd69046ed296'},
-     1: {'cluster': 'GPSC29', 'hash': '9c00583e2f24fed5e3c6baa87a4bfa4c'},
-     2: {'cluster': 'GPSC8', 'hash': '99965c83b1839b25c3c27bd2910da00a'}
+    0: {
+        "cluster": "GPSC16",
+        "hash": "02ff334f17f17d775b9ecd69046ed296",
+        "raw_cluster_num": "16",
+    },
+    1: {
+        "cluster": "GPSC29",
+        "hash": "9c00583e2f24fed5e3c6baa87a4bfa4c",
+        "raw_cluster_num": "29",
+    },
+    2: {
+        "cluster": "GPSC8",
+        "hash": "99965c83b1839b25c3c27bd2910da00a",
+        "raw_cluster_num": "8",
+    },
 }
 
 name_mapping = {
@@ -39,14 +51,22 @@ name_mapping = {
     "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
 }
 
-db_fs = DatabaseFileStore('./storage/dbs/GPS_v8_ref',
-                          "GPS_v8_external_clusters.csv")
+ref_db_fs = DatabaseFileStore(
+    "./storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv"
+)
+
 args = get_args()
 species = "Streptococcus pneumoniae"
-species_db_name = "GPS_v8_ref"
+species_db_name = "GPS_v9_ref"
 
 
 def do_assign_clusters(p_hash: str):
+    # setup output directory
+    fs.setup_output_directory(p_hash)
+    # setup metadata csv file for microreact
+    pd.DataFrame(amr_for_metadata_csv).to_csv(
+        fs.tmp_output_metadata(p_hash), index=False
+    )
     hashes_list = [
             '02ff334f17f17d775b9ecd69046ed296',
             '9c00583e2f24fed5e3c6baa87a4bfa4c',
@@ -56,17 +76,37 @@ def do_assign_clusters(p_hash: str):
         hashes_list,
         p_hash,
         fs,
-        db_fs,
+        ref_db_fs,
+        ref_db_fs,
         args,
         species)
 
 
 def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
-    visualise.network_internal(expected_assign_result,
-                               p_hash,
+    visualise.network_internal(p_hash,
                                fs,
-                               db_fs,
+                               ref_db_fs,
                                args,
                                name_mapping,
                                species)
+
+
+amr_for_metadata_csv = [
+    {
+        "ID": "02ff334f17f17d775b9ecd69046ed296",
+        "Penicillin Resistance": "Highly unlikely",
+        "Chloramphenicol Resistance": "Unsure",
+        "Erythromycin Resistance": "Highly unlikely",
+        "Tetracycline Resistance": "Almost certainly",
+        "Cotrim Resistance": "Highly likely",
+    },
+    {
+        "ID": "9c00583e2f24fed5e3c6baa87a4bfa4c",
+        "Penicillin Resistance": "Highly unlikely",
+        "Chloramphenicol Resistance": "Highly unlikely",
+        "Erythromycin Resistance": "Highly unlikely",
+        "Tetracycline Resistance": "Highly unlikely",
+        "Cotrim Resistance": "Unlikely",
+    },
+]

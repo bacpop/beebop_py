@@ -2,6 +2,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 from beebop.filestore import DatabaseFileStore, PoppunkFileStore
 import shutil
+from typing import Optional
 
 
 class PoppunkWrapper:
@@ -9,6 +10,7 @@ class PoppunkWrapper:
     [Wrapper to separate the poppunk function calls that require an enormous
     amount of arguments from the main scripts.]
     """
+
     def __init__(
         self,
         fs: PoppunkFileStore,
@@ -31,19 +33,23 @@ class PoppunkWrapper:
         self.p_hash = p_hash
         self.species = species
 
-    def assign_clusters(self,
-                        dbFuncs: DatabaseFileStore,
-                        qNames: list) -> None:
+    def assign_clusters(
+        self,
+        db_funcs: dict,
+        qNames: list[str],
+        output: str,
+    ) -> None:
         """
-        :param dbFuncs: [database functions, generated with poppunks
+        :param db_funcs: [database functions, generated with poppunks
             setupDBFuncs()]
         :param qNames: [hd5 database with all sketches]
+        :param output: [output folder for assign_clusters]
         """
         assign_query_hdf5(
-            dbFuncs=dbFuncs,
+            dbFuncs=db_funcs,
             ref_db=self.db_fs.db,
             qNames=qNames,
-            output=self.fs.output(self.p_hash),
+            output=output,
             qc_dict=vars(getattr(self.args.species, self.species).qc_dict),
             update_db=self.args.assign.update_db,
             write_references=self.args.assign.write_references,
@@ -61,7 +67,9 @@ class PoppunkWrapper:
             accessory=self.args.assign.accessory_only,
             gpu_dist=self.args.assign.gpu_dist,
             gpu_graph=self.args.assign.gpu_graph,
-            save_partial_query_graph=self.args.assign.save_partial_query_graph
+            save_partial_query_graph=self.args.assign.save_partial_query_graph,
+            stable=self.args.assign.stable,
+            use_full_network=self.args.assign.use_full_network,
         )
 
     def create_microreact(self, cluster: str, internal_cluster: str) -> None:
@@ -74,11 +82,11 @@ class PoppunkWrapper:
         :param internal_cluster: [corresponding poppunk cluster, used to
             indicate clusters to include]
         """
-        print(shutil.which('rapidnj'))
+        print(shutil.which("rapidnj"))
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.fs.distances(self.p_hash),
+            distances=self.db_fs.distances,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_microreact(self.p_hash, cluster),
@@ -96,18 +104,23 @@ class PoppunkWrapper:
             model_dir=self.db_fs.db,
             previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
-                self.fs.previous_query_clustering(self.p_hash)),
+                self.fs.previous_query_clustering(self.p_hash)
+            ),
             previous_mst=None,
             previous_distances=None,
-            network_file=self.fs.network_file(self.p_hash),
+            network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
-            info_csv=self.args.visualise.info_csv,
-            rapidnj=shutil.which('rapidnj'),
+            info_csv=self.fs.tmp_output_metadata(self.p_hash),
+            rapidnj=shutil.which("rapidnj"),
             api_key=None,
             tree=self.args.visualise.tree,
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            display_cluster=self.args.visualise.display_cluster
+            display_cluster=self.args.visualise.display_cluster,
+            recalculate_distances=self.args.visualise.recalculate_distances,
+            use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
+            tmp=self.fs.tmp(self.p_hash),
+            extend_query_graph=True
         )
 
     def create_network(self) -> None:
@@ -118,7 +131,7 @@ class PoppunkWrapper:
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.fs.distances(self.p_hash),
+            distances=self.db_fs.distances,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_network(self.p_hash),
@@ -136,16 +149,21 @@ class PoppunkWrapper:
             model_dir=self.db_fs.db,
             previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(
-                self.fs.previous_query_clustering(self.p_hash)),
+                self.fs.previous_query_clustering(self.p_hash)
+            ),
             previous_mst=None,
             previous_distances=None,
-            network_file=self.fs.network_file(self.p_hash),
+            network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
             info_csv=self.args.visualise.info_csv,
-            rapidnj=shutil.which('rapidnj'),
+            rapidnj=shutil.which("rapidnj"),
             api_key=None,
             tree="none",
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
-            display_cluster=self.args.visualise.display_cluster
+            display_cluster=self.args.visualise.display_cluster,
+            recalculate_distances=self.args.visualise.recalculate_distances,
+            use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
+            tmp=self.fs.tmp(self.p_hash),
+            extend_query_graph=True
         )

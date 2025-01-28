@@ -1,15 +1,14 @@
 from types import SimpleNamespace
 import json
-import csv
 import xml.etree.ElementTree as ET
-import fnmatch
 import os
 import re
-import pickle
 import fileinput
 import glob
-
+import pandas as pd
 from beebop.filestore import PoppunkFileStore
+from networkx import read_graphml, write_graphml, Graph
+import random
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -29,116 +28,6 @@ def get_args() -> SimpleNamespace:
 
 
 NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
-
-
-def generate_mapping(
-    p_hash: str,
-    cluster_nums_to_map: list,
-    fs: PoppunkFileStore,
-    is_external_clusters: bool,
-) -> dict:
-    """
-    [PopPUNKs network visualisation generates one overall .graphml file
-    covering all clusters/ components. Furthermore, it generates one .graphml
-    file per component, where the component numbers are arbitrary and do not
-    match poppunk cluster numbers.
-    To find the right component file by cluster number, we need to generate
-    a mapping to be able to return the right component number based on cluster
-    number. This function will generate that mapping by looking up the first
-    filename from each component file in the csv file that holds all filenames
-    and their corresponding clusters.]
-
-    :param p_hash: [project hash]
-    :param cluster_nums_to_map: [clusters of interest for this project -
-        skip all other clusters]
-    :param fs: [PoppunkFileStore with paths to input data]
-    :param is_external_clusters: [The species has available external clusters]
-    :return dict: [dict that maps clusters to components]
-    """
-    samples_to_clusters = {}
-    with open(fs.network_output_csv(p_hash)) as f:
-        next(f)  # Skip the header
-        reader = csv.reader(f, skipinitialspace=True)
-        for row in reader:
-            sample_id, sample_clusters = row
-            cluster = (
-                str(get_lowest_cluster(sample_clusters))
-                if is_external_clusters
-                else str(sample_clusters)
-            )
-            if cluster in cluster_nums_to_map:
-                samples_to_clusters[sample_id] = cluster
-
-    # list of all component graph filenames
-    file_list = []
-    for file in os.listdir(fs.output_network(p_hash)):
-        if fnmatch.fnmatch(file, "network_component_*.graphml"):
-            file_list.append(file)
-
-    # generate dict that maps cluster number to component number
-    cluster_component_dict = match_clusters_to_components(
-        p_hash, fs, file_list, samples_to_clusters
-    )
-
-    # save as pickle
-    with open(fs.network_mapping(p_hash), "wb") as mapping:
-        pickle.dump(cluster_component_dict, mapping)
-    return cluster_component_dict
-
-
-def match_clusters_to_components(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    file_list: list,
-    samples_to_clusters: dict,
-) -> dict:
-    """
-    [Generate a dictionary mapping clusters to network components based on
-    matching their shared samples]
-    :param p_hash: [project hash]
-    :param fs: [project filestore]
-    :param file_list: [list of network component files]
-    :param samples_to_clusters: [dict of sample ids to cluster labels]
-    :return dict: [dict of cluster labels to network component numbers]
-    """
-    cluster_component_dict = {}
-    # Match each cluster with the component with which it shares the most
-    # samples - keep a tally on how many matches the current winner has
-    # TODO: Really, PopPUNK should only return one component per sample,
-    # which should match the corresponding cluster - this appears to be
-    # an issue with PopPUNK. Simplify this logic when this is fixed
-    # in PopPUNK.
-    cluster_sample_counts = {}
-    for component_filename in file_list:
-        component_number = re.findall(R"\d+", component_filename)[0]
-        component_xml = ET.parse(
-            fs.network_output_component(p_hash, component_number)
-        ).getroot()
-        sample_nodes = component_xml.findall(NODE_SCHEMA)
-        component_cluster_counts = {}
-        # for every sample in the component, increment its cluster's
-        # count in component_cluster_counts
-        for sample_node in sample_nodes:
-            sample_id = sample_node.text
-            if sample_id in samples_to_clusters.keys():
-                cluster = samples_to_clusters[sample_id]
-                if cluster not in component_cluster_counts.keys():
-                    component_cluster_counts[cluster] = 0
-                component_cluster_counts[cluster] += 1
-
-        # For every cluster we have samples for in this component
-        # update the cluster component mapping, if this component
-        # has more matching samples than the current value (or
-        # if this is the first matching component)
-        for cluster, count in component_cluster_counts.items():
-            if (
-                cluster not in cluster_sample_counts.keys()
-                or count > cluster_sample_counts[cluster]
-            ):
-                cluster_component_dict[cluster] = component_number
-                cluster_sample_counts[cluster] = count
-
-    return cluster_component_dict
 
 
 def get_cluster_num(cluster: str) -> str:
@@ -166,40 +55,6 @@ def cluster_nums_from_assign(assign_result: dict) -> list:
     return list(result)
 
 
-def delete_component_files(
-    cluster_component_dict: dict,
-    fs: PoppunkFileStore,
-    assign_result: dict,
-    p_hash: str,
-) -> None:
-    """
-    [poppunk generates >1100 component graph files. We only need to store those
-    files from the clusters our queries belong to.]
-
-    :param cluster_component_dict: [dictionary that maps cluster number
-        to component number]
-    :param fs: [PoppunkFilestore with paths to component files]
-    :param assign_result: [result from clustering, needed here to define
-        which clusters we want to keep]
-    :param p_hash: [project hash]
-    """
-    components = []
-    for cluster_no in cluster_nums_from_assign(assign_result):
-        components.append(cluster_component_dict[cluster_no])
-
-    # delete redundant component files
-    keep_filenames = list(
-        map(lambda x: f"network_component_{x}.graphml", components)
-    )
-    keep_filenames.append("network_cytoscape.csv")
-    keep_filenames.append("network_cytoscape.graphml")
-    keep_filenames.append("cluster_component_dict.pickle")
-    dir = fs.output_network(p_hash)
-    # remove files not in keep_filenames
-    for item in list(set(os.listdir(dir)) - set(keep_filenames)):
-        os.remove(os.path.join(dir, item))
-
-
 def replace_filehashes(folder: str, filename_dict: dict) -> None:
     """
     [Since the analyses run with filehashes rather than filenames (because we
@@ -214,9 +69,9 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
         corresponding filenames (values) of all query samples.]
     """
     file_list = []
-    for root, dirs, files in os.walk(folder):
+    for root, _dirs, files in os.walk(folder):
         for file in files:
-            if file != "cluster_component_dict.pickle":
+            if not file.endswith(".h5"):
                 file_list.append(os.path.join(root, file))
     with fileinput.input(files=(file_list), inplace=True) as input:
         for line in input:
@@ -229,9 +84,106 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def add_query_ref_status(
-    fs: PoppunkFileStore, p_hash: str, filename_dict: dict
+def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
+    """
+    [Create subgraphs for the network visualisation. These are what
+    will be sent back to the user to see.
+    The subgraphs are created
+    by selecting a maximum number nodes, prioritizing query nodes and adding
+    neighbor nodes until the maximum number of nodes is reached. The query
+    nodes are highlighted in the network graph by adding a ref or query status
+    to the .graphml files.]
+
+    :param network_folder: [path to the network folder]
+    :param filename_dict: [dict that maps filehashes(keys) to
+        corresponding filenames (values) of all query samples. We only need
+        the filenames here.]
+    """
+    query_names = list(filename_dict.values())
+
+    for path in get_component_filenames(network_folder):
+        sub_graph = build_subgraph(path, query_names)
+
+        add_query_ref_to_graph(sub_graph, query_names)
+
+        write_graphml(
+            sub_graph,
+            path.replace("network_component", "pruned_network_component"),
+        )
+
+
+def get_component_filenames(network_folder: str) -> list[str]:
+    """
+    [Get all network component filenames in the network folder.]
+
+    :param network_folder: [path to the network folder]
+    :return list: [list of all network component filenames]
+    """
+    return glob.glob(network_folder + "/network_component_*.graphml")
+
+
+def build_subgraph(path: str, query_names: list) -> Graph:
+    """
+    [Build a subgraph from a network graph, prioritizing query nodes and
+    adding neighbor nodes until the maximum number of nodes is reached.]
+
+    :param path: [path to the network graph]
+    :param query_names: [list of query sample names]
+    :return nx.Graph: [subgraph]
+    """
+    MAX_NODES = 30  # arbitrary number based on performance
+    graph = read_graphml(path)
+    if MAX_NODES >= len(graph.nodes()):
+        return graph
+    # get query nodes
+    query_nodes = {
+        node for (node, id) in graph.nodes(data="id") if id in query_names
+    }
+
+    # get neighbor nodes of query nodes
+    neighbor_nodes = set()
+    for node in query_nodes:
+        neighbor_nodes.update(graph.neighbors(node))
+
+    # remove query nodes from neighbor nodes
+    neighbor_nodes = neighbor_nodes - query_nodes
+
+    # create final set of nodes, prioritizing query nodes
+    sub_graph_nodes = set()
+    sub_graph_nodes.update(query_nodes)
+
+    # add neighbor nodes until we reach the maximum number of nodes
+    remaining_capacity = MAX_NODES - len(sub_graph_nodes)
+    if remaining_capacity > 0:
+        add_neighbor_nodes(
+            sub_graph_nodes, neighbor_nodes, remaining_capacity
+        )
+
+    return graph.subgraph(sub_graph_nodes)
+
+
+def add_neighbor_nodes(
+    graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
 ) -> None:
+    """
+    [Add neighbor nodes to the set of nodes until the
+    maximum number of nodes is reached.
+    Randomly select nodes to add if there are more neighbor nodes than
+    can be added.]
+
+    :param graph_nodes: [set of nodes to add to]
+    :param neighbor_nodes: [set of neighbor nodes to add]
+    :param max_nodes_to_add: [maximum number of nodes to add]
+    """
+    if max_nodes_to_add >= len(neighbor_nodes):
+        graph_nodes.update(neighbor_nodes)
+    else:
+        graph_nodes.update(
+            random.sample(list(neighbor_nodes), max_nodes_to_add)
+        )
+
+
+def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -241,31 +193,14 @@ def add_query_ref_status(
     This is done by adding a new <data> element to the nodes, with the key
     "ref_query" and the value being coded as either 'query' or 'ref'.]
 
-    :param fs: [filestore to locate output files]
-    :param p_hash: [project hash to find right project folder]
-    :param filename_dict: [dict that maps filehashes(keys) toclear
-        corresponding filenames (values) of all query samples. We only need
-        the filenames here.]
+    :param graph: [networkx graph object]
+    :param query_names: [list of query sample names]
     """
-    # list of query filenames
-    query_names = list(filename_dict.values())
-    # list of all component graph filenames
-    file_list = glob.glob(
-        fs.output_network(p_hash) + "/network_component_*.graphml"
-    )
-    for path in file_list:
-        xml_tree = ET.parse(path)
-        graph = xml_tree.getroot()
-        nodes = graph.findall(".//{http://graphml.graphdrawing.org/xmlns}node")
-        for node in nodes:
-            name = node.find("./").text
-            child = ET.Element("data")
-            child.set("key", "ref_query")
-            child.text = "query" if name in query_names else "ref"
-            node.append(child)
-        ET.indent(xml_tree, space="  ", level=0)
-        with open(path, "wb") as f:
-            xml_tree.write(f, encoding="utf-8")
+    for node, id in graph.nodes(data="id"):
+        if id in query_names:
+            graph.nodes[node]["ref_query"] = "query"
+        else:
+            graph.nodes[node]["ref_query"] = "ref"
 
 
 def get_lowest_cluster(clusters_str: str) -> int:
@@ -285,45 +220,126 @@ def get_external_clusters_from_file(
     previous_query_clustering_file: str,
     hashes_list: list,
     external_clusters_prefix: str,
-) -> dict:
+) -> tuple[dict[str, dict[str, str]], list[str]]:
     """
-    [Finds sample hashes defined by hashes_list in the given external clusters
-    file and returns a dictionary of sample hash to external cluster name. If
-    there are multiple external clusters listed for a sample, the lowest
-    cluster number is returned]
+    [Finds sample hashes defined by hashes_list in
+    the given external clusters
+    file and returns a dictionary of sample hash to
+    external cluster name & raw external cluster number. If
+    there is a merged clusters for a sample, the lowest
+    cluster number is used for cluster. If any samples are found
+    but do  not
+    have a cluster assigned, they are returned separately.]
 
     :param previous_query_clustering_file: [filename
     of the project's external clusters file]
     :param hashes_list: [list of sample hashes to find samples for]
     :param external_clusters_prefix: prefix for external cluster name
-    :return dict: [dict of sample hash to lowest numbered-cluster for that
-        sample]
+    :return tuple: [dictionary of sample hash to
+    external cluster name & raw external cluster number,
+    list of sample hashes not found in the external]
     """
-    # copy hashes list to keep track of hashes we still need to find samples
-    # for
-    remaining_hashes = hashes_list[:]
-    result = {}
-    with open(previous_query_clustering_file) as f:
-        reader = csv.reader(f, delimiter=",")
-        for row in reader:
-            # We expect two columns in the external clusters csv: the
-            # first contains the sample id (which will be the hash in
-            # the case of our uploaded samples), and the second contains
-            # all the external cluster numbers for the sample, separated
-            # by semicolons
-            sample_id = row[0]
-            if sample_id in remaining_hashes:
-                # Add lowest numeric cluster to dictionary
-                if len(row) > 1:
-                    cluster_no = get_lowest_cluster(row[1])
-                    result[sample_id] = (
-                        f"{external_clusters_prefix}{cluster_no}"
-                    )
+    filtered_df = get_df_filtered_by_samples(
+        previous_query_clustering_file, hashes_list
+    )
 
-                # Remove sample id from remaining hashes to find
-                remaining_hashes.remove(sample_id)
+    # Split into found and not found based on NaN values
+    found_mask = filtered_df["Cluster"].notna()
+    not_found_hashes = filtered_df[~found_mask]["sample"].tolist()
 
-                # Break if no hashes left to find
-                if len(remaining_hashes) == 0:
-                    break
-    return result
+    # Process only rows with valid clusters
+    valid_clusters = filtered_df[found_mask]
+    hash_cluster_info = {
+        sample: {
+            "cluster":
+                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "raw_cluster_num": cluster,
+        }
+        for sample, cluster in zip(
+            valid_clusters["sample"], valid_clusters["Cluster"]
+        )
+    }
+
+    return hash_cluster_info, not_found_hashes
+
+
+def get_external_cluster_nums(
+    previous_query_clustering_file: str, hashes_list: list
+) -> dict[str, str]:
+    """
+    [Get external cluster numbers for samples in the external clusters file.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return dict: [Dictionary mapping sample names to external cluster names]
+    """
+    filtered_df = get_df_filtered_by_samples(
+        previous_query_clustering_file, hashes_list
+    )
+
+    sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
+    sample_cluster_num_mapping.index = filtered_df["sample"]
+
+    return sample_cluster_num_mapping.to_dict()
+
+
+def get_df_filtered_by_samples(previous_query_clustering_file: str,
+                               hashes_list: list) -> pd.DataFrame:
+    """
+    [Filter a DataFrame by sample names.]
+
+    :param previous_query_clustering_file: [Path to CSV file
+    containing sample data]
+    :param hashes_list: [List of sample hashes to find samples for]
+    :return pd.DataFrame: [DataFrame containing sample data]
+    """
+    df, samples_mask = get_df_sample_mask(
+        previous_query_clustering_file, hashes_list
+    )
+    return df[samples_mask]
+
+
+def update_external_clusters_csv(
+    dest_query_clustering_file: str,
+    source_query_clustering_file: str,
+    q_names: list,
+) -> None:
+    """
+    [Update the external clusters CSV file with the clusters of the samples
+    that were not found in the external clusters file.]
+
+    :param dest_query_clustering_file: [Path to CSV file
+    containing sample data to copy into]
+    :param source_query_clustering_file: [Path to CSV file
+    containing sample data to copy from]
+    :param q_names: [List of sample names to match]
+    """
+    df, samples_mask = get_df_sample_mask(
+        dest_query_clustering_file, q_names
+    )
+    sample_cluster_num_mapping = get_external_cluster_nums(
+        source_query_clustering_file, q_names
+    )
+
+    df.loc[samples_mask, "Cluster"] = [
+        sample_cluster_num_mapping[sample_id] for sample_id in q_names
+    ]
+    df.to_csv(dest_query_clustering_file, index=False)
+
+
+def get_df_sample_mask(
+    previous_query_clustering_file: str, samples: str
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Read a CSV file and create a boolean mask for matching sample names.
+
+    :param previous_query_clustering_file: [Path to CSV file
+        containing sample data
+        samples: List of sample names to match]
+    :param samples: [List of sample names to match]
+    :return tuple: [DataFrame containing sample data,
+        boolean mask for matching samples]
+    """
+    df = pd.read_csv(previous_query_clustering_file, dtype=str)
+    return df, df["sample"].isin(samples)

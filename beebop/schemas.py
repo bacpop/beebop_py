@@ -17,7 +17,7 @@ class Schema:
     def __init__(self):
         self.version = read_schema("version")
         self.sketch = read_schema("sketch")
-        self.sketches = read_schema("sketches")
+        self.run_poppunk = read_schema("runPoppunk")
         self.cluster = read_schema("cluster")
         self.project = read_schema("project")
         self.db_kmers = read_schema("db_kmers")

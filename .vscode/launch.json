@@ -12,7 +12,8 @@
       "env": {
         "FLASK_APP": "beebop/app.py",
         "FLASK_DEBUG": "1",
-        "STORAGE_LOCATION": "./storage"
+        "STORAGE_LOCATION": "./storage",
+        "DBS_LOCATION": "./storage/dbs",
       },
       "args": ["run", "--no-debugger", "--no-reload"],
       "jinja": true,
