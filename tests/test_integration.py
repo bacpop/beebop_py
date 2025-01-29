@@ -30,7 +30,7 @@ def test_run_poppunk_pneumo(client, qtbot):
     sketches = json.loads(setup.generate_json_pneumo())
     name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
     # submit new job
-    p_hash = "integration_test_run_poppunk"
+    p_hash = "integration_test_run_poppunk_pneumo"
 
     run_poppunk(
         client,

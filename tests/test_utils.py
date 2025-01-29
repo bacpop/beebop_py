@@ -100,5 +100,5 @@ def assert_correct_poppunk_results(client, p_hash, qtbot, cluster_nums):
         assert os.path.exists(
             setup.output_folder
             + p_hash
-            + f"/microreact_{cluster_num}/microreact_{cluster_num}_core_NJ.nwk"
+            + f"/microreact_{cluster_num}/microreact_{cluster_num}.microreact"
         )
