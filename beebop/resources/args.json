@@ -81,6 +81,27 @@
                 "length_range": [1500000, 3500000],
                 "upper_n": null
             }
+        },
+        "Streptococcus pyogenes": {
+            "refdb": "gas_references",
+            "fulldb": "gas_database",
+            "external_cluster_prefix": null,
+            "external_clusters_file": null,
+            "db_metadata_file": null,
+            "qc_dict": { 
+                "run_qc": true,
+                "type_isolate": null,
+                "max_a_dist": 0.5,
+                "max_pi_dist": 0.1,
+                "prop_zero": 0.05,
+                "prop_n": 0.1,
+                "max_merge": -1,
+                "betweenness": true,
+                "retain_failures": false,
+                "no_remove": false,
+                "length_range": [1500000, 3500000],
+                "upper_n": null
+            }
         }
     }
 }

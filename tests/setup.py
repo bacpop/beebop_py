@@ -7,6 +7,7 @@ import json
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 from beebop.utils import get_args
 import pandas as pd
+
 schemas = beebop.schemas.Schema()
 
 
@@ -15,11 +16,11 @@ def generate_json_pneumo():
     subprocess.run(
         "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
         shell=True,
-        cwd='tests/results'
+        cwd="tests/results",
     )
 
     # translate hdf5 into json
-    filepath = 'tests/results/pneumo_sample.h5'
+    filepath = "tests/results/pneumo_sample.h5"
     sketches_json = json.loads(hdf5_to_json.h5_to_json(filepath))
 
     return json.dumps(sketches_json)
@@ -48,7 +49,7 @@ expected_assign_result = {
 
 name_mapping = {
     "02ff334f17f17d775b9ecd69046ed296": "name1.fa",
-    "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa"
+    "9c00583e2f24fed5e3c6baa87a4bfa4c": "name2.fa",
 }
 
 ref_db_fs = DatabaseFileStore(
@@ -58,6 +59,7 @@ ref_db_fs = DatabaseFileStore(
 args = get_args()
 species = "Streptococcus pneumoniae"
 species_db_name = "GPS_v9_ref"
+output_folder = "./tests/results/poppunk_output/"
 
 
 def do_assign_clusters(p_hash: str):
@@ -68,28 +70,21 @@ def do_assign_clusters(p_hash: str):
         fs.tmp_output_metadata(p_hash), index=False
     )
     hashes_list = [
-            '02ff334f17f17d775b9ecd69046ed296',
-            '9c00583e2f24fed5e3c6baa87a4bfa4c',
-            '99965c83b1839b25c3c27bd2910da00a']
+        "02ff334f17f17d775b9ecd69046ed296",
+        "9c00583e2f24fed5e3c6baa87a4bfa4c",
+        "99965c83b1839b25c3c27bd2910da00a",
+    ]
 
     return assignClusters.get_clusters(
-        hashes_list,
-        p_hash,
-        fs,
-        ref_db_fs,
-        ref_db_fs,
-        args,
-        species)
+        hashes_list, p_hash, fs, ref_db_fs, ref_db_fs, args, species
+    )
 
 
 def do_network_internal(p_hash: str):
     do_assign_clusters(p_hash)
-    visualise.network_internal(p_hash,
-                               fs,
-                               ref_db_fs,
-                               args,
-                               name_mapping,
-                               species)
+    visualise.network_internal(
+        p_hash, fs, ref_db_fs, args, name_mapping, species
+    )
 
 
 amr_for_metadata_csv = [
@@ -110,3 +105,5 @@ amr_for_metadata_csv = [
         "Cotrim Resistance": "Unlikely",
     },
 ]
+
+output_folder = "./tests/results/poppunk_output/"
