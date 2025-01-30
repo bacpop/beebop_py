@@ -4,53 +4,14 @@ import os
 import re
 import beebop.schemas
 from tests import setup
-
+from tests.test_utils import (
+    read_data,
+    assert_all_finished,
+    run_poppunk,
+    assert_correct_poppunk_results,
+)
 
 schemas = beebop.schemas.Schema()
-
-
-def read_data(response):
-    return json.loads(response.data.decode("utf-8"))["data"]
-
-
-def microreact_status_finished(client, p_hash):
-    status = client.get("/status/" + p_hash)
-    microreact_clusters_status = read_data(status)["microreactClusters"]
-    assert len(microreact_clusters_status) > 0
-    assert all(
-        status == "finished" for status in microreact_clusters_status.values()
-    )
-
-
-def network_status_finished(client, p_hash):
-    status = client.get("/status/" + p_hash)
-    assert read_data(status)["network"] == "finished"
-
-
-def assign_status_finished(client, p_hash):
-    status = client.get("/status/" + p_hash)
-    assert read_data(status)["assign"] == "finished"
-
-
-def assert_status_present(client, p_hash):
-    status = client.get("/status/" + p_hash)
-    status_options = ["queued", "started", "finished", "waiting", "deferred"]
-    assert read_data(status)["assign"] in status_options
-    assert read_data(status)["microreact"] in status_options
-    assert read_data(status)["network"] in status_options
-
-
-def assert_all_finished(project_data):
-    assert project_data["status"]["assign"] == "finished"
-    assert project_data["status"]["microreact"] == "finished"
-    assert project_data["status"]["network"] == "finished"
-
-
-def run_assign_and_validate(client, p_hash):
-    result = client.post("/results/assign", json={"projectHash": p_hash})
-    result_object = json.loads(result.data.decode("utf-8"))
-    assert result_object["status"] == "success"
-    assert jsonschema.validate(result_object["data"], schemas.cluster) is None
 
 
 def test_request_version(client):
@@ -65,54 +26,22 @@ def test_request_version(client):
 
 
 def test_run_poppunk_pneumo(client, qtbot):
-    # this requires Redis & rqworker to be running
-    storage = "./tests/results/poppunk_output/"
-    os.makedirs(storage, exist_ok=True)
     # generate sketches
     sketches = json.loads(setup.generate_json_pneumo())
     name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
     # submit new job
-    p_hash = "integration_test_run_poppunk"
-    response = client.post(
-        "/poppunk",
-        json={
-            "projectHash": p_hash,
-            "sketches": sketches,
-            "names": name_mapping,
-            "species": setup.species,
-            "amrForMetadataCsv": setup.amr_for_metadata_csv,
-        },
-    )
-    assert response.status_code == 200
-    # retrieve job status
-    assert_status_present(client, p_hash)
+    p_hash = "integration_test_run_poppunk_pneumo"
 
-    # retrieve cluster result when finished
-    qtbot.waitUntil(
-        lambda: assign_status_finished(client, p_hash), timeout=20000
-    )
-    run_assign_and_validate(client, p_hash)
-
-    # check if visualisation files are stored
-    qtbot.waitUntil(
-        lambda: network_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        storage + p_hash + "/network/network_component_3.graphml"
-    )
-    assert os.path.exists(
-        storage + p_hash + "/network/network_component_60.graphml"
+    run_poppunk(
+        client,
+        p_hash,
+        sketches,
+        name_mapping,
+        setup.species,
+        setup.amr_for_metadata_csv,
     )
 
-    qtbot.waitUntil(
-        lambda: microreact_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        storage + p_hash + "/microreact_3/microreact_3_core_NJ.nwk"
-    )
-    assert os.path.exists(
-        storage + p_hash + "/microreact_3/microreact_3_core_NJ.nwk"
-    )
+    assert_correct_poppunk_results(client, p_hash, qtbot, [3, 60])
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
@@ -203,8 +132,6 @@ def test_404(client):
 
 
 def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
-    output_folder = "./tests/results/poppunk_output/"
-    os.makedirs(output_folder, exist_ok=True)
     p_hash = "integration_test_run_poppunk_streptococcus_agalactiae"
     sketch_hash = "strep_sample"
     name_mapping = {
@@ -213,41 +140,16 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
     with open("tests/files/sketches/strep_sample.json") as f:
         sketch = json.load(f)
 
-    response = client.post(
-        "/poppunk",
-        json={
-            "projectHash": p_hash,
-            "sketches": {sketch_hash: sketch},
-            "names": name_mapping,
-            "species": "Streptococcus agalactiae",
-            "amrForMetadataCsv": setup.amr_for_metadata_csv,
-        },
+    run_poppunk(
+        client,
+        p_hash,
+        {sketch_hash: sketch},
+        name_mapping,
+        "Streptococcus agalactiae",
     )
 
-    assert response.status_code == 200
-    # retrieve job status
-    assert_status_present(client, p_hash)
+    assert_correct_poppunk_results(client, p_hash, qtbot, [18])
 
-    # retrieve cluster result when finished
-    qtbot.waitUntil(
-        lambda: assign_status_finished(client, p_hash), timeout=20000
-    )
-    run_assign_and_validate(client, p_hash)
-
-    # check if visualisation files are stored
-    qtbot.waitUntil(
-        lambda: network_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        output_folder + p_hash + "/network/network_component_18.graphml"
-    )
-
-    qtbot.waitUntil(
-        lambda: microreact_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        output_folder + p_hash + "/microreact_18/microreact_18_core_NJ.nwk"
-    )
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
@@ -256,8 +158,6 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
 
 
 def test_run_poppunk_streptococcus_pyogenes(client, qtbot):
-    output_folder = "./tests/results/poppunk_output/"
-    os.makedirs(output_folder, exist_ok=True)
     p_hash = "integration_test_run_poppunk_streptococcus_pyogenes"
     sketch_hash = "strep_pyogenes_sample"
     name_mapping = {
@@ -266,41 +166,15 @@ def test_run_poppunk_streptococcus_pyogenes(client, qtbot):
     with open(f"tests/files/sketches/{sketch_hash}.json") as f:
         sketch = json.load(f)
 
-    response = client.post(
-        "/poppunk",
-        json={
-            "projectHash": p_hash,
-            "sketches": {sketch_hash: sketch},
-            "names": name_mapping,
-            "species": "Streptococcus pyogenes",
-            "amrForMetadataCsv": setup.amr_for_metadata_csv,
-        },
+    run_poppunk(
+        client,
+        p_hash,
+        {sketch_hash: sketch},
+        name_mapping,
+        "Streptococcus pyogenes",
     )
 
-    assert response.status_code == 200
-    # retrieve job status
-    assert_status_present(client, p_hash)
-
-    # retrieve cluster result when finished
-    qtbot.waitUntil(
-        lambda: assign_status_finished(client, p_hash), timeout=20000
-    )
-    run_assign_and_validate(client, p_hash)
-
-    # check if visualisation files are stored
-    qtbot.waitUntil(
-        lambda: network_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        output_folder + p_hash + "/network/network_component_2.graphml"
-    )
-
-    qtbot.waitUntil(
-        lambda: microreact_status_finished(client, p_hash), timeout=300000
-    )
-    assert os.path.exists(
-        output_folder + p_hash + "/microreact_2/microreact_2_core_NJ.nwk"
-    )
+    assert_correct_poppunk_results(client, p_hash, qtbot, [2])
 
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
