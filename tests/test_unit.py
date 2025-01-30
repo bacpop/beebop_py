@@ -152,7 +152,7 @@ def test_microreact(mocker):
 
     setup.do_network_internal(p_hash)
 
-    visualise.microreact(
+    visualise.visualise(
         p_hash,
         fs,
         setup.ref_db_fs,
@@ -166,13 +166,13 @@ def test_microreact(mocker):
     time.sleep(60)  # wait for jobs to finish
 
     assert os.path.exists(
-        fs.output_microreact(p_hash, 16) + "/microreact_16_core_NJ.nwk"
+        fs.output_visualisations(p_hash, 16) + "/microreact_16_core_NJ.nwk"
     )
     assert os.path.exists(
-        fs.output_microreact(p_hash, 8) + "/microreact_8_core_NJ.nwk"
+        fs.output_visualisations(p_hash, 8) + "/microreact_8_core_NJ.nwk"
     )
     assert os.path.exists(
-        fs.output_microreact(p_hash, 29) + "/microreact_29_core_NJ.nwk"
+        fs.output_visualisations(p_hash, 29) + "/microreact_29_core_NJ.nwk"
     )
 
 
@@ -182,7 +182,7 @@ def test_microreact_per_cluster(mock_replace_filehashes):
     cluster = "GPSC16"
     wrapper = Mock()
 
-    visualise.microreact_per_cluster(
+    visualise.visualise_per_cluster(
         cluster,
         p_hash,
         fs,
@@ -193,7 +193,7 @@ def test_microreact_per_cluster(mock_replace_filehashes):
 
     wrapper.create_microreact.assert_called_with("16", "9")
     mock_replace_filehashes.assert_called_with(
-        fs.output_microreact(p_hash, 16), setup.name_mapping
+        fs.output_visualisations(p_hash, 16), setup.name_mapping
     )
 
 
@@ -206,7 +206,7 @@ def test_microreact_per_cluster_last_cluster(
     cluster = "GPSC16"
     wrapper = Mock()
 
-    visualise.microreact_per_cluster(
+    visualise.visualise_per_cluster(
         cluster,
         p_hash,
         fs,
@@ -218,7 +218,7 @@ def test_microreact_per_cluster_last_cluster(
 
     wrapper.create_microreact.assert_called_with("16", "9")
     mock_replace_filehashes.assert_called_with(
-        fs.output_microreact(p_hash, 16), setup.name_mapping
+        fs.output_visualisations(p_hash, 16), setup.name_mapping
     )
     mock_remove.assert_called_with(fs.tmp_output_metadata(p_hash))
 
@@ -242,7 +242,7 @@ def test_queue_microreact_jobs(mocker):
     ]
     expected_enqueue_calls = [
         call(
-            visualise.microreact_per_cluster,
+            visualise.visualise_per_cluster,
             args=(
                 item["cluster"],
                 p_hash,
@@ -258,7 +258,7 @@ def test_queue_microreact_jobs(mocker):
         for i, item in enumerate(setup.expected_assign_result.values())
     ]
 
-    visualise.queue_microreact_jobs(
+    visualise.queue_visualisation_jobs(
         setup.expected_assign_result,
         p_hash,
         fs,
@@ -339,7 +339,7 @@ def test_run_poppunk_internal(qtbot):
         redis,
         queue,
         setup.species,
-        []
+        [],
     )
     job_ids = read_data(response)["data"]
     # stores sketches in storage
@@ -1485,7 +1485,7 @@ def test_get_component_filenames(tmp_path):
     (network_folder / "other_file.txt").touch()
     (network_folder / "network_other.graphml").touch()
 
-    result = utils.get_component_filenames(str(network_folder))
+    result = utils.get_component_filepath(str(network_folder))
 
     assert len(result) == 2
     assert sorted(result) == sorted([str(f) for f in expected_files])
@@ -1526,7 +1526,7 @@ def test_create_subgraphs(
     }
     query_names = list(filename_dict.values())
 
-    utils.create_subgraphs("network_folder", filename_dict)
+    utils.create_subgraph("network_folder", filename_dict)
 
     mock_build_subgraph.assert_called_once_with(
         "network_component_1.graphml", query_names
