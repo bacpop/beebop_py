@@ -117,20 +117,9 @@ class PoppunkFileStore:
         """
         :param p_hash: [project hash]
         :param cluster: [cluster number]
-        :return str: [path to microreact results folder]
+        :return str: [path to visualisations results folder]
         """
         return str(PurePath(self.output(p_hash), f"visualise_{cluster}"))
-
-    def output_network_component(
-        self, p_hash: str, component_number: str
-    ) -> str:
-
-        return str(
-            PurePath(
-                self.output_visualisations(p_hash, component_number),
-                f"network_component_{component_number}.graphml",
-            )
-        )
 
     def partial_query_graph(self, p_hash) -> str:
         """
@@ -200,33 +189,6 @@ class PoppunkFileStore:
             )
         )
 
-    # TODO: update paths
-    # def network_output_csv(self, p_hash) -> str:
-    #     """
-    #     :param p_hash: [project hash]
-    #     :return str: [path to network csv file]
-    #     """
-    #     return str(
-    #         PurePath(self.output(p_hash), "network", "network_cytoscape.csv")
-    #     )
-
-    # # TODO: update path
-    # def network_output_component(self, p_hash, component_number) -> str:
-    #     """
-    #     :param p_hash: [project hash]
-    #     :param component_number: [component number,
-    #         which is the same as cluster number]
-    #     :return str: [path to network component file]
-    #     """
-    #     return str(
-    #         PurePath(
-    #             self.output(p_hash),
-    #             "network",
-    #             f"network_component_{component_number}.graphml",
-    #         )
-    #     )
-
-    # TODO: update path
     def pruned_network_output_component(
         self, p_hash, component_number: str, cluster
     ) -> str:
@@ -239,10 +201,9 @@ class PoppunkFileStore:
             which is the same as cluster number]
         :return str: [path to pruned network component file]
         """
-        return str(
-            PurePath(
-                self.output_visualisations(p_hash, cluster),
-                f"pruned_visualise_{cluster}_component_{component_number}.graphml",
+        return str(PurePath(
+            self.output_visualisations(p_hash, cluster),
+            f"pruned_visualise_{cluster}_component_{component_number}.graphml",
             )
         )
 

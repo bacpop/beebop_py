@@ -28,9 +28,6 @@ def get_args() -> SimpleNamespace:
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
 
 
-NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
-
-
 def get_cluster_num(cluster: str) -> str:
     """
     [Extract the numeric part from a cluster label, regardless of the prefix.]
@@ -104,9 +101,7 @@ def create_subgraph(
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
-    sub_graph = build_subgraph(
-        component_path, query_names
-    )
+    sub_graph = build_subgraph(component_path, query_names)
 
     add_query_ref_to_graph(sub_graph, query_names)
 
@@ -123,12 +118,15 @@ def get_component_filepath(
     visualisations_folder: str, cluster_num: str
 ) -> str:
     """
-    Get the filename of the network component for a given cluster number.
+    Get the filename of the network component
+    for a given assigned cluster number.
 
-    :param visualisations_folder: Path to the folder containing visualisation files.
+    :param visualisations_folder: Path to the
+        folder containing visualisation files.
     :param cluster_num: Cluster number to find the component file for.
     :return: Path to the network component file.
-    :raises FileNotFoundError: If no component files are found for the given cluster number.
+    :raises FileNotFoundError: If no component files are
+        found for the given cluster number.
     """
     component_files = glob.glob(
         str(
@@ -154,7 +152,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 30  # arbitrary number based on performance
+    MAX_NODES = 20  # arbitrary number based on performance & visibility
     graph = read_graphml(path)
     if MAX_NODES >= len(graph.nodes()):
         return graph
@@ -272,7 +270,8 @@ def get_external_clusters_from_file(
     valid_clusters = filtered_df[found_mask]
     hash_cluster_info = {
         sample: {
-            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "cluster":
+                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
             "raw_cluster_num": cluster,
         }
         for sample, cluster in zip(

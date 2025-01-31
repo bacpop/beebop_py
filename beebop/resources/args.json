@@ -37,7 +37,8 @@
         "overwrite":true,
         "display_cluster":null,
         "gpu_graph":false,
-        "recalculate_distances": true
+        "recalculate_distances": true,
+        "extend_query_graph": true
     },
     "species": {
         "Streptococcus pneumoniae": {

@@ -62,7 +62,6 @@ def check_connection(redis) -> None:
         abort(500, description="Redis not found")
 
 
-# TODO: update to get from correct locations and get correct files
 def generate_zip(
     fs: PoppunkFileStore, p_hash: str, type: str, cluster: str
 ) -> BytesIO:
@@ -72,53 +71,72 @@ def generate_zip(
     :param fs: [PoppunkFileStore with path to folder to be zipped]
     :param p_hash: [project hash]
     :param type: [can be either 'microreact' or 'network']
-    :param cluster: [only relevant for 'network', since there are multiple
-        component files stored in the folder, but only the right one should
-        be included in the zip folder. For 'microreact' this can be None, as
-        the cluster information is already included in the path]
+    :param cluster: [cluster assigned]
     :return BytesIO: [memory file]
     """
     memory_file = BytesIO()
     cluster_num = get_cluster_num(cluster)
     visualisations_folder = fs.output_visualisations(p_hash, cluster_num)
+    network_files = get_network_files_for_zip(
+        visualisations_folder, cluster_num
+    )
+
+    if type == "microreact":
+        add_files(
+            memory_file, visualisations_folder, network_files, exclude=True
+        )
+    elif type == "network":
+        add_files(
+            memory_file, visualisations_folder, network_files, exclude=False
+        )
+    memory_file.seek(0)
+    return memory_file
+
+
+def get_network_files_for_zip(
+    visualisations_folder: str, cluster_num: str
+) -> list[str]:
+    """
+    [Get the network files for a given cluster number,
+    that will be used for network zip generation.
+    These are the graphml files and the csv file for cytoscape.]
+
+    :param visualisations_folder: [path to visualisations folder]
+    :param cluster_num: [cluster number]
+    :return list[str]: [list of network files to be included in zip]
+    """
     network_file_name = os.path.basename(
         get_component_filepath(visualisations_folder, cluster_num)
     )
-    network_files = [
+
+    return [
         network_file_name,
         f"pruned_{network_file_name}",
         f"visualise_{cluster_num}_cytoscape.csv",
     ]
-    if type == "microreact":
-        add_files(memory_file, visualisations_folder, network_files, True)
-    elif type == "network":
-        add_files(memory_file, visualisations_folder, network_files, False)
-    memory_file.seek(0)
-    return memory_file
 
 
 def add_files(
     memory_file: BytesIO,
     path_folder: str,
     file_list: list[str],
-    should_exclude: bool,
+    exclude: bool,
 ) -> BytesIO:
     """
     [Add files in specified folder to a memory_file.
-    If filelist is provided, only files in this list are added,
-    otherwise all files in the folder will be included]
+    If exclude is True, only files not in file_list are added.
+    If exclude is False, only files in file_list are added.]
 
     :param memory_file: [empty memory file to add files to]
     :param path_folder: [path to folder with files to include]
-    :param file_list: [optional, if only specific files in folder should
-        be included]
+    :param file_list: [list of files to include/exclude]
     :return BytesIO: [memory file with added files]
     """
     with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(path_folder):
             for file in files:
-                if (not should_exclude and file in file_list) or (
-                    should_exclude and file not in file_list
+                if (not exclude and file in file_list) or (
+                    exclude and file not in file_list
                 ):
                     zipf.write(os.path.join(root, file), arcname=file)
     return memory_file
@@ -247,8 +265,7 @@ def run_poppunk_internal(
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
-    (microreact and network) with poppunk_visualise. In future, also lineage
-    assignment and QC should be triggered from this endpoint.]
+    (microreact and network) with poppunk_visualise.]
 
     :param sketches: [all sketches in json format]
     :param p_hash: [project hash]
@@ -291,7 +308,7 @@ def run_poppunk_internal(
     fs.setup_output_directory(p_hash)
     with open(fs.output_cluster(p_hash), "wb") as f:
         pickle.dump(initial_output, f)
-    # check connection to redis
+
     check_connection(redis)
     # keep results forever
     queue_kwargs = {
@@ -311,8 +328,8 @@ def run_poppunk_internal(
         species,
         **queue_kwargs,
     )
-    # save p-hash with job.id in redis server
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+
     # create visualisations
     add_amr_to_metadata(fs, p_hash, amr_metadata, ref_db_fs.metadata)
     # delete all previous visualise cluster job results for this project
@@ -399,8 +416,6 @@ def setup_db_file_stores(
     return ref_db_fs, full_db_fs
 
 
-# get job status
-# TODO: update and put in correct schema (need to update)
 @app.route("/status/<p_hash>")
 def get_status(p_hash) -> json:
     """
@@ -429,11 +444,11 @@ def get_status_response(p_hash: str, redis: Redis) -> json:
         return jsonify(response_success(response))
 
 
-# TODO: update so only gets assign, and visualise
 def get_status_internal(p_hash: str, redis: Redis) -> dict:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
-    microreact and network visualisations)]
+    initial visualisations job that kicks off all other jobs
+    ,and visualisations for all clusters)]
 
     :param p_hash: [project hash]
     :param redis: [Redis instance]
@@ -470,11 +485,10 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
         return {"error": "Unknown project hash"}
 
 
-# TODO: see maybe just get all that are available?
 @app.route("/results/networkGraphs/<p_hash>", methods=["GET"])
 def get_network_graphs(p_hash) -> json:
     """
-    [returns all network graphml files for a given project hash]
+    [returns all network pruined graphml files for a given project hash]
 
     :param p_hash: [project hash]
     :return json: [response object with all graphml files stored in 'data']
@@ -601,7 +615,6 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
     return jsonify(response_success({**cluster_dict, **failed_samples}))
 
 
-# TODO: still need type as need to distinguish what files we need
 def send_zip_internal(
     p_hash: str, type: str, cluster: str, storage_location: str
 ) -> any:
@@ -691,18 +704,11 @@ def generate_microreact_url_internal(
             404,
         )
     else:
-        return (
-            jsonify(
-                error=response_failure(
-                    {
-                        "error": "Unknown error",
-                        "detail": f"""Microreact API returned status code {r.status_code}.
-                Response text: {r.text}.""",
-                    }
-                )
-            ),
-            500,
-        )
+        return jsonify(error=response_failure({
+            "error": "Unknown error",
+            "detail": f"""Microreact API returned status code {r.status_code}.
+                Response text: {r.text}."""
+            })), 500
 
 
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
@@ -740,17 +746,10 @@ def get_project(p_hash) -> json:
     """
     job_id = redis.hget("beebop:hash:job:assign", p_hash)
     if job_id is None:
-        return (
-            jsonify(
-                error=response_failure(
-                    {
-                        "error": "Project hash not found",
-                        "detail": "Project hash does not have an associated job",
-                    }
-                )
-            ),
-            404,
-        )
+        return jsonify(error=response_failure({
+            "error": "Project hash not found",
+            "detail": "Project hash does not have an associated job"
+        })), 404
 
     status = get_status_internal(p_hash, redis)
 

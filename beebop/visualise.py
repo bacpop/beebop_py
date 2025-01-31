@@ -24,6 +24,7 @@ def visualise(
 ) -> None:
     """
     [generate files to use on microreact.org
+    and graphml files for network visualisations.
     Output files are .csv, .dot and .nwk
     (last one only for clusters with >3 isolates).
     Also, a .microreact file is provided which can alternatively be uploaded.]
@@ -77,7 +78,8 @@ def queue_visualisation_jobs(
     queue_kwargs: dict,
 ) -> None:
     """
-    Enqueues microreact jobs for each unique cluster in the assignment results.
+    Enqueues visualisation jobs for each
+    unique cluster in the assignment results.
     Runs sequentially, with each job depending on the previous one.
 
     :param assign_result: Dictionary containing the assignment results,
@@ -105,7 +107,7 @@ def queue_visualisation_jobs(
             if previous_job
             else None
         )
-        cluster_microreact_job = q.enqueue(
+        cluster_visualise_job = q.enqueue(
             visualise_per_cluster,
             args=(
                 assign_cluster,
@@ -123,9 +125,9 @@ def queue_visualisation_jobs(
         redis.hset(
             f"beebop:hash:job:visualise:{p_hash}",
             assign_cluster,
-            cluster_microreact_job.id,
+            cluster_visualise_job.id,
         )
-        previous_job = cluster_microreact_job
+        previous_job = cluster_visualise_job
 
 
 def visualise_per_cluster(
@@ -138,10 +140,11 @@ def visualise_per_cluster(
     is_last_cluster_to_process: bool = False,
 ) -> None:
     """
-    This function is called by the queue
-        to generate the microreact files for a single cluster.
+    [This function is called by the queue
+    to generate the visualisation files for a single cluster.]
 
-    :param assign_cluster: [cluster number to generate microreact files for]
+
+    :param assign_cluster: [cluster number to generate network_files files for]
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
@@ -165,36 +168,7 @@ def visualise_per_cluster(
     wrapper.create_visualisations(cluster_no, internal_cluster)
 
     replace_filehashes(output_folder, name_mapping)
-    # TODO: need to be raw cluster_num
     create_subgraph(output_folder, name_mapping, cluster_no)
+
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))
-
-
-# # TODO get rid and merge into visualise
-# def network_internal(
-#     p_hash,
-#     fs,
-#     db_fs: DatabaseFileStore,
-#     args,
-#     name_mapping,
-#     species: str,
-# ) -> None:
-#     """
-#     :param p_hash: [project hash to find input data (output from
-#         assignClusters)]
-#     :param fs: [PoppunkFileStore with paths to input data]
-#     :param db_fs: [DatabaseFileStore with paths to db files]
-#     :param args: [arguments for poppunk functions]
-#     :param name_mapping: [dict that maps filehashes (keys) to
-#         corresponding filenames (values) of all query samples.]
-#     :param species: [Type of species]
-#     """
-#     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-#     wrapper.create_network()
-
-#     network_folder = fs.output_network(p_hash)
-#     replace_filehashes(network_folder, name_mapping)
-#     create_subgraphs(
-#         network_folder, name_mapping
-#     )  # TODO: as part of microreact
