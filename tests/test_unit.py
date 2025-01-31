@@ -133,7 +133,7 @@ def test_assign_clusters():
     assert list(result.values()) == expected
 
 
-def test_microreact(mocker):
+def test_visualise(mocker):
     def mock_get_current_job(Redis):
         assign_result = setup.expected_assign_result
 
@@ -148,9 +148,9 @@ def test_microreact(mocker):
         return mock_job(assign_result)
 
     mocker.patch("beebop.visualise.get_current_job", new=mock_get_current_job)
-    p_hash = "unit_test_microreact"
+    p_hash = "unit_test_visualise"
 
-    setup.do_network_internal(p_hash)
+    setup.do_assign_clusters(p_hash)
 
     visualise.visualise(
         p_hash,
@@ -165,20 +165,42 @@ def test_microreact(mocker):
 
     time.sleep(60)  # wait for jobs to finish
 
-    assert os.path.exists(
-        fs.output_visualisations(p_hash, 16) + "/microreact_16_core_NJ.nwk"
-    )
-    assert os.path.exists(
-        fs.output_visualisations(p_hash, 8) + "/microreact_8_core_NJ.nwk"
-    )
-    assert os.path.exists(
-        fs.output_visualisations(p_hash, 29) + "/microreact_29_core_NJ.nwk"
-    )
+    for cluster in external_to_poppunk_clusters.keys():
+        cluster_num = utils.get_cluster_num(cluster)
+
+        # microreact
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/visualise_{cluster_num}_core_NJ.nwk"
+        )
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/visualise_{cluster_num}_microreact_clusters.csv"
+        )
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/visualise_{cluster_num}.microreact"
+        )
+        # network
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/visualise_{cluster_num}_component_{cluster_num}.graphml"
+        )
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/pruned_visualise_{cluster_num}"
+            + f"_component_{cluster_num}.graphml"
+        )
+        assert os.path.exists(
+            fs.output_visualisations(p_hash, cluster_num)
+            + f"/visualise_{cluster_num}_cytoscape.csv"
+        )
 
 
 @patch("beebop.visualise.replace_filehashes")
-def test_microreact_per_cluster(mock_replace_filehashes):
-    p_hash = "unit_test_microreact_internal"
+@patch("beebop.visualise.create_subgraph")
+def test_visualise_per_cluster(mock_create_subgraph, mock_replace_filehashes):
+    p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
     wrapper = Mock()
 
@@ -191,18 +213,21 @@ def test_microreact_per_cluster(mock_replace_filehashes):
         external_to_poppunk_clusters,
     )
 
-    wrapper.create_microreact.assert_called_with("16", "9")
+    wrapper.create_visualisations.assert_called_with("16", "9")
     mock_replace_filehashes.assert_called_with(
         fs.output_visualisations(p_hash, 16), setup.name_mapping
     )
+    mock_create_subgraph.assert_called_with(
+        fs.output_visualisations(p_hash, 16), setup.name_mapping, "16")
 
 
 @patch("beebop.visualise.replace_filehashes")
 @patch("os.remove")
-def test_microreact_per_cluster_last_cluster(
-    mock_remove, mock_replace_filehashes
+@patch("beebop.visualise.create_subgraph")
+def test_visualise_per_cluster_last_cluster(
+    mock_create_subgraph, mock_remove, mock_replace_filehashes
 ):
-    p_hash = "unit_test_microreact_internal"
+    p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
     wrapper = Mock()
 
@@ -216,15 +241,15 @@ def test_microreact_per_cluster_last_cluster(
         True,  # is_last_cluster_to_process
     )
 
-    wrapper.create_microreact.assert_called_with("16", "9")
-    mock_replace_filehashes.assert_called_with(
-        fs.output_visualisations(p_hash, 16), setup.name_mapping
+    wrapper.create_visualisations.assert_called_with("16", "9")
+    mock_create_subgraph.assert_called_with(
+        fs.output_visualisations(p_hash, 16), setup.name_mapping, "16"
     )
     mock_remove.assert_called_with(fs.tmp_output_metadata(p_hash))
 
 
-def test_queue_microreact_jobs(mocker):
-    p_hash = "unit_test_microreact_internal"
+def test_queue_visualise_jobs(mocker):
+    p_hash = "unit_test_visualise_internal"
     wrapper = Mock()
     redis = Mock()
     mocker.patch.object(redis, "hset")
@@ -236,7 +261,7 @@ def test_queue_microreact_jobs(mocker):
     mocker.patch("beebop.visualise.Dependency")
     expected_hset_calls = [
         call(
-            f"beebop:hash:job:microreact:{p_hash}", item["cluster"], mockJob.id
+            f"beebop:hash:job:visualise:{p_hash}", item["cluster"], mockJob.id
         )
         for item in setup.expected_assign_result.values()
     ]
@@ -271,49 +296,6 @@ def test_queue_microreact_jobs(mocker):
 
     redis.hset.assert_has_calls(expected_hset_calls, any_order=True)
     mockQueue.enqueue.assert_has_calls(expected_enqueue_calls, any_order=True)
-
-
-def test_network(mocker):
-    p_hash = "unit_test_network"
-
-    def mock_get_current_job(Redis):
-        assign_result = setup.expected_assign_result
-
-        class mock_dependency:
-            def __init__(self, result):
-                self.result = result
-
-        class mock_job:
-            def __init__(self, result):
-                self.dependency = mock_dependency(result)
-
-        return mock_job(assign_result)
-
-    mocker.patch("beebop.visualise.get_current_job", new=mock_get_current_job)
-    from beebop import visualise
-
-    setup.do_assign_clusters(p_hash)
-    visualise.network(
-        p_hash, fs, setup.ref_db_fs, args, setup.name_mapping, setup.species
-    )
-
-    for cluster in external_to_poppunk_clusters.keys():
-        cluster_num = utils.get_cluster_num(cluster)
-        assert os.path.exists(
-            fs.output_network(p_hash)
-            + f"/network_component_{cluster_num}.graphml"
-        )
-
-
-def test_network_internal():
-    p_hash = "unit_test_network_internal"
-    setup.do_network_internal(p_hash)
-    for cluster in external_to_poppunk_clusters.keys():
-        cluster_num = utils.get_cluster_num(cluster)
-        assert os.path.exists(
-            fs.output_network(p_hash)
-            + f"/network_component_{cluster_num}.graphml"
-        )
 
 
 def test_run_poppunk_internal(qtbot):
@@ -370,17 +352,11 @@ def test_run_poppunk_internal(qtbot):
 
     qtbot.waitUntil(assign_status_finished, timeout=20000)
     # submits visualisation jobs to queue
-    job_microreact = Job.fetch(job_ids["microreact"], connection=redis)
-    assert job_microreact.get_status() in status_options
+    job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
+    assert job_visualise.get_status() in status_options
     assert (
-        read_redis("beebop:hash:job:microreact", project_hash, redis)
-        == job_ids["microreact"]
-    )
-    job_network = Job.fetch(job_ids["network"], connection=redis)
-    assert job_network.get_status() in status_options
-    assert (
-        read_redis("beebop:hash:job:network", project_hash, redis)
-        == job_ids["network"]
+        read_redis("beebop:hash:job:visualise", project_hash, redis)
+        == job_ids["visualise"]
     )
 
 
@@ -436,8 +412,7 @@ def test_get_project(client):
     assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["cluster"] == 24
     assert samples["f3d9b387e311d5ab59a8c08eb3545dbb"]["sketch"]["bbits"] == 14
     assert data["status"]["assign"] in status_options
-    assert data["status"]["microreact"] in status_options
-    assert data["status"]["network"] in status_options
+    assert data["status"]["visualise"] in status_options
     schema = schemas.project
     assert jsonschema.validate(data, schema, resolver=resolver) is None
 
@@ -525,8 +500,8 @@ def test_get_status_response(client):
     result = app.get_status_response(hash, redis)
     assert read_data(result)["status"] == "success"
     assert read_data(result)["data"]["assign"] in status_options
-    assert read_data(result)["data"]["microreact"] in status_options
-    assert read_data(result)["data"]["network"] in status_options
+    assert read_data(result)["data"]["visualise"] in status_options
+    assert read_data(result)["data"]["visualiseClusters"] in status_options
     assert read_data(app.get_status_response("wrong-hash", redis)[0])[
         "error"
     ] == {
@@ -660,8 +635,11 @@ def test_send_zip_internal(client):
             project_hash, type, cluster, storage_location
         )
         response.direct_passthrough = False
-        assert "network_cytoscape.csv".encode("utf-8") in response.data
-        assert "network_component_38.graphml".encode("utf-8") in response.data
+        assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
+        assert (
+            "visualise_38_component_38.graphml".encode("utf-8")
+            in response.data
+        )
 
 
 def test_hex_to_decimal():
@@ -720,21 +698,28 @@ def test_check_connection():
     app.check_connection(redis)
 
 
-def test_add_files():
-    memory_file1 = BytesIO()
-    app.add_files(memory_file1, "./tests/files/sketchlib_input")
-    memory_file1.seek(0)
-    contents1 = memory_file1.read()
-    assert "rfile.txt".encode("utf-8") in contents1
-    assert "6930_8_9.fa".encode("utf-8") in contents1
-    assert "7622_5_91.fa".encode("utf-8") in contents1
-    memory_file2 = BytesIO()
-    app.add_files(memory_file2, "./tests/files/sketchlib_input", ("rfile.txt"))
-    memory_file2.seek(0)
-    contents2 = memory_file2.read()
+def test_add_files_include_files():
+    memory_file = BytesIO()
+    app.add_files(
+        memory_file, "./tests/files/sketchlib_input", ("rfile.txt"), False
+    )
+    memory_file.seek(0)
+    contents2 = memory_file.read()
     assert "rfile.txt".encode("utf-8") in contents2
     assert "6930_8_9.fa".encode("utf-8") not in contents2
     assert "7622_5_91.fa".encode("utf-8") not in contents2
+
+
+def test_add_files_exclude_files():
+    memory_file = BytesIO()
+    app.add_files(
+        memory_file, "./tests/files/sketchlib_input", ("rfile.txt"), True
+    )
+    memory_file.seek(0)
+    contents2 = memory_file.read()
+    assert "rfile.txt".encode("utf-8") not in contents2
+    assert "6930_8_9.fa".encode("utf-8") in contents2
+    assert "7622_5_91.fa".encode("utf-8") in contents2
 
 
 def test_replace_filehashes(tmp_path):
@@ -1443,7 +1428,7 @@ def test_save_result(tmp_path, config):
         assert assign_result == pickle.load(f)
 
 
-def test_stest_save_external_to_poppunk_clusters(
+def test__save_external_to_poppunk_clusters(
     tmp_path,
 ):
     q_names = ["sample1", "sample2"]
@@ -1508,16 +1493,15 @@ def test_get_df_filtered_by_samples(sample_clustering_csv):
 @patch("beebop.utils.build_subgraph")
 @patch("beebop.utils.write_graphml")
 @patch("beebop.utils.add_query_ref_to_graph")
-@patch("beebop.utils.get_component_filenames")
+@patch("beebop.utils.get_component_filepath")
 def test_create_subgraphs(
-    mock_get_component_filenames,
+    mock_get_component_filepath,
     mock_add_query_ref_to_graph,
     mock_write_graphml,
     mock_build_subgraph,
 ):
-    mock_get_component_filenames.return_value = [
-        "network_component_1.graphml",
-    ]
+    mock_get_component_filepath.return_value = "network_component_1.graphml",
+
     mock_subgraph = Mock()
     mock_build_subgraph.return_value = mock_subgraph
     filename_dict = {
@@ -1691,7 +1675,6 @@ def test_add_amr_to_metadata_no_init_metadata(tmp_path):
     app.add_amr_to_metadata(fs, p_hash, amr_metadata)
 
     res = pd.read_csv(tmp_path / "tmp_output_metadata.csv")
-    print(res)
     fs.tmp_output_metadata.assert_called_once_with(p_hash)
     len(res) == 2
     assert res["ID"].tolist() == ["sample1", "sample2"]
@@ -1720,7 +1703,6 @@ def test_add_amr_to_metadata_init_metadata(tmp_path):
     app.add_amr_to_metadata(fs, p_hash, amr_metadata, metadata_file)
 
     res = pd.read_csv(tmp_path / "tmp_output_metadata.csv")
-    print(res)
     fs.tmp_output_metadata.assert_called_once_with(p_hash)
     len(res) == 4
     assert res["ID"].tolist() == ["sample1", "sample2", "sample3", "sample4"]
