@@ -94,7 +94,7 @@ def create_subgraph(
     nodes are highlighted in the network graph by adding a ref or query status
     to the .graphml files.]
 
-    :param network_folder: [path to the network folder]
+    :param visualisations_folder: [path to the visualisations folder]
     :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
