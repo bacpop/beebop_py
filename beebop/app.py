@@ -130,6 +130,7 @@ def add_files(
     :param memory_file: [empty memory file to add files to]
     :param path_folder: [path to folder with files to include]
     :param file_list: [list of files to include/exclude]
+    :param: exclude: [whether to exclude the file list or not]
     :return BytesIO: [memory file with added files]
     """
     with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zipf:

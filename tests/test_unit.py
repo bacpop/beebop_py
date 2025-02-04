@@ -623,8 +623,8 @@ def test_send_zip_internal(client):
             project_hash, type, cluster, storage_location
         )
         response.direct_passthrough = False
-        filename1 = "microreact_24_microreact_clusters.csv"
-        filename2 = "microreact_24_perplexity20.0_accessory_mandrake.dot"
+        filename1 = "visualise_24_microreact_clusters.csv"
+        filename2 = "visualise_24_perplexity20.0_accessory_mandrake.dot"
         assert filename1.encode("utf-8") in response.data
         assert filename2.encode("utf-8") in response.data
 
@@ -1454,26 +1454,45 @@ def test__save_external_to_poppunk_clusters(
         }
 
 
-def test_get_component_filenames(tmp_path):
-    network_folder = tmp_path / "network"
-    network_folder.mkdir()
+def test_get_component_filepath(tmp_path):
+    visualise_folder = tmp_path / "visualise"
+    visualise_folder.mkdir()
 
     # Create matching files
-    expected_files = [
-        network_folder / "network_component_1;88.graphml",
-        network_folder / "network_component_2.graphml",
-    ]
-    for f in expected_files:
-        f.touch()
+    cluster_num = 1
+    expected_file = (
+        visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
+    )
+
+    expected_file.touch()
 
     # Create non-matching files
-    (network_folder / "other_file.txt").touch()
-    (network_folder / "network_other.graphml").touch()
+    (visualise_folder / "other_file.txt").touch()
+    (visualise_folder / "visualise_other.graphml").touch()
 
-    result = utils.get_component_filepath(str(network_folder))
+    result = utils.get_component_filepath(str(visualise_folder), cluster_num)
 
-    assert len(result) == 2
-    assert sorted(result) == sorted([str(f) for f in expected_files])
+    assert result == str(expected_file)
+
+
+def test_get_component_filepath_not_found(tmp_path):
+    visualise_folder = tmp_path / "visualise"
+    visualise_folder.mkdir()
+
+    # Create matching files
+    cluster_num = 1
+    expected_file = (
+        visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
+    )
+
+    expected_file.touch()
+
+    # Create non-matching files
+    (visualise_folder / "other_file.txt").touch()
+    (visualise_folder / "visualise_other.graphml").touch()
+
+    with pytest.raises(FileNotFoundError):
+        utils.get_component_filepath(str(visualise_folder), 69)
 
 
 def test_get_df_filtered_by_samples(sample_clustering_csv):
@@ -1510,8 +1529,11 @@ def test_create_subgraphs(
     }
     query_names = list(filename_dict.values())
 
-    utils.create_subgraph("network_folder", filename_dict)
+    utils.create_subgraph("network_folder", filename_dict, "1")
 
+    mock_get_component_filepath.assert_called_once_with(
+        "network_folder", "1"
+    )
     mock_build_subgraph.assert_called_once_with(
         "network_component_1.graphml", query_names
     )
@@ -1532,7 +1554,7 @@ def test_build_subgraph(mock_read_graphml):
 
     subgraph = utils.build_subgraph("network_component_1.graphml", query_names)
 
-    assert len(subgraph.nodes) == 30  # max number
+    assert len(subgraph.nodes) == 25  # max number
 
 
 @patch("beebop.utils.read_graphml")
@@ -1744,3 +1766,39 @@ def test_tmp_output_metadata(tmp_path):
     result = fs.tmp_output_metadata("hash")
 
     assert result == str(PurePath(fs.tmp("hash"), "metadata.csv"))
+
+
+def test_pruned_network_output_component(tmp_path):
+    fs = PoppunkFileStore(tmp_path)
+    hash = "hash"
+    component = "909;1;2"
+    cluster = "4"
+
+    result = fs.pruned_network_output_component(hash, component, cluster)
+
+    assert result == str(
+        PurePath(
+            fs.output_visualisations(hash, cluster),
+            f"pruned_visualise_{cluster}_component_{component}.graphml",
+        )
+    )
+
+
+@patch("beebop.app.get_component_filepath")
+def test_get_network_files_for_zip(mock_component_filepath):
+    component_filename = "component_filename"
+    visualise_folder = "visualise_folder"
+    cluster_num = "3"
+    mock_component_filepath.return_value = (
+        f"{visualise_folder}/{component_filename}"
+    )
+
+    files = app.get_network_files_for_zip(visualise_folder, cluster_num)
+
+    mock_component_filepath.assert_called_with(visualise_folder, cluster_num)
+
+    assert files == [
+        component_filename,
+        f"pruned_{component_filename}",
+        f"visualise_{cluster_num}_cytoscape.csv",
+    ]

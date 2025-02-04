@@ -190,20 +190,21 @@ class PoppunkFileStore:
         )
 
     def pruned_network_output_component(
-        self, p_hash, component_number: str, cluster
+        self, p_hash, component: str, cluster
     ) -> str:
         """
         [Generates the path to the pruned network component file
         for the given project hash and component number.]
 
         :param p_hash: [project hash]
-        :param component_number: [component number,
-            which is the same as cluster number]
+        :param component: [component number,
+            which is the same as raw cluster number]
+        :param cluster: [assigned cluster number]
         :return str: [path to pruned network component file]
         """
         return str(PurePath(
             self.output_visualisations(p_hash, cluster),
-            f"pruned_visualise_{cluster}_component_{component_number}.graphml",
+            f"pruned_visualise_{cluster}_component_{component}.graphml",
             )
         )
 

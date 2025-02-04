@@ -152,7 +152,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 20  # arbitrary number based on performance & visibility
+    MAX_NODES = 25  # arbitrary number based on performance & visibility
     graph = read_graphml(path)
     if MAX_NODES >= len(graph.nodes()):
         return graph
