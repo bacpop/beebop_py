@@ -92,8 +92,7 @@ def config():
     )
 
 
-def dummy_fct(duration):
-    time.sleep(duration)
+def dummy_fct():
     return "Result"
 
 
@@ -108,14 +107,12 @@ def read_redis(name, key, redis):
 def run_test_job(p_hash):
     # queue example job
     redis = Redis()
-    q = Queue(connection=Redis())
-    job_assign = q.enqueue(dummy_fct, 1)
-    job_microreact = q.enqueue(dummy_fct, 1)
-    job_network = q.enqueue(dummy_fct, 1)
-    worker = SimpleWorker([q], connection=q.connection)
-    worker.work(burst=True)
+    q = Queue(connection=Redis(), is_async=False)
+    job_assign = q.enqueue(dummy_fct)
+    job_visualise = q.enqueue(dummy_fct)
+    job_network = q.enqueue(dummy_fct)
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
-    redis.hset("beebop:hash:job:microreact", p_hash, job_microreact.id)
+    redis.hset("beebop:hash:job:visualise", p_hash, job_visualise.id)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
 
 
@@ -384,13 +381,15 @@ def test_get_clusters_json(client):
     }
 
 
-def test_get_project(client):
+def test_get_project_success(client):
     hash = "unit_test_get_clusters_internal"
     run_test_job(hash)
-    result = app.get_project("unit_test_get_clusters_internal")
+
+    result = app.get_project(hash)
+
     assert result.status == "200 OK"
     data = read_data(result)["data"]
-    assert data["hash"] == "unit_test_get_clusters_internal"
+    assert data["hash"] == hash
     samples = data["samples"]
     assert len(samples) == 3
     assert (
@@ -501,7 +500,7 @@ def test_get_status_response(client):
     assert read_data(result)["status"] == "success"
     assert read_data(result)["data"]["assign"] in status_options
     assert read_data(result)["data"]["visualise"] in status_options
-    assert read_data(result)["data"]["visualiseClusters"] in status_options
+    assert read_data(result)["data"]["visualiseClusters"] == {}
     assert read_data(app.get_status_response("wrong-hash", redis)[0])[
         "error"
     ] == {
@@ -1519,7 +1518,7 @@ def test_create_subgraphs(
     mock_write_graphml,
     mock_build_subgraph,
 ):
-    mock_get_component_filepath.return_value = "network_component_1.graphml",
+    mock_get_component_filepath.return_value = "network_component_1.graphml"
 
     mock_subgraph = Mock()
     mock_build_subgraph.return_value = mock_subgraph
@@ -1541,7 +1540,7 @@ def test_create_subgraphs(
         mock_subgraph, query_names
     )
     mock_write_graphml.assert_called_once_with(
-        mock_subgraph, "pruned_network_component_1.graphml"
+        mock_subgraph, "network_component_1.graphml"
     )
 
 

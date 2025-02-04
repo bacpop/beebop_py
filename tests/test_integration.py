@@ -17,7 +17,7 @@ schemas = beebop.schemas.Schema()
 def run_pneumo(client, qtbot):
     # generate sketches
     sketches = json.loads(setup.generate_json_pneumo())
-    name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
+    name_mapping = {"6930_8_9": "6930_8_9.fa", "7622_5_91": "7622_5_91.fa"}
     # submit new job
     p_hash = "integration_test_run_poppunk_pneumo"
 
