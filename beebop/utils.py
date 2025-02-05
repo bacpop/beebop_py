@@ -98,6 +98,7 @@ def create_subgraph(
     :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
+    :param cluster_num: [cluster number to create subgraph for]
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
