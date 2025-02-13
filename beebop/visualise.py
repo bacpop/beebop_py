@@ -144,7 +144,7 @@ def visualise_per_cluster(
     to generate the visualisation files for a single cluster.]
 
 
-    :param assign_cluster: [cluster number to generate network_files files for]
+    :param assign_cluster: [cluster number to generate visualisation files for]
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
