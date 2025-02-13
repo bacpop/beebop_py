@@ -82,13 +82,11 @@ def generate_zip(
     )
 
     if type == "microreact":
-        # microreact zip should include all files from the visualisations folder except those which are
+        # microreact zip should include all files from the
+        # visualisations folder except those which are
         # network files, hence set exclude to True
         add_files(
-            memory_file,
-            visualisations_folder,
-            network_files,
-            exclude=True,
+            memory_file, visualisations_folder, network_files, exclude=True
         )
     elif type == "network":
         add_files(
@@ -710,18 +708,11 @@ def generate_microreact_url_internal(
             404,
         )
     else:
-        return (
-            jsonify(
-                error=response_failure(
-                    {
-                        "error": "Unknown error",
-                        "detail": f"""Microreact API returned status code {r.status_code}.
-                Response text: {r.text}.""",
-                    }
-                )
-            ),
-            500,
-        )
+        return jsonify(error=response_failure({
+            "error": "Unknown error",
+            "detail": f"""Microreact API returned status code {r.status_code}.
+                Response text: {r.text}."""
+            })), 500
 
 
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
@@ -759,17 +750,10 @@ def get_project(p_hash) -> json:
     """
     job_id = redis.hget("beebop:hash:job:assign", p_hash)
     if job_id is None:
-        return (
-            jsonify(
-                error=response_failure(
-                    {
-                        "error": "Project hash not found",
-                        "detail": "Project hash does not have an associated job",
-                    }
-                )
-            ),
-            404,
-        )
+        return jsonify(error=response_failure({
+            "error": "Project hash not found",
+            "detail": "Project hash does not have an associated job"
+        })), 404
 
     status = get_status_internal(p_hash, redis)
 
