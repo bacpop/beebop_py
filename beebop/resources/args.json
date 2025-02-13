@@ -24,10 +24,10 @@
         "threads":1,
         "gpu_dist":false,
         "deviceid":0,
-        "microreact":false,
+        "microreact":true,
         "phandango":false,
         "grapetree":false,
-        "cytoscape":false,
+        "cytoscape":true,
         "perplexity":20.0,
         "maxIter":10000000,
         "strand_preserved":false,
@@ -37,7 +37,8 @@
         "overwrite":true,
         "display_cluster":null,
         "gpu_graph":false,
-        "recalculate_distances": true
+        "recalculate_distances": true,
+        "extend_query_graph": true
     },
     "species": {
         "Streptococcus pneumoniae": {

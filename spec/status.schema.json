@@ -5,12 +5,15 @@
     "assign": {
       "type": "string"
     },
-    "microreact": {
+    "visualise": {
       "type": "string"
     },
-    "network": {
-      "type": "string"
+    "visualiseClusters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
-  "required": ["assign", "microreact", "network"]
+  "required": ["assign", "visualise"]
 }

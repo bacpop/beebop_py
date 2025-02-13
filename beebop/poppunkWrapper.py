@@ -72,10 +72,12 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network,
         )
 
-    def create_microreact(self, cluster: str, internal_cluster: str) -> None:
+    def create_visualisations(
+        self, cluster: str, internal_cluster: str
+    ) -> None:
         """
-        [Generates microreact visualisation output based on previous
-        assign_clusters() output.]
+        [Generates visualisation outputs (microreact + network)
+        based on previous assign_clusters output.]
 
         Args:
         :param cluster: [external cluster]
@@ -89,11 +91,11 @@ class PoppunkWrapper:
             distances=self.db_fs.distances,
             rank_fit=None,
             threads=self.args.visualise.threads,
-            output=self.fs.output_microreact(self.p_hash, cluster),
+            output=self.fs.output_visualisations(self.p_hash, cluster),
             gpu_dist=self.args.visualise.gpu_dist,
             deviceid=self.args.visualise.deviceid,
             external_clustering=self.db_fs.external_clustering,
-            microreact=True,
+            microreact=self.args.visualise.microreact,
             phandango=self.args.visualise.phandango,
             grapetree=self.args.visualise.grapetree,
             cytoscape=self.args.visualise.cytoscape,
@@ -120,50 +122,5 @@ class PoppunkWrapper:
             recalculate_distances=self.args.visualise.recalculate_distances,
             use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash),
-            extend_query_graph=True
-        )
-
-    def create_network(self) -> None:
-        """
-        [Generates network visualisation output in .graphml format based on
-        previous assign_clusters.get_clusters() output.]
-        """
-        generate_visualisations(
-            query_db=self.fs.output(self.p_hash),
-            ref_db=self.db_fs.db,
-            distances=self.db_fs.distances,
-            rank_fit=None,
-            threads=self.args.visualise.threads,
-            output=self.fs.output_network(self.p_hash),
-            gpu_dist=self.args.visualise.gpu_dist,
-            deviceid=self.args.visualise.deviceid,
-            external_clustering=self.db_fs.external_clustering,
-            microreact=self.args.visualise.microreact,
-            phandango=self.args.visualise.phandango,
-            grapetree=self.args.visualise.grapetree,
-            cytoscape=True,
-            perplexity=self.args.visualise.perplexity,
-            maxIter=self.args.visualise.maxIter,
-            strand_preserved=self.args.visualise.strand_preserved,
-            include_files=None,
-            model_dir=self.db_fs.db,
-            previous_clustering=self.db_fs.previous_clustering,
-            previous_query_clustering=(
-                self.fs.previous_query_clustering(self.p_hash)
-            ),
-            previous_mst=None,
-            previous_distances=None,
-            network_file=None,
-            gpu_graph=self.args.visualise.gpu_graph,
-            info_csv=self.args.visualise.info_csv,
-            rapidnj=shutil.which("rapidnj"),
-            api_key=None,
-            tree="none",
-            mst_distances=self.args.visualise.mst_distances,
-            overwrite=self.args.visualise.overwrite,
-            display_cluster=self.args.visualise.display_cluster,
-            recalculate_distances=self.args.visualise.recalculate_distances,
-            use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
-            tmp=self.fs.tmp(self.p_hash),
-            extend_query_graph=True
+            extend_query_graph=self.args.visualise.extend_query_graph,
         )
