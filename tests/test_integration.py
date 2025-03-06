@@ -14,6 +14,26 @@ from tests.test_utils import (
 schemas = beebop.schemas.Schema()
 
 
+def run_pneumo(client, qtbot):
+    # generate sketches
+    sketches = json.loads(setup.generate_json_pneumo())
+    name_mapping = {"6930_8_9": "6930_8_9.fa", "7622_5_91": "7622_5_91.fa"}
+    # submit new job
+    p_hash = "integration_test_run_poppunk_pneumo"
+
+    run_poppunk(
+        client,
+        p_hash,
+        sketches,
+        name_mapping,
+        setup.species,
+        setup.amr_for_metadata_csv,
+    )
+    assert_correct_poppunk_results(client, p_hash, qtbot, [3, 60])
+
+    return (p_hash, sketches)
+
+
 def test_request_version(client):
     response = client.get("/version")
     schema = schemas.version
@@ -26,22 +46,8 @@ def test_request_version(client):
 
 
 def test_run_poppunk_pneumo(client, qtbot):
-    # generate sketches
-    sketches = json.loads(setup.generate_json_pneumo())
-    name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
-    # submit new job
-    p_hash = "integration_test_run_poppunk_pneumo"
+    p_hash, sketches = run_pneumo(client, qtbot)
 
-    run_poppunk(
-        client,
-        p_hash,
-        sketches,
-        name_mapping,
-        setup.species,
-        setup.amr_for_metadata_csv,
-    )
-
-    assert_correct_poppunk_results(client, p_hash, qtbot, [3, 60])
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
     project_data = read_data(project_response)
@@ -101,27 +107,35 @@ def test_results_microreact(client):
     assert error["errors"][0]["error"] == "Wrong Token"
 
 
-def test_results_zip(client):
+def test_network_results_zip(client):
     p_hash = "test_network_zip"
     type = "network"
     response = client.post(
         "/results/zip",
         json={"projectHash": p_hash, "cluster": "GPSC38", "type": type},
     )
-    assert "network_component_38.graphml".encode("utf-8") in response.data
-    assert "network_cytoscape.csv".encode("utf-8") in response.data
-
-
-def test_get_network_graphs(client):
-    p_hash = "integration_test_download_graphml"
-    setup.do_network_internal(p_hash)
-    response = client.get(f"/results/networkGraphs/{p_hash}")
-    graph_string = json.loads(response.data.decode("utf-8"))["data"]["GPSC16"]
-    assert response.status_code == 200
-    assert all(
-        x in graph_string
-        for x in ["</graph>", "</graphml>", "</node>", "</edge>"]
+    assert "visualise_38_component_38.graphml".encode("utf-8") in response.data
+    assert (
+        "pruned_visualise_38_component_38.graphml".encode("utf-8")
+        in response.data
     )
+    assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
+
+
+def test_get_network_graphs(client, qtbot):
+    p_hash, _ = run_pneumo(client, qtbot)
+
+    response = client.get(f"/results/networkGraphs/{p_hash}")
+    graph_string_3 = json.loads(response.data.decode("utf-8"))["data"]["GPSC3"]
+    graph_string_60 = json.loads(response.data.decode("utf-8"))["data"][
+        "GPSC60"
+    ]
+    assert response.status_code == 200
+    for graph_string in [graph_string_3, graph_string_60]:
+        assert all(
+            x in graph_string
+            for x in ["</graph>", "</graphml>", "</node>", "</edge>"]
+        )
 
 
 def test_404(client):

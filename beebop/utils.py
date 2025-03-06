@@ -9,6 +9,7 @@ import pandas as pd
 from beebop.filestore import PoppunkFileStore
 from networkx import read_graphml, write_graphml, Graph
 import random
+from pathlib import PurePath
 
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
@@ -25,9 +26,6 @@ def get_args() -> SimpleNamespace:
     with open("./beebop/resources/args.json") as a:
         args_json = a.read()
     return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
-
-
-NODE_SCHEMA = ".//{http://graphml.graphdrawing.org/xmlns}node/"
 
 
 def get_cluster_num(cluster: str) -> str:
@@ -84,7 +82,9 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
             print(line)
 
 
-def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
+def create_subgraph(
+    visualisations_folder: str, filename_dict: dict, cluster_num: str
+) -> None:
     """
     [Create subgraphs for the network visualisation. These are what
     will be sent back to the user to see.
@@ -94,32 +94,54 @@ def create_subgraphs(network_folder: str, filename_dict: dict) -> None:
     nodes are highlighted in the network graph by adding a ref or query status
     to the .graphml files.]
 
-    :param network_folder: [path to the network folder]
+    :param visualisations_folder: [path to the visualisations folder]
     :param filename_dict: [dict that maps filehashes(keys) to
         corresponding filenames (values) of all query samples. We only need
         the filenames here.]
+    :param cluster_num: [cluster number to create subgraph for]
     """
     query_names = list(filename_dict.values())
+    component_path = get_component_filepath(visualisations_folder, cluster_num)
+    sub_graph = build_subgraph(component_path, query_names)
 
-    for path in get_component_filenames(network_folder):
-        sub_graph = build_subgraph(path, query_names)
+    add_query_ref_to_graph(sub_graph, query_names)
 
-        add_query_ref_to_graph(sub_graph, query_names)
+    write_graphml(
+        sub_graph,
+        component_path.replace(
+            f"visualise_{cluster_num}_component",
+            f"pruned_visualise_{cluster_num}_component",
+        ),
+    )
 
-        write_graphml(
-            sub_graph,
-            path.replace("network_component", "pruned_network_component"),
+
+def get_component_filepath(
+    visualisations_folder: str, cluster_num: str
+) -> str:
+    """
+    Get the filename of the network component
+    for a given assigned cluster number.
+
+    :param visualisations_folder: Path to the
+        folder containing visualisation files.
+    :param cluster_num: Cluster number to find the component file for.
+    :return: Path to the network component file.
+    :raises FileNotFoundError: If no component files are
+        found for the given cluster number.
+    """
+    component_files = glob.glob(
+        str(
+            PurePath(
+                visualisations_folder,
+                f"visualise_{cluster_num}_component_*.graphml",
+            )
         )
-
-
-def get_component_filenames(network_folder: str) -> list[str]:
-    """
-    [Get all network component filenames in the network folder.]
-
-    :param network_folder: [path to the network folder]
-    :return list: [list of all network component filenames]
-    """
-    return glob.glob(network_folder + "/network_component_*.graphml")
+    )
+    if not component_files:
+        raise FileNotFoundError(
+            f"No component files found for cluster {cluster_num}"
+        )
+    return component_files[0]
 
 
 def build_subgraph(path: str, query_names: list) -> Graph:
@@ -131,7 +153,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 30  # arbitrary number based on performance
+    MAX_NODES = 25  # arbitrary number based on performance & visibility
     graph = read_graphml(path)
     if MAX_NODES >= len(graph.nodes()):
         return graph
@@ -155,9 +177,7 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
-        add_neighbor_nodes(
-            sub_graph_nodes, neighbor_nodes, remaining_capacity
-        )
+        add_neighbor_nodes(sub_graph_nodes, neighbor_nodes, remaining_capacity)
 
     return graph.subgraph(sub_graph_nodes)
 
@@ -284,8 +304,9 @@ def get_external_cluster_nums(
     return sample_cluster_num_mapping.to_dict()
 
 
-def get_df_filtered_by_samples(previous_query_clustering_file: str,
-                               hashes_list: list) -> pd.DataFrame:
+def get_df_filtered_by_samples(
+    previous_query_clustering_file: str, hashes_list: list
+) -> pd.DataFrame:
     """
     [Filter a DataFrame by sample names.]
 
@@ -315,9 +336,7 @@ def update_external_clusters_csv(
     containing sample data to copy from]
     :param q_names: [List of sample names to match]
     """
-    df, samples_mask = get_df_sample_mask(
-        dest_query_clustering_file, q_names
-    )
+    df, samples_mask = get_df_sample_mask(dest_query_clustering_file, q_names)
     sample_cluster_num_mapping = get_external_cluster_nums(
         source_query_clustering_file, q_names
     )

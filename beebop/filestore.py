@@ -113,20 +113,13 @@ class PoppunkFileStore:
             )
         )
 
-    def output_microreact(self, p_hash, cluster) -> str:
+    def output_visualisations(self, p_hash, cluster) -> str:
         """
         :param p_hash: [project hash]
         :param cluster: [cluster number]
-        :return str: [path to microreact results folder]
+        :return str: [path to visualisations results folder]
         """
-        return str(PurePath(self.output(p_hash), f"microreact_{cluster}"))
-
-    def output_network(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to network results folder]
-        """
-        return str(PurePath(self.output(p_hash), "network"))
+        return str(PurePath(self.output(p_hash), f"visualise_{cluster}"))
 
     def partial_query_graph(self, p_hash) -> str:
         """
@@ -142,13 +135,6 @@ class PoppunkFileStore:
         :return str: [path to include files]
         """
         return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
-
-    def network_file(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to network file]
-        """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_graph.gt"))
 
     def external_previous_query_clustering_path(self, p_hash) -> str:
         """
@@ -198,51 +184,27 @@ class PoppunkFileStore:
         """
         return str(
             PurePath(
-                self.output(p_hash),
-                f"microreact_{cluster}",
-                (f"microreact_{cluster}.microreact"),
+                self.output_visualisations(p_hash, cluster),
+                f"visualise_{cluster}.microreact",
             )
         )
 
-    def network_output_csv(self, p_hash) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to network csv file]
-        """
-        return str(
-            PurePath(self.output(p_hash), "network", "network_cytoscape.csv")
-        )
-
-    def network_output_component(self, p_hash, component_number) -> str:
-        """
-        :param p_hash: [project hash]
-        :param component_number: [component number,
-            which is the same as cluster number]
-        :return str: [path to network component file]
-        """
-        return str(
-            PurePath(
-                self.output(p_hash),
-                "network",
-                f"network_component_{component_number}.graphml",
-            )
-        )
-
-    def pruned_network_output_component(self, p_hash, component_number) -> str:
+    def pruned_network_output_component(
+        self, p_hash, component: str, cluster
+    ) -> str:
         """
         [Generates the path to the pruned network component file
         for the given project hash and component number.]
 
         :param p_hash: [project hash]
-        :param component_number: [component number,
-            which is the same as cluster number]
+        :param component: [component number,
+            which is the same as raw cluster number]
+        :param cluster: [assigned cluster number]
         :return str: [path to pruned network component file]
         """
-        return str(
-            PurePath(
-                self.output(p_hash),
-                "network",
-                f"pruned_network_component_{component_number}.graphml",
+        return str(PurePath(
+            self.output_visualisations(p_hash, cluster),
+            f"pruned_visualise_{cluster}_component_{component}.graphml",
             )
         )
 

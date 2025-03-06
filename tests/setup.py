@@ -80,13 +80,6 @@ def do_assign_clusters(p_hash: str):
     )
 
 
-def do_network_internal(p_hash: str):
-    do_assign_clusters(p_hash)
-    visualise.network_internal(
-        p_hash, fs, ref_db_fs, args, name_mapping, species
-    )
-
-
 amr_for_metadata_csv = [
     {
         "ID": "02ff334f17f17d775b9ecd69046ed296",

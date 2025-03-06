@@ -4,7 +4,7 @@ from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.utils import (
     replace_filehashes,
-    create_subgraphs,
+    create_subgraph,
 )
 from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
@@ -12,7 +12,7 @@ import pickle
 import os
 
 
-def microreact(
+def visualise(
     p_hash: str,
     fs: PoppunkFileStore,
     db_fs: DatabaseFileStore,
@@ -24,6 +24,7 @@ def microreact(
 ) -> None:
     """
     [generate files to use on microreact.org
+    and graphml files for network visualisations.
     Output files are .csv, .dot and .nwk
     (last one only for clusters with >3 isolates).
     Also, a .microreact file is provided which can alternatively be uploaded.]
@@ -54,7 +55,7 @@ def microreact(
         print("no external cluster info found")
 
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    queue_microreact_jobs(
+    queue_visualisation_jobs(
         assign_result,
         p_hash,
         fs,
@@ -66,7 +67,7 @@ def microreact(
     )
 
 
-def queue_microreact_jobs(
+def queue_visualisation_jobs(
     assign_result: dict,
     p_hash: str,
     fs: PoppunkFileStore,
@@ -77,7 +78,8 @@ def queue_microreact_jobs(
     queue_kwargs: dict,
 ) -> None:
     """
-    Enqueues microreact jobs for each unique cluster in the assignment results.
+    Enqueues visualisation jobs for each
+    unique cluster in the assignment results.
     Runs sequentially, with each job depending on the previous one.
 
     :param assign_result: Dictionary containing the assignment results,
@@ -94,17 +96,19 @@ def queue_microreact_jobs(
         to the queue when enqueuing jobs.
     """
     q = Queue(connection=redis)
-    queries_clusters = [item["cluster"] for item in assign_result.values()]
+    queries_clusters = set(
+        [item["cluster"] for item in assign_result.values()]
+    )
     previous_job = None
     last_cluster_idx = len(queries_clusters) - 1
-    for idx, assign_cluster in enumerate(set(queries_clusters)):
+    for idx, assign_cluster in enumerate(queries_clusters):
         dependency = (
             Dependency(previous_job, allow_failure=True)
             if previous_job
             else None
         )
-        cluster_microreact_job = q.enqueue(
-            microreact_per_cluster,
+        cluster_visualise_job = q.enqueue(
+            visualise_per_cluster,
             args=(
                 assign_cluster,
                 p_hash,
@@ -112,21 +116,21 @@ def queue_microreact_jobs(
                 wrapper,
                 name_mapping,
                 external_to_poppunk_clusters,
-                (idx == last_cluster_idx)
+                (idx == last_cluster_idx),
             ),
             depends_on=dependency,
             **queue_kwargs,
         )
 
         redis.hset(
-            f"beebop:hash:job:microreact:{p_hash}",
+            f"beebop:hash:job:visualise:{p_hash}",
             assign_cluster,
-            cluster_microreact_job.id,
+            cluster_visualise_job.id,
         )
-        previous_job = cluster_microreact_job
+        previous_job = cluster_visualise_job
 
 
-def microreact_per_cluster(
+def visualise_per_cluster(
     assign_cluster: str,
     p_hash: str,
     fs: PoppunkFileStore,
@@ -136,10 +140,11 @@ def microreact_per_cluster(
     is_last_cluster_to_process: bool = False,
 ) -> None:
     """
-    This function is called by the queue
-        to generate the microreact files for a single cluster.
+    [This function is called by the queue
+    to generate the visualisation files for a single cluster.]
 
-    :param assign_cluster: [cluster number to generate microreact files for]
+
+    :param assign_cluster: [cluster number to generate visualisation files for]
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param fs: [PoppunkFileStore with paths to input data]
@@ -154,72 +159,16 @@ def microreact_per_cluster(
     """
 
     cluster_no = get_cluster_num(assign_cluster)
+    output_folder = fs.output_visualisations(p_hash, cluster_no)
     if external_to_poppunk_clusters:
         internal_cluster = external_to_poppunk_clusters[assign_cluster]
     else:
         internal_cluster = assign_cluster
 
-    wrapper.create_microreact(cluster_no, internal_cluster)
+    wrapper.create_visualisations(cluster_no, internal_cluster)
 
-    replace_filehashes(fs.output_microreact(p_hash, cluster_no), name_mapping)
+    replace_filehashes(output_folder, name_mapping)
+    create_subgraph(output_folder, name_mapping, cluster_no)
+
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))
-
-
-def network(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    db_fs: DatabaseFileStore,
-    args: dict,
-    name_mapping: dict,
-    species: str,
-) -> None:
-    """
-    [Generate files to draw a network.
-    Output files are .csv and .graphml (one overall and several component
-    files).
-    Since network component number and poppunk cluster number do not
-    match, we need to generate a mapping to find the right component files.
-    To highlight query samples in the network graph, a ref or query status is
-    added to .graphml files.]
-
-    :param p_hash: [project hash to find input data (output from
-        assign_clusters)]
-    :param fs: [PoppunkFileStore with paths to input data]
-    :param db_fs: [DatabaseFileStore with paths to db files]
-    :param args: [arguments for poppunk functions]
-    :param name_mapping: [dict that maps filehashes (keys) to
-        corresponding filenames (values) of all query samples.]
-    :param species: [Type of species]
-    """
-    # get results from previous job
-    current_job = get_current_job(Redis())
-    assign_result = current_job.dependency.result
-    network_internal(p_hash, fs, db_fs, args, name_mapping, species)
-    return assign_result
-
-
-def network_internal(
-    p_hash,
-    fs,
-    db_fs: DatabaseFileStore,
-    args,
-    name_mapping,
-    species: str,
-) -> None:
-    """
-    :param p_hash: [project hash to find input data (output from
-        assignClusters)]
-    :param fs: [PoppunkFileStore with paths to input data]
-    :param db_fs: [DatabaseFileStore with paths to db files]
-    :param args: [arguments for poppunk functions]
-    :param name_mapping: [dict that maps filehashes (keys) to
-        corresponding filenames (values) of all query samples.]
-    :param species: [Type of species]
-    """
-    wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-    wrapper.create_network()
-
-    network_folder = fs.output_network(p_hash)
-    replace_filehashes(network_folder, name_mapping)
-    create_subgraphs(network_folder, name_mapping)
