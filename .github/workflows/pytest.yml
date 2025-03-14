@@ -81,7 +81,7 @@ jobs:
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
         conda install graph-tool
-        conda install mandrake==1.2.3
+        conda install mandrake
         conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
         sudo apt-get update
         sudo apt-get install libeigen3-dev libegl1
