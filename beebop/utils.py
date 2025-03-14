@@ -1,19 +1,15 @@
 from types import SimpleNamespace
 import json
-import xml.etree.ElementTree as ET
 import os
 import re
 import fileinput
 import glob
 import pandas as pd
 from beebop.filestore import PoppunkFileStore
-from networkx import read_graphml, write_graphml, Graph
 import random
 from pathlib import PurePath
 import graph_tool.all as gt
-ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
-ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
-import time
+
 
 def get_args() -> SimpleNamespace:
     """
@@ -102,15 +98,9 @@ def create_subgraph(
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
-    start = time.time()
+    
     sub_graph = build_subgraph(component_path, query_names)
-    print(f"Subgraph building took took {time.time() - start} seconds")
-    
-    start = time.time()
     add_query_ref_to_graph(sub_graph, query_names)
-    print(f"Adding query/ref took {time.time() - start} seconds")
-    
-    start = time.time()
     
     sub_graph.save(
         component_path.replace(
@@ -119,7 +109,6 @@ def create_subgraph(
         ),
         fmt="graphml",
     )
-    print(f"Saving subgraph took {time.time() - start} seconds")
 
 
 def get_component_filepath(
