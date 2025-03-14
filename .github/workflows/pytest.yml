@@ -112,8 +112,6 @@ jobs:
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
     - name: Test with pytest
       env:
         MICROREACT_TOKEN: ${{ secrets.MICROREACT_TOKEN }}
@@ -141,7 +139,7 @@ jobs:
     # Uncomment the next three lines to debug on failure with
     # tmate. However, don't leave them uncommented on merge as that
     # causes failing builds to hang forever.
-    #
-    # - name: tmate session
-    #   if: ${{ failure() }}
-    #   uses: mxschmitt/action-tmate@v3
+    
+    - name: tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
