@@ -101,7 +101,7 @@ jobs:
       run: |
         source $CONDA/etc/profile.d/conda.sh
         conda activate beebop_py
-        conda-list graph-tool 
+        conda list graph-tool 
         poetry install
 
     - name: Run Redis
