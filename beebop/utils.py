@@ -5,7 +5,6 @@ import re
 import fileinput
 import glob
 import pandas as pd
-from beebop.filestore import PoppunkFileStore
 import random
 from pathlib import PurePath
 import graph_tool.all as gt
@@ -98,10 +97,10 @@ def create_subgraph(
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
-    
+
     sub_graph = build_subgraph(component_path, query_names)
     add_query_ref_to_graph(sub_graph, query_names)
-    
+
     sub_graph.save(
         component_path.replace(
             f"visualise_{cluster_num}_component",
@@ -147,16 +146,16 @@ def build_subgraph(path: str, query_names: list) -> gt.GraphView:
 
     :param path: [path to the network graph]
     :param query_names: [list of query sample names]
-    :return nx.Graph: [subgraph]
+    :return gt.Graph: [subgraph]
     """
     MAX_NODES = 25
-    g = gt.load_graph(path, fmt="graphml")  
+    g = gt.load_graph(path, fmt="graphml")
     query_nodes = {v for v in g.get_vertices() if g.vp["id"][v] in query_names}
 
     neighbor_nodes = set()
     for node in query_nodes:
         neighbor_nodes.update(g.get_all_neighbors(node))
-            
+
     neighbor_nodes = neighbor_nodes - query_nodes
 
     # create final set of nodes, prioritizing query nodes
@@ -166,9 +165,10 @@ def build_subgraph(path: str, query_names: list) -> gt.GraphView:
     if remaining_capacity > 0:
         add_neighbor_nodes(sub_graph_nodes, neighbor_nodes, remaining_capacity)
 
-    sub_graph =  gt.GraphView(g, vfilt=lambda v: v in sub_graph_nodes)
+    sub_graph = gt.GraphView(g, vfilt=lambda v: v in sub_graph_nodes)
     sub_graph.purge_vertices()
     return sub_graph
+
 
 def add_neighbor_nodes(
     graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
