@@ -139,7 +139,7 @@ def get_component_filepath(
     return component_files[0]
 
 
-def build_subgraph(path: str, query_names: list) -> gt.GraphView:
+def build_subgraph(path: str, query_names: list) -> gt.Graph:
     """
     [Build a subgraph from a network graph, prioritizing query nodes and
     adding neighbor nodes until the maximum number of nodes is reached.]
@@ -149,12 +149,17 @@ def build_subgraph(path: str, query_names: list) -> gt.GraphView:
     :return gt.Graph: [subgraph]
     """
     MAX_NODES = 25
-    g = gt.load_graph(path, fmt="graphml")
-    query_nodes = {v for v in g.get_vertices() if g.vp["id"][v] in query_names}
+    graph = gt.load_graph(path, fmt="graphml")
+    if MAX_NODES >= graph.num_vertices():
+        return graph
+    # get query nodes
+    query_nodes = {
+        v for v in graph.get_vertices() if graph.vp["id"][v] in query_names
+    }
 
     neighbor_nodes = set()
     for node in query_nodes:
-        neighbor_nodes.update(g.get_all_neighbors(node))
+        neighbor_nodes.update(graph.get_all_neighbors(node))
 
     neighbor_nodes = neighbor_nodes - query_nodes
 
@@ -165,7 +170,7 @@ def build_subgraph(path: str, query_names: list) -> gt.GraphView:
     if remaining_capacity > 0:
         add_neighbor_nodes(sub_graph_nodes, neighbor_nodes, remaining_capacity)
 
-    sub_graph = gt.GraphView(g, vfilt=lambda v: v in sub_graph_nodes)
+    sub_graph = gt.GraphView(graph, vfilt=lambda v: v in sub_graph_nodes)
     sub_graph.purge_vertices()
     return sub_graph
 
@@ -191,7 +196,7 @@ def add_neighbor_nodes(
         )
 
 
-def add_query_ref_to_graph(graph: gt.GraphView, query_names: list) -> None:
+def add_query_ref_to_graph(graph: gt.Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
