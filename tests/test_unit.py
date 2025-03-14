@@ -1509,13 +1509,11 @@ def test_get_df_filtered_by_samples(sample_clustering_csv):
 
 
 @patch("beebop.utils.build_subgraph")
-@patch("beebop.utils.write_graphml")
 @patch("beebop.utils.add_query_ref_to_graph")
 @patch("beebop.utils.get_component_filepath")
-def test_create_subgraphs(
+def test_create_subgraph(
     mock_get_component_filepath,
     mock_add_query_ref_to_graph,
-    mock_write_graphml,
     mock_build_subgraph,
 ):
     mock_get_component_filepath.return_value = "network_component_1.graphml"
@@ -1539,8 +1537,8 @@ def test_create_subgraphs(
     mock_add_query_ref_to_graph.assert_called_once_with(
         mock_subgraph, query_names
     )
-    mock_write_graphml.assert_called_once_with(
-        mock_subgraph, "network_component_1.graphml"
+    mock_subgraph.save.assert_called_once_with(
+        "network_component_1.graphml", fmt="graphml"
     )
 
 
