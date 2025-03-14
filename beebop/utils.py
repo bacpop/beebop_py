@@ -162,7 +162,7 @@ def build_subgraph(path: str, query_names: list) -> gt.GraphView:
     """
     MAX_NODES = 25
     g = gt.load_graph(path, fmt="graphml")  
-    query_nodes = {vid for vid in g.vertex_index if g.vp["id"][vid] in query_names}
+    query_nodes = {v for v in g.get_vertices() if g.vp["id"][v] in query_names}
 
     neighbor_nodes = set()
     for node in query_nodes:
@@ -202,7 +202,7 @@ def add_neighbor_nodes(
         )
 
 
-def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
+def add_query_ref_to_graph(graph: gt.GraphView, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -215,13 +215,14 @@ def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     :param graph: [networkx graph object]
     :param query_names: [list of query sample names]
     """
-    ref_query_vp = graph.new_vertex_property("string")
-    for v in graph.vertices():
-        if graph.vp["id"][v] in query_names:
-            ref_query_vp[v] = "query"
-        else:
-            ref_query_vp[v] = "ref"
-    graph.vp.ref_query = ref_query_vp
+    vertex_property_ref_query = graph.new_vertex_property(
+        "string",
+        vals=[
+            "query" if graph.vp["id"][v] in query_names else "ref"
+            for v in graph.get_vertices()
+        ],
+    )
+    graph.vp.ref_query = vertex_property_ref_query
 
 
 def get_lowest_cluster(clusters_str: str) -> int:
