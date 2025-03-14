@@ -10,7 +10,7 @@ from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 import os
-
+import time
 
 def visualise(
     p_hash: str,
@@ -168,7 +168,8 @@ def visualise_per_cluster(
     wrapper.create_visualisations(cluster_no, internal_cluster)
 
     replace_filehashes(output_folder, name_mapping)
+    start = time.time()
     create_subgraph(output_folder, name_mapping, cluster_no)
-
+    print(f"Subgraph creation took {time.time() - start} seconds")
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))

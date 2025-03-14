@@ -10,10 +10,10 @@ from beebop.filestore import PoppunkFileStore
 from networkx import read_graphml, write_graphml, Graph
 import random
 from pathlib import PurePath
-
+import graph_tool.all as gt
 ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
 ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
-
+import time
 
 def get_args() -> SimpleNamespace:
     """
@@ -102,17 +102,24 @@ def create_subgraph(
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
+    start = time.time()
     sub_graph = build_subgraph(component_path, query_names)
-
+    print(f"Subgraph building took took {time.time() - start} seconds")
+    
+    start = time.time()
     add_query_ref_to_graph(sub_graph, query_names)
-
-    write_graphml(
-        sub_graph,
+    print(f"Adding query/ref took {time.time() - start} seconds")
+    
+    start = time.time()
+    
+    sub_graph.save(
         component_path.replace(
             f"visualise_{cluster_num}_component",
             f"pruned_visualise_{cluster_num}_component",
         ),
+        fmt="graphml",
     )
+    print(f"Saving subgraph took {time.time() - start} seconds")
 
 
 def get_component_filepath(
@@ -144,7 +151,7 @@ def get_component_filepath(
     return component_files[0]
 
 
-def build_subgraph(path: str, query_names: list) -> Graph:
+def build_subgraph(path: str, query_names: list) -> gt.GraphView:
     """
     [Build a subgraph from a network graph, prioritizing query nodes and
     adding neighbor nodes until the maximum number of nodes is reached.]
@@ -153,34 +160,26 @@ def build_subgraph(path: str, query_names: list) -> Graph:
     :param query_names: [list of query sample names]
     :return nx.Graph: [subgraph]
     """
-    MAX_NODES = 25  # arbitrary number based on performance & visibility
-    graph = read_graphml(path)
-    if MAX_NODES >= len(graph.nodes()):
-        return graph
-    # get query nodes
-    query_nodes = {
-        node for (node, id) in graph.nodes(data="id") if id in query_names
-    }
+    MAX_NODES = 25
+    g = gt.load_graph(path, fmt="graphml")  
+    query_nodes = {vid for vid in g.vertex_index if g.vp["id"][vid] in query_names}
 
-    # get neighbor nodes of query nodes
     neighbor_nodes = set()
     for node in query_nodes:
-        neighbor_nodes.update(graph.neighbors(node))
-
-    # remove query nodes from neighbor nodes
+        neighbor_nodes.update(g.get_all_neighbors(node))
+            
     neighbor_nodes = neighbor_nodes - query_nodes
 
     # create final set of nodes, prioritizing query nodes
     sub_graph_nodes = set()
     sub_graph_nodes.update(query_nodes)
-
-    # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
         add_neighbor_nodes(sub_graph_nodes, neighbor_nodes, remaining_capacity)
 
-    return graph.subgraph(sub_graph_nodes)
-
+    sub_graph =  gt.GraphView(g, vfilt=lambda v: v in sub_graph_nodes)
+    sub_graph.purge_vertices()
+    return sub_graph
 
 def add_neighbor_nodes(
     graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
@@ -216,11 +215,13 @@ def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     :param graph: [networkx graph object]
     :param query_names: [list of query sample names]
     """
-    for node, id in graph.nodes(data="id"):
-        if id in query_names:
-            graph.nodes[node]["ref_query"] = "query"
+    ref_query_vp = graph.new_vertex_property("string")
+    for v in graph.vertices():
+        if graph.vp["id"][v] in query_names:
+            ref_query_vp[v] = "query"
         else:
-            graph.nodes[node]["ref_query"] = "ref"
+            ref_query_vp[v] = "ref"
+    graph.vp.ref_query = ref_query_vp
 
 
 def get_lowest_cluster(clusters_str: str) -> int:
