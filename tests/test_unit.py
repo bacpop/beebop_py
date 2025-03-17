@@ -35,6 +35,7 @@ from beebop.poppunkWrapper import PoppunkWrapper
 import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 import graph_tool.all as gt
+from tests.test_utils import wait_until
 
 fs = setup.fs
 args = setup.args
@@ -295,7 +296,7 @@ def test_queue_visualise_jobs(mocker):
     mockQueue.enqueue.assert_has_calls(expected_enqueue_calls, any_order=True)
 
 
-def test_run_poppunk_internal(qtbot):
+def test_run_poppunk_internal():
     fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get(
@@ -345,9 +346,13 @@ def test_run_poppunk_internal(qtbot):
     # wait for assign job to be finished
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
-        assert job.get_status() == "finished"
+        try:
+            assert job.get_status() == "finished"
+        except AssertionError:
+            return False
+        return True
 
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
+    wait_until(assign_status_finished, timeout=20000)
     # submits visualisation jobs to queue
     job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
     assert job_visualise.get_status() in status_options
