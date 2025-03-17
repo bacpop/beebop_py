@@ -44,6 +44,12 @@ def test_request_version(client):
         is None
     )
 
+def is_true(value):
+    return value is True
+def test_qt_bug(client, qtbot):
+    qtbot.waitUntil(
+        lambda: is_true(True), timeout=1000
+    )
 
 # def test_run_poppunk_pneumo(client, qtbot):
 #     p_hash, sketches = run_pneumo(client, qtbot)
