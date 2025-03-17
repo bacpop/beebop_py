@@ -82,13 +82,13 @@ jobs:
         conda activate beebop_py
         conda install graph-tool
         conda install mandrake
-        conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
+        conda install rapidnj
         sudo apt-get update
         sudo apt-get install libeigen3-dev libegl1
         sudo apt-get install libopenblas-dev
         sudo apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
-        pip install joblib
-        conda install -c bioconda pp-sketchlib
+        pip install joblib==1.1.0
+        conda install -c bioconda pp-sketchlib=2.0.0
         pip3 install git+https://github.com/bacpop/PopPUNK@v2.7.5#egg=PopPUNK
     - name: Install Poetry
       uses: snok/install-poetry@v1
@@ -110,7 +110,7 @@ jobs:
         conda activate beebop_py
         docker pull redis
         docker run --rm -d --name=redis -p 6379:6379 redis
-
+  
     - name: Test with pytest
       env:
         MICROREACT_TOKEN: ${{ secrets.MICROREACT_TOKEN }}
@@ -138,7 +138,7 @@ jobs:
     # Uncomment the next three lines to debug on failure with
     # tmate. However, don't leave them uncommented on merge as that
     # causes failing builds to hang forever.
-    
-    - name: tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
+    #
+    # - name: tmate session
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
