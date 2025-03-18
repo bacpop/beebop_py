@@ -1,18 +1,13 @@
 from types import SimpleNamespace
 import json
-import xml.etree.ElementTree as ET
 import os
 import re
 import fileinput
 import glob
 import pandas as pd
-from beebop.filestore import PoppunkFileStore
-from networkx import read_graphml, write_graphml, Graph
 import random
 from pathlib import PurePath
-
-ET.register_namespace("", "http://graphml.graphdrawing.org/xmlns")
-ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
+import graph_tool.all as gt
 
 
 def get_args() -> SimpleNamespace:
@@ -102,16 +97,16 @@ def create_subgraph(
     """
     query_names = list(filename_dict.values())
     component_path = get_component_filepath(visualisations_folder, cluster_num)
-    sub_graph = build_subgraph(component_path, query_names)
 
+    sub_graph = build_subgraph(component_path, query_names)
     add_query_ref_to_graph(sub_graph, query_names)
 
-    write_graphml(
-        sub_graph,
+    sub_graph.save(
         component_path.replace(
             f"visualise_{cluster_num}_component",
             f"pruned_visualise_{cluster_num}_component",
         ),
+        fmt="graphml",
     )
 
 
@@ -144,42 +139,40 @@ def get_component_filepath(
     return component_files[0]
 
 
-def build_subgraph(path: str, query_names: list) -> Graph:
+def build_subgraph(path: str, query_names: list) -> gt.Graph:
     """
     [Build a subgraph from a network graph, prioritizing query nodes and
     adding neighbor nodes until the maximum number of nodes is reached.]
 
     :param path: [path to the network graph]
     :param query_names: [list of query sample names]
-    :return nx.Graph: [subgraph]
+    :return gt.Graph: [subgraph]
     """
     MAX_NODES = 25  # arbitrary number based on performance & visibility
-    graph = read_graphml(path)
-    if MAX_NODES >= len(graph.nodes()):
+    graph = gt.load_graph(path, fmt="graphml")
+    if MAX_NODES >= graph.num_vertices():
         return graph
     # get query nodes
     query_nodes = {
-        node for (node, id) in graph.nodes(data="id") if id in query_names
+        v for v in graph.get_vertices() if graph.vp["id"][v] in query_names
     }
 
-    # get neighbor nodes of query nodes
     neighbor_nodes = set()
     for node in query_nodes:
-        neighbor_nodes.update(graph.neighbors(node))
+        neighbor_nodes.update(graph.get_all_neighbors(node))
 
-    # remove query nodes from neighbor nodes
     neighbor_nodes = neighbor_nodes - query_nodes
 
     # create final set of nodes, prioritizing query nodes
     sub_graph_nodes = set()
     sub_graph_nodes.update(query_nodes)
-
-    # add neighbor nodes until we reach the maximum number of nodes
     remaining_capacity = MAX_NODES - len(sub_graph_nodes)
     if remaining_capacity > 0:
         add_neighbor_nodes(sub_graph_nodes, neighbor_nodes, remaining_capacity)
 
-    return graph.subgraph(sub_graph_nodes)
+    sub_graph = gt.GraphView(graph, vfilt=lambda v: v in sub_graph_nodes)
+    sub_graph.purge_vertices()
+    return sub_graph
 
 
 def add_neighbor_nodes(
@@ -203,7 +196,7 @@ def add_neighbor_nodes(
         )
 
 
-def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
+def add_query_ref_to_graph(graph: gt.Graph, query_names: list) -> None:
     """
     [The standard poppunk visualisation output for the cytoscape network graph
     (.graphml file) does not include information on whether a sample has been
@@ -216,11 +209,14 @@ def add_query_ref_to_graph(graph: Graph, query_names: list) -> None:
     :param graph: [networkx graph object]
     :param query_names: [list of query sample names]
     """
-    for node, id in graph.nodes(data="id"):
-        if id in query_names:
-            graph.nodes[node]["ref_query"] = "query"
-        else:
-            graph.nodes[node]["ref_query"] = "ref"
+    vertex_property_ref_query = graph.new_vertex_property(
+        "string",
+        vals=[
+            "query" if graph.vp["id"][v] in query_names else "ref"
+            for v in graph.get_vertices()
+        ],
+    )
+    graph.vp.ref_query = vertex_property_ref_query
 
 
 def get_lowest_cluster(clusters_str: str) -> int:

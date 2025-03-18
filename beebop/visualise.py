@@ -169,6 +169,5 @@ def visualise_per_cluster(
 
     replace_filehashes(output_folder, name_mapping)
     create_subgraph(output_folder, name_mapping, cluster_no)
-
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))

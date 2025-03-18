@@ -3,6 +3,31 @@ import os
 import jsonschema
 from tests import setup
 import beebop.schemas
+import time
+from typing import Literal
+
+
+def wait_until(
+    condition: callable, interval=300, timeout=10000
+) -> Literal[True]:
+    """
+    Wait until a condition is met or timeout occurs.
+
+    :param condition: A callable that returns True when the condition is met.
+    :param interval: Time in milliseconds to wait between checks.
+    :param timeout: Time in milliseconds to wait before timing out.
+    :return: True if the condition is met before timeout.
+    :raises TimeoutError: If the timeout period is exceeded.
+    """
+    interval_seconds = interval / 1000
+    timeout_seconds = timeout / 1000
+
+    start_time = time.time()
+    while not condition():
+        if (time.time() - start_time) > timeout_seconds:
+            raise TimeoutError("Condition not met within the timeout period.")
+        time.sleep(interval_seconds)
+    return True
 
 
 def read_data(response):
@@ -12,15 +37,15 @@ def read_data(response):
 def visualise_status_finished(client, p_hash):
     status = client.get("/status/" + p_hash)
     visualise_clusters_status = read_data(status)["visualiseClusters"]
-    assert len(visualise_clusters_status) > 0
-    assert all(
-        status == "finished" for status in visualise_clusters_status.values()
+    return len(visualise_clusters_status) > 0 and all(
+        status == "finished"
+        for status in visualise_clusters_status.values()
     )
 
 
 def assign_status_finished(client, p_hash):
     status = client.get("/status/" + p_hash)
-    assert read_data(status)["assign"] == "finished"
+    return read_data(status)["assign"] == "finished"
 
 
 def assert_status_present(client, p_hash):
@@ -65,18 +90,16 @@ def run_poppunk(
     assert response.status_code == 200
 
 
-def assert_correct_poppunk_results(client, p_hash, qtbot, cluster_nums):
+def assert_correct_poppunk_results(client, p_hash, cluster_nums):
     # retrieve job status
     assert_status_present(client, p_hash)
 
     # retrieve cluster result when finished
-    qtbot.waitUntil(
-        lambda: assign_status_finished(client, p_hash), timeout=20000
-    )
+    wait_until(lambda: assign_status_finished(client, p_hash), timeout=30000)
     run_assign_and_validate(client, p_hash)
 
     # check if visualisation files are stored
-    qtbot.waitUntil(
+    wait_until(
         lambda: visualise_status_finished(client, p_hash), timeout=300000
     )
 

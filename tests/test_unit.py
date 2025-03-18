@@ -34,7 +34,8 @@ from beebop.poppunkWrapper import PoppunkWrapper
 
 import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-import networkx as nx
+import graph_tool.all as gt
+from tests.test_utils import wait_until
 
 fs = setup.fs
 args = setup.args
@@ -295,7 +296,7 @@ def test_queue_visualise_jobs(mocker):
     mockQueue.enqueue.assert_has_calls(expected_enqueue_calls, any_order=True)
 
 
-def test_run_poppunk_internal(qtbot):
+def test_run_poppunk_internal():
     fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get(
@@ -345,9 +346,9 @@ def test_run_poppunk_internal(qtbot):
     # wait for assign job to be finished
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
-        assert job.get_status() == "finished"
+        return job.get_status() == "finished"
 
-    qtbot.waitUntil(assign_status_finished, timeout=20000)
+    wait_until(assign_status_finished, timeout=20000)
     # submits visualisation jobs to queue
     job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
     assert job_visualise.get_status() in status_options
@@ -1509,13 +1510,11 @@ def test_get_df_filtered_by_samples(sample_clustering_csv):
 
 
 @patch("beebop.utils.build_subgraph")
-@patch("beebop.utils.write_graphml")
 @patch("beebop.utils.add_query_ref_to_graph")
 @patch("beebop.utils.get_component_filepath")
-def test_create_subgraphs(
+def test_create_subgraph(
     mock_get_component_filepath,
     mock_add_query_ref_to_graph,
-    mock_write_graphml,
     mock_build_subgraph,
 ):
     mock_get_component_filepath.return_value = "network_component_1.graphml"
@@ -1539,46 +1538,50 @@ def test_create_subgraphs(
     mock_add_query_ref_to_graph.assert_called_once_with(
         mock_subgraph, query_names
     )
-    mock_write_graphml.assert_called_once_with(
-        mock_subgraph, "network_component_1.graphml"
+    mock_subgraph.save.assert_called_once_with(
+        "network_component_1.graphml", fmt="graphml"
     )
 
 
-@patch("beebop.utils.read_graphml")
-def test_build_subgraph(mock_read_graphml):
-    graph = nx.complete_graph(50)  # 50 nodes fully conected
+@patch("beebop.utils.gt.load_graph")
+def test_build_subgraph(mock_load_graph):
+    graph = gt.complete_graph(50)  # 50 nodes fully conected
     query_names = ["sample1", "sample2", "sample3"]
-    graph.nodes[45]["id"] = "sample2"
-    mock_read_graphml.return_value = graph
+    id_vertex_properties = graph.new_vertex_property("string")
+    id_vertex_properties[45] = "sample2"
+    graph.vp.id = id_vertex_properties
+    mock_load_graph.return_value = graph
 
     subgraph = utils.build_subgraph("network_component_1.graphml", query_names)
 
-    assert len(subgraph.nodes) == 25  # max number
+    assert subgraph.num_vertices() == 25  # max number
 
 
-@patch("beebop.utils.read_graphml")
+@patch("beebop.utils.gt.load_graph")
 @patch("beebop.utils.add_neighbor_nodes")
-def test_build_subgraph_no_prune(mock_add_neighbor_nodes, mock_read_graphml):
-    graph = nx.complete_graph(10)  # 50 nodes fully conected
+def test_build_subgraph_no_prune(mock_add_neighbor_nodes, mock_load_graph):
+    graph = gt.complete_graph(10)  # 50 nodes fully conected
     query_names = ["sample1", "sample2", "sample3"]
-    mock_read_graphml.return_value = graph
+    mock_load_graph.return_value = graph
 
-    graph = utils.build_subgraph("network_component_1.graphml", query_names)
+    subgraph = utils.build_subgraph("network_component_1.graphml", query_names)
 
-    assert len(graph.nodes) == 10
+    assert subgraph.num_vertices() == 10
     mock_add_neighbor_nodes.assert_not_called()
 
 
 def test_add_query_ref_to_graph():
-    graph = nx.complete_graph(10)  # 10 nodes fully conected
+    graph = gt.complete_graph(10)  # 10 nodes fully conected
     query_names = ["sample1", "sample2", "sample3"]
-    graph.nodes[0]["id"] = "sample2"
+    id_vertex_properties = graph.new_vertex_property("string")
+    id_vertex_properties[0] = "sample2"
+    graph.vp.id = id_vertex_properties
 
     utils.add_query_ref_to_graph(graph, query_names)
 
-    assert graph.nodes[0]["ref_query"] == "query"
+    assert graph.vp["ref_query"][0] == "query"
     for i in range(1, 10):
-        assert graph.nodes[i]["ref_query"] == "ref"
+        assert graph.vp["ref_query"][i] == "ref"
 
 
 def create_test_files(network_folder, filenames):

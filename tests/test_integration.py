@@ -14,7 +14,7 @@ from tests.test_utils import (
 schemas = beebop.schemas.Schema()
 
 
-def run_pneumo(client, qtbot):
+def run_pneumo(client):
     # generate sketches
     sketches = json.loads(setup.generate_json_pneumo())
     name_mapping = {"6930_8_9": "6930_8_9.fa", "7622_5_91": "7622_5_91.fa"}
@@ -29,7 +29,7 @@ def run_pneumo(client, qtbot):
         setup.species,
         setup.amr_for_metadata_csv,
     )
-    assert_correct_poppunk_results(client, p_hash, qtbot, [3, 60])
+    assert_correct_poppunk_results(client, p_hash, [3, 60])
 
     return (p_hash, sketches)
 
@@ -45,8 +45,8 @@ def test_request_version(client):
     )
 
 
-def test_run_poppunk_pneumo(client, qtbot):
-    p_hash, sketches = run_pneumo(client, qtbot)
+def test_run_poppunk_pneumo(client):
+    p_hash, sketches = run_pneumo(client)
 
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
@@ -122,8 +122,8 @@ def test_network_results_zip(client):
     assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
 
 
-def test_get_network_graphs(client, qtbot):
-    p_hash, _ = run_pneumo(client, qtbot)
+def test_get_network_graphs(client):
+    p_hash, _ = run_pneumo(client)
 
     response = client.get(f"/results/networkGraphs/{p_hash}")
     graph_string_3 = json.loads(response.data.decode("utf-8"))["data"]["GPSC3"]
@@ -145,7 +145,7 @@ def test_404(client):
     assert json.loads(response_data)["error"]["status"] == "failure"
 
 
-def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
+def test_run_poppunk_streptococcus_agalactiae(client):
     p_hash = "integration_test_run_poppunk_streptococcus_agalactiae"
     sketch_hash = "strep_sample"
     name_mapping = {
@@ -162,7 +162,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
         "Streptococcus agalactiae",
     )
 
-    assert_correct_poppunk_results(client, p_hash, qtbot, [18])
+    assert_correct_poppunk_results(client, p_hash, [18])
 
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
@@ -171,7 +171,7 @@ def test_run_poppunk_streptococcus_agalactiae(client, qtbot):
     assert_all_finished(project_data)
 
 
-def test_run_poppunk_streptococcus_pyogenes(client, qtbot):
+def test_run_poppunk_streptococcus_pyogenes(client):
     p_hash = "integration_test_run_poppunk_streptococcus_pyogenes"
     sketch_hash = "strep_pyogenes_sample"
     name_mapping = {
@@ -188,7 +188,7 @@ def test_run_poppunk_streptococcus_pyogenes(client, qtbot):
         "Streptococcus pyogenes",
     )
 
-    assert_correct_poppunk_results(client, p_hash, qtbot, [2])
+    assert_correct_poppunk_results(client, p_hash, [2])
 
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
