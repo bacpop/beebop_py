@@ -37,24 +37,15 @@ def read_data(response):
 def visualise_status_finished(client, p_hash):
     status = client.get("/status/" + p_hash)
     visualise_clusters_status = read_data(status)["visualiseClusters"]
-    try:
-        assert len(visualise_clusters_status) > 0
-        assert all(
-            status == "finished"
-            for status in visualise_clusters_status.values()
-        )
-    except AssertionError:
-        return False
-    return True
+    return len(visualise_clusters_status) > 0 and all(
+        status == "finished"
+        for status in visualise_clusters_status.values()
+    )
 
 
 def assign_status_finished(client, p_hash):
     status = client.get("/status/" + p_hash)
-    try:
-        assert read_data(status)["assign"] == "finished"
-    except AssertionError:
-        return False
-    return True
+    return read_data(status)["assign"] == "finished"
 
 
 def assert_status_present(client, p_hash):

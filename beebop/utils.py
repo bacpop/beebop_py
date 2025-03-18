@@ -148,7 +148,7 @@ def build_subgraph(path: str, query_names: list) -> gt.Graph:
     :param query_names: [list of query sample names]
     :return gt.Graph: [subgraph]
     """
-    MAX_NODES = 25
+    MAX_NODES = 25  # arbitrary number based on performance & visibility
     graph = gt.load_graph(path, fmt="graphml")
     if MAX_NODES >= graph.num_vertices():
         return graph

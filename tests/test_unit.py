@@ -346,11 +346,7 @@ def test_run_poppunk_internal():
     # wait for assign job to be finished
     def assign_status_finished():
         job = Job.fetch(job_ids["assign"], connection=redis)
-        try:
-            assert job.get_status() == "finished"
-        except AssertionError:
-            return False
-        return True
+        return job.get_status() == "finished"
 
     wait_until(assign_status_finished, timeout=20000)
     # submits visualisation jobs to queue
