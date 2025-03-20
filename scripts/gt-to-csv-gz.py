@@ -3,7 +3,7 @@ import graph_tool.all as gt
 import argparse
 
 # This script converts a graph-tool graph to a gzipped CSV file.
-# PopPUNK's GPU accelerated graphing library cuGraph cannot read .gt files, 
+# PopPUNK's GPU accelerated graphing library cuGraph cannot read .gt files,
 # so we need to convert it to csv that cuGraph can read.
 
 
