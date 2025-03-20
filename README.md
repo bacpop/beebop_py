@@ -138,3 +138,4 @@ To use GPU, ensure the following conditions are met:
   - `--input` the path to the graph .gt file
   - `--output` the path to the output csv.gz file
 - In `args.json` set the `gpu_graph` and `gpu_dist` to `True` for both `assign` and `visualise` fields.
+*Note: may need to reinstall and **pp-sketchlib, PopPUNK and mandrake** to ensure CUDA enabled versions are installed*
