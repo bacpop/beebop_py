@@ -38,8 +38,7 @@ def get_input_output_paths():
         raise FileNotFoundError(f"Input file {args.input} does not exist.")
     if not args.input.endswith(".gt"):
         raise ValueError("Input file must be a .gt file.")
-    
-    
+
     return args.input, args.input.replace(".gt", ".csv.gz")
 
 
