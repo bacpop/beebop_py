@@ -1,6 +1,7 @@
 import pandas as pd
 import graph_tool.all as gt
 import argparse
+import os
 
 # This script converts a graph-tool graph to a gzipped CSV file.
 # PopPUNK's GPU accelerated graphing library cuGraph cannot read .gt files,
@@ -31,16 +32,15 @@ def get_input_output_paths():
         required=True,
         help="Path to the input graph-tool .gt file.",
     )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        required=True,
-        help="Path to the output gzipped CSV file.",
-    )
     args = parser.parse_args()
 
-    return args.input, args.output
+    if not os.path.exists(args.input):
+        raise FileNotFoundError(f"Input file {args.input} does not exist.")
+    if not args.input.endswith(".gt"):
+        raise ValueError("Input file must be a .gt file.")
+    
+    
+    return args.input, args.input.replace(".gt", ".csv.gz")
 
 
 def main():
