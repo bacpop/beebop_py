@@ -127,3 +127,14 @@ You can build the image with `/docker/build --with-dev`, this new image can now 
 A pull request can be created so GHA pushes the images to the docker hub. Add `--with-dev` to the build & push commands `pipeline.yaml`.
 **Ensure to remove the `--with-dev` flag before merging the PR.**
 Then on the `beebop-deploy` the api image can be updated with the new dev image.
+
+### GPU
+
+To use GPU, ensure the following conditions are met:
+
+- The host machine has a GPU and the NVIDIA drivers and cuda-toolkit are installed with correct versions. [Check the NVIDIA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux)
+- The necessary libraries for GPU support are installed in your environment.[RAPIDS](https://rapids.ai/),[numba](https://numba.readthedocs.io/en/stable/user/installing.html), [cupy](https://docs.cupy.dev/en/stable/install.html)
+- Ensure any new PopPUNK databases have *graph.csv.gz* file. If not run script in scripts folder: `python gt-to-csv-gz.py` with
+  - `--input` the path to the graph .gt file
+
+**Note:** If you installed **pp-sketchlib, PopPUNK, and mandrake** before installing CUDA, you will need to reinstall them to ensure CUDA-enabled versions are installed.
