@@ -193,7 +193,7 @@ def handle_external_clusters(
             )
         )
         output_full_tmp = config.fs.output_tmp(config.p_hash)
-        found_query_names_full_db, found_query_clusters_full_db = (
+        not_found_query_names_new, not_found_query_clusters_new = (
             handle_not_found_queries(
                 config,
                 sketches_dict,
@@ -202,8 +202,8 @@ def handle_external_clusters(
                 not_found_query_clusters,
             )
         )
-        queries_names.extend(found_query_names_full_db)
-        queries_clusters.extend(found_query_clusters_full_db)
+        queries_names.extend(not_found_query_names_new)
+        queries_clusters.extend(not_found_query_clusters_new)
         update_external_clusters(
             config,
             not_found_query_names,
@@ -309,7 +309,7 @@ def handle_files_manipulation(
 
 def update_external_clusters(
     config: ClusteringConfig,
-    query_names: list,
+    not_found_query_names: list,
     external_clusters: dict,
     previous_query_clustering: str,
 ) -> None:
@@ -326,8 +326,8 @@ def update_external_clusters(
 
     :param config: [ClusteringConfig
         with all necessary information]
-    :param query_names: [list of sample hashes
-        that were not found in the initial external clusters file]
+    :param not_found_query_names: [list of sample hashes
+        that were not found]
     :param external_clusters: [dict of sample hashes
         to external cluster labels]
     :param previous_query_clustering: [path to previous
@@ -340,47 +340,15 @@ def update_external_clusters(
     update_external_clusters_csv(
         previous_query_clustering,
         not_found_prev_querying,
-        query_names,
+        not_found_query_names,
     )
 
-    external_clusters_full_db, not_found_query_names_full_db = (
-        get_external_clusters_from_file(
-            not_found_prev_querying,
-            query_names,
-            config.external_clusters_prefix,
-        )
+    external_clusters_not_found, _ = get_external_clusters_from_file(
+        not_found_prev_querying,
+        not_found_query_names,
+        config.external_clusters_prefix,
     )
-
-    process_unassignable_samples(
-        not_found_query_names_full_db, config.fs, config.p_hash
-    )
-
-    external_clusters.update(external_clusters_full_db)
-
-
-def process_unassignable_samples(
-    unassignable_names: list[str], fs: PoppunkFileStore, p_hash: str
-) -> None:
-    """
-    [Process samples that are unassignable to external clusters.
-    These samples are added to the QC error report file.]
-
-    :param unassignable_names: [List of sample hashes that
-    are unassignable to external clusters.]
-    :param fs: [PoppunkFileStore with paths to input/output files.]
-    :param p_hash: [Project hash.]
-    """
-    if not unassignable_names:
-        return
-
-    qc_report_path = fs.output_qc_report(p_hash)
-    strain_assignment_error = (
-        "Unable to assign to an existing strain - potentially novel genotype"
-    )
-
-    with open(qc_report_path, "a") as report_file:
-        for sample_hash in unassignable_names:
-            report_file.write(f"{sample_hash}\t{strain_assignment_error}\n")
+    external_clusters.update(external_clusters_not_found)
 
 
 def merge_txt_files(main_file: str, merge_file: str) -> None:
@@ -474,7 +442,7 @@ def delete_include_files(
 
 
 def assign_clusters_to_result(
-    query_cluster_mapping: Union[dict.items, zip],
+    query_cluster_mapping: Union[dict.items, zip]
 ) -> dict:
     """
     [Assign clusters to the result dictionary,
@@ -533,12 +501,8 @@ def save_external_to_poppunk_clusters(
     """
     external_to_poppunk_clusters = {}
     for i, name in enumerate(queries_names):
-        external_cluster = external_clusters.get(name, {}).get("cluster")
-        if external_cluster is None:
-            continue
-        external_to_poppunk_clusters[external_cluster] = str(
+        external_to_poppunk_clusters[external_clusters[name]["cluster"]] = str(
             queries_clusters[i]
         )
-
     with open(fs.external_to_poppunk_clusters(p_hash), "wb") as f:
         pickle.dump(external_to_poppunk_clusters, f)
