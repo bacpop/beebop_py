@@ -1251,7 +1251,10 @@ def test_update_external_clusters(
     external_clusters = {"sample1": "GPSC69", "sample2": "GPSC420"}
     new_external_clusters = {"sample3": "GPSC11", "samples4": "GPSC33"}
     not_found_samples = ["sample4"]
-    mock_get_external_clusters.return_value = (new_external_clusters, not_found_samples)
+    mock_get_external_clusters.return_value = (
+        new_external_clusters,
+        not_found_samples,
+    )
 
     assignClusters.update_external_clusters(
         config, query_names, external_clusters, previous_query_clustering
@@ -1812,6 +1815,7 @@ def test_get_network_files_for_zip(mock_component_filepath):
         f"visualise_{cluster_num}_cytoscape.csv",
     ]
 
+
 def test_process_unassignable_samples(tmp_path):
     unassignable_samples = ["sample1", "sample2"]
     strain_assignment_error = (
@@ -1825,16 +1829,17 @@ def test_process_unassignable_samples(tmp_path):
     report_path = tmp_path / "qc_report.txt"
 
     fs.output_qc_report.return_value = str(report_path)
-    
+
     assignClusters.process_unassignable_samples(
         unassignable_samples, fs, "hash"
     )
-    
+
     fs.output_qc_report.assert_called_once_with("hash")
-    
+
     qc_report_lines = list(report_path.read_text().splitlines())
     assert qc_report_lines == expected_output
-    
+
+
 def test_process_unassignable_samples_no_samples():
     fs = Mock()
 
