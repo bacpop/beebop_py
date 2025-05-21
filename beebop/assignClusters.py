@@ -309,7 +309,7 @@ def handle_files_manipulation(
 
 def update_external_clusters(
     config: ClusteringConfig,
-    query_names: list,
+    found_in_full_db_query_names: list,
     external_clusters: dict,
     previous_query_clustering: str,
 ) -> None:
@@ -326,7 +326,7 @@ def update_external_clusters(
 
     :param config: [ClusteringConfig
         with all necessary information]
-    :param query_names: [list of sample hashes
+    :param found_in_full_db_query_names: [list of sample hashes
         that were not found in the initial external clusters file]
     :param external_clusters: [dict of sample hashes
         to external cluster labels]
@@ -340,13 +340,13 @@ def update_external_clusters(
     update_external_clusters_csv(
         previous_query_clustering,
         not_found_prev_querying,
-        query_names,
+        found_in_full_db_query_names,
     )
 
     external_clusters_full_db, not_found_query_names_full_db = (
         get_external_clusters_from_file(
             not_found_prev_querying,
-            query_names,
+            found_in_full_db_query_names,
             config.external_clusters_prefix,
         )
     )
