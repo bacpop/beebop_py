@@ -216,7 +216,8 @@ def test_visualise_per_cluster(mock_create_subgraph, mock_replace_filehashes):
         fs.output_visualisations(p_hash, 16), setup.name_mapping
     )
     mock_create_subgraph.assert_called_with(
-        fs.output_visualisations(p_hash, 16), setup.name_mapping, "16")
+        fs.output_visualisations(p_hash, 16), setup.name_mapping, "16"
+    )
 
 
 @patch("beebop.visualise.replace_filehashes")
@@ -1233,31 +1234,42 @@ def test_handle_files_manipulation(mock_delete, mock_copy, mock_merge, config):
     )
 
 
+@patch("beebop.assignClusters.process_unassignable_samples")
 @patch("beebop.assignClusters.update_external_clusters_csv")
 @patch("beebop.assignClusters.get_external_clusters_from_file")
 def test_update_external_clusters(
-    mock_get_external_clusters, mock_update_external_clusters, config
+    mock_get_external_clusters,
+    mock_update_external_clusters,
+    mock_process_unassignable_samples,
+    config,
 ):
     previous_query_clustering = "previous_query_clustering"
     config.fs.external_previous_query_clustering_tmp.return_value = (
         "tmp_previous_query_clustering"
     )
-    not_found = ["sample3", "samples4"]
+    query_names = ["sample3", "samples4"]
     external_clusters = {"sample1": "GPSC69", "sample2": "GPSC420"}
     new_external_clusters = {"sample3": "GPSC11", "samples4": "GPSC33"}
-    mock_get_external_clusters.return_value = (new_external_clusters, [])
+    not_found_samples = ["sample4"]
+    mock_get_external_clusters.return_value = (
+        new_external_clusters,
+        not_found_samples,
+    )
 
     assignClusters.update_external_clusters(
-        config, not_found, external_clusters, previous_query_clustering
+        config, query_names, external_clusters, previous_query_clustering
     )
 
     mock_get_external_clusters.assert_called_once_with(
         "tmp_previous_query_clustering",
-        not_found,
+        query_names,
         config.external_clusters_prefix,
     )
     mock_update_external_clusters.assert_called_once_with(
-        previous_query_clustering, "tmp_previous_query_clustering", not_found
+        previous_query_clustering, "tmp_previous_query_clustering", query_names
+    )
+    mock_process_unassignable_samples.assert_called_once_with(
+        not_found_samples, config.fs, config.p_hash
     )
 
     assert external_clusters == {
@@ -1529,9 +1541,7 @@ def test_create_subgraph(
 
     utils.create_subgraph("network_folder", filename_dict, "1")
 
-    mock_get_component_filepath.assert_called_once_with(
-        "network_folder", "1"
-    )
+    mock_get_component_filepath.assert_called_once_with("network_folder", "1")
     mock_build_subgraph.assert_called_once_with(
         "network_component_1.graphml", query_names
     )
@@ -1804,3 +1814,35 @@ def test_get_network_files_for_zip(mock_component_filepath):
         f"pruned_{component_filename}",
         f"visualise_{cluster_num}_cytoscape.csv",
     ]
+
+
+def test_process_unassignable_samples(tmp_path):
+    unassignable_samples = ["sample1", "sample2"]
+    strain_assignment_error = (
+        "Unable to assign to an existing strain - potentially novel genotype"
+    )
+    expected_output = [
+        f"{sample}\t{strain_assignment_error}"
+        for sample in unassignable_samples
+    ]
+    fs = Mock()
+    report_path = tmp_path / "qc_report.txt"
+
+    fs.output_qc_report.return_value = str(report_path)
+
+    assignClusters.process_unassignable_samples(
+        unassignable_samples, fs, "hash"
+    )
+
+    fs.output_qc_report.assert_called_once_with("hash")
+
+    qc_report_lines = list(report_path.read_text().splitlines())
+    assert qc_report_lines == expected_output
+
+
+def test_process_unassignable_samples_no_samples():
+    fs = Mock()
+
+    assignClusters.process_unassignable_samples([], fs, "")
+
+    fs.output_qc_report.assert_not_called()
