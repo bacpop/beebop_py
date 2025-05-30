@@ -211,7 +211,7 @@ def create_combined_include_file(
     fs: PoppunkFileStore,
     p_hash: str,
     internal_clusters: list[str],
-) -> None:
+) -> str:
     """
     [Creates a combined include file for multiple internal clusters.
     The combined file contains the contents of
@@ -221,7 +221,7 @@ def create_combined_include_file(
     :param p_hash: [project hash to find input data (output from
         assignClusters)]
     :param internal_clusters: [list of internal cluster names to combine]
-    :return: [name of the combined internal cluster]
+    :return: [combined internal cluster]
     """
     combined_internal_cluster = "_".join(internal_clusters)
     with open(
