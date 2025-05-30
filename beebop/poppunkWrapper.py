@@ -72,17 +72,14 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network,
         )
 
-    def create_visualisations(
-        self, cluster: str, internal_cluster: str
-    ) -> None:
+    def create_visualisations(self, cluster: str, include_file: str) -> None:
         """
         [Generates visualisation outputs (microreact + network)
         based on previous assign_clusters output.]
 
         Args:
         :param cluster: [external cluster]
-        :param internal_cluster: [corresponding poppunk cluster, used to
-            indicate clusters to include]
+        :param include_file: [txt file with isolates to include in visualisation]
         """
         print(shutil.which("rapidnj"))
         generate_visualisations(
@@ -102,7 +99,7 @@ class PoppunkWrapper:
             perplexity=self.args.visualise.perplexity,
             maxIter=self.args.visualise.maxIter,
             strand_preserved=self.args.visualise.strand_preserved,
-            include_files=self.fs.include_files(self.p_hash, internal_cluster),
+            include_files=include_file,
             model_dir=self.db_fs.db,
             previous_clustering=self.db_fs.previous_clustering,
             previous_query_clustering=(

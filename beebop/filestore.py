@@ -128,10 +128,11 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
 
-    def include_files(self, p_hash, cluster) -> str:
+    def include_file(self, p_hash: str, cluster: str) -> str:
         """
         :param p_hash: [project hash]
-        :param cluster: [cluster number]
+        :param cluster: [internal cluster number or combined
+        internal cluster numbers separated by '_']
         :return str: [path to include files]
         """
         return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
@@ -202,9 +203,10 @@ class PoppunkFileStore:
         :param cluster: [assigned cluster number]
         :return str: [path to pruned network component file]
         """
-        return str(PurePath(
-            self.output_visualisations(p_hash, cluster),
-            f"pruned_visualise_{cluster}_component_{component}.graphml",
+        return str(
+            PurePath(
+                self.output_visualisations(p_hash, cluster),
+                f"pruned_visualise_{cluster}_component_{component}.graphml",
             )
         )
 
