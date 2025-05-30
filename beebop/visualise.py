@@ -184,7 +184,8 @@ def get_internal_cluster(
     fs: PoppunkFileStore,
 ) -> str:
     """
-    [Determines the internal cluster name based on the external cluster mapping.
+    [Determines the internal cluster name based on
+    the external cluster mapping.
     If the external cluster maps to multiple internal clusters,
     it creates a combined include file.]
 
@@ -213,7 +214,8 @@ def create_combined_include_file(
 ) -> None:
     """
     [Creates a combined include file for multiple internal clusters.
-    The combined file contains the contents of all specified internal clusters.]
+    The combined file contains the contents of
+    all specified internal clusters.]
 
     :param fs: [PoppunkFileStore with paths to input data]
     :param p_hash: [project hash to find input data (output from
