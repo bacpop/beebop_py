@@ -186,7 +186,8 @@ def get_internal_cluster(
     """
     [Determines the internal cluster name based on
     the external cluster mapping.
-    If the external cluster maps to multiple internal clusters,
+    In the edge case where the external cluster maps
+    to multiple internal clusters,
     it creates a combined include file.]
 
     :param external_to_poppunk_clusters: [dict mapping external clusters
