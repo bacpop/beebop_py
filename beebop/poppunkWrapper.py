@@ -79,7 +79,7 @@ class PoppunkWrapper:
 
         Args:
         :param cluster: [external cluster]
-        :param include_file: [txt file with isolates
+        :param include_file: [path to txt file with isolates
         to include in visualisation]
         """
         print(shutil.which("rapidnj"))

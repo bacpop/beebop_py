@@ -133,7 +133,8 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :param cluster: [internal cluster number or combined
         internal cluster numbers separated by '_']
-        :return str: [path to include files]
+        :return str: [path to include file]
+
         """
         return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
 

@@ -47,7 +47,6 @@ def visualise(
     # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters = None
-
     try:
         with open(fs.external_to_poppunk_clusters(p_hash), "rb") as dict:
             external_to_poppunk_clusters = pickle.load(dict)
@@ -166,7 +165,6 @@ def visualise_per_cluster(
         p_hash,
         fs,
     )
-
     wrapper.create_visualisations(
         cluster_no, fs.include_file(p_hash, internal_cluster)
     )
