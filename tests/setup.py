@@ -5,7 +5,7 @@ from beebop import visualise
 from tests import hdf5_to_json
 import json
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
-from beebop.utils import get_args
+from beebop.config import get_args
 import pandas as pd
 
 schemas = beebop.schemas.Schema()

@@ -267,8 +267,7 @@ def get_external_clusters_from_file(
     valid_clusters = filtered_df[found_mask]
     hash_cluster_info = {
         sample: {
-            "cluster":
-                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
             "raw_cluster_num": cluster,
         }
         for sample, cluster in zip(

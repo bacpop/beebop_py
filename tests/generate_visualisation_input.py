@@ -5,7 +5,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args
+from beebop.config import get_args
 from tests import setup
 
 

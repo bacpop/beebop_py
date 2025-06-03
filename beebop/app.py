@@ -1,10 +1,10 @@
-from flask import Flask, jsonify, request, abort, send_file
+from flask import Flask, jsonify, request, abort, send_file, wrappers
 from flask_expects_json import expects_json
 from waitress import serve
 from redis import Redis
 import redis.exceptions as redis_exceptions
 from rq import Queue
-from rq.job import Job, Dependency
+from rq.job import Job
 import os
 from io import BytesIO
 import zipfile
@@ -13,42 +13,39 @@ import requests
 import pickle
 from datetime import datetime
 import pandas as pd
-
 from beebop import versions, assignClusters, visualise
+from beebop.config import get_environment, get_args
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_args, get_cluster_num, get_component_filepath
+from beebop.utils import get_cluster_num, get_component_filepath
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
-from beebop.dataClasses import SpeciesConfig
+from beebop.dataClasses import SpeciesConfig, Response, ResponseError
+from typing import Any, Union
 
 schemas = beebop.schemas.Schema()
 
-redis_host = os.environ.get("REDIS_HOST")
-if not redis_host:
-    redis_host = "127.0.0.1"
+storage_location, dbs_location, redis_host = get_environment()
+args = get_args()
 app = Flask(__name__)
 redis = Redis(host=redis_host)
-job_timeout = 1200
-
-storage_location = os.environ.get("STORAGE_LOCATION")
-dbs_location = os.environ.get("DBS_LOCATION")
+JOB_TIMEOUT = 1200
 
 
-def response_success(data) -> dict:
+def response_success(data: Any) -> Response:
     """
     :param data: [data to be stored in response object]
     :return dict: [response object for successful response holding data]
     """
-    response = {"status": "success", "errors": [], "data": data}
+    response = Response(status="success", errors=[], data=data)
     return response
 
 
-def response_failure(error) -> dict:
+def response_failure(error: ResponseError) -> Response:
     """
-    :param error: [error message]
-    :return dict: [response object for error response holding error message]
+    :param error: [error object with error message and details]
+    :return Response: [response object for error response holding error message]
     """
-    response = {"status": "failure", "errors": [error], "data": []}
+    response = Response(status="failure", errors=[error], data=[])
     return response
 
 
@@ -155,7 +152,7 @@ def internal_server_error(e) -> json:
     return (
         jsonify(
             error=response_failure(
-                {"error": "Internal Server Error", "detail": str(e)}
+                ResponseError(error="Internal Server Error", details=str(e))
             )
         ),
         500,
@@ -171,7 +168,7 @@ def resource_not_found(e) -> json:
     return (
         jsonify(
             error=response_failure(
-                {"error": "Resource not found", "detail": str(e)}
+                ResponseError(error="Resource not found", details=str(e))
             )
         ),
         404,
@@ -204,7 +201,7 @@ def get_species_config() -> json:
         where each key is a species and the value is another
         dictionary with a list of k-mers for that species.]
     """
-    all_species_args = vars(get_args().species)
+    all_species_args = vars(args.species)
     species_config = {
         species: get_species_kmers(args.refdb)
         for species, args in all_species_args.items()
@@ -283,7 +280,6 @@ def run_poppunk_internal(
     :return json: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
-    args = get_args()
     species_args = getattr(args.species, species, None)
     if not species_args:
         return (
@@ -316,7 +312,7 @@ def run_poppunk_internal(
     check_connection(redis)
     # keep results forever
     queue_kwargs = {
-        "job_timeout": job_timeout,
+        "job_timeout": JOB_TIMEOUT,
         "result_ttl": -1,
         "failure_ttl": -1,
     }
@@ -448,7 +444,7 @@ def get_status_response(p_hash: str, redis: Redis) -> json:
         return jsonify(response_success(response))
 
 
-def get_status_internal(p_hash: str, redis: Redis) -> dict:
+def get_status_internal(p_hash: str, redis: Redis) -> Union[dict, ResponseError]:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
     initial visualisations job that kicks off all other jobs
@@ -486,7 +482,7 @@ def get_status_internal(p_hash: str, redis: Redis) -> dict:
             "visualiseClusters": visualise_cluster_statuses,
         }
     except AttributeError:
-        return {"error": "Unknown project hash"}
+        return ResponseError(error="Unknown project hash")
 
 
 @app.route("/results/networkGraphs/<p_hash>", methods=["GET"])
@@ -517,10 +513,10 @@ def get_network_graphs(p_hash) -> json:
         f = (
             jsonify(
                 error=response_failure(
-                    {
-                        "error": "Cluster not found",
-                        "detail": "Cluster not found",
-                    }
+                    ResponseError(
+                        error="Cluster not found",
+                        details="No clusters found for the given project hash",
+                    )
                 )
             ),
             500,
@@ -530,10 +526,10 @@ def get_network_graphs(p_hash) -> json:
         return (
             jsonify(
                 error=response_failure(
-                    {
-                        "error": "File not found",
-                        "detail": "GraphML files not found",
-                    }
+                    ResponseError(
+                        error="File not found",
+                        details="GraphML files not found",
+                    )
                 )
             ),
             404,
@@ -621,7 +617,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
 
 def send_zip_internal(
     p_hash: str, type: str, cluster: str, storage_location: str
-) -> any:
+) -> wrappers.Response:
     """
     [Generates a zipfile with visualisation results and returns zipfile]
 
@@ -685,12 +681,12 @@ def generate_microreact_url_internal(
         return (
             jsonify(
                 error=response_failure(
-                    {
-                        "error": "Wrong Token",
-                        "detail": """
+                    ResponseError(
+                        error="Wrong Token",
+                        details="""
             Microreact reported Internal Server Error.
             Most likely Token is invalid!""",
-                    }
+                    )
                 )
             ),
             500,
@@ -699,20 +695,27 @@ def generate_microreact_url_internal(
         return (
             jsonify(
                 error=response_failure(
-                    {
-                        "error": "Resource not found",
-                        "detail": "Cannot reach Microreact API",
-                    }
+                    ResponseError(
+                        error="Resource not found",
+                        details="Cannot reach Microreact API",
+                    )
                 )
             ),
             404,
         )
     else:
-        return jsonify(error=response_failure({
-            "error": "Unknown error",
-            "detail": f"""Microreact API returned status code {r.status_code}.
-                Response text: {r.text}."""
-            })), 500
+        return (
+            jsonify(
+                error=response_failure(
+                    ResponseError(
+                        error="Unknown error",
+                        details=f"""Microreact API returned status code {r.status_code}.
+                Response text: {r.text}.""",
+                    )
+                )
+            ),
+            500,
+        )
 
 
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
@@ -750,10 +753,17 @@ def get_project(p_hash) -> json:
     """
     job_id = redis.hget("beebop:hash:job:assign", p_hash)
     if job_id is None:
-        return jsonify(error=response_failure({
-            "error": "Project hash not found",
-            "detail": "Project hash does not have an associated job"
-        })), 404
+        return (
+            jsonify(
+                error=response_failure(
+                    ResponseError(
+                        error="Project hash not found",
+                        details="Project hash does not have an associated job",
+                    )
+                )
+            ),
+            404,
+        )
 
     status = get_status_internal(p_hash, redis)
 

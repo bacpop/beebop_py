@@ -41,3 +41,16 @@ class SpeciesConfig:
     external_clusters_file: str
     db_metadata_file: str
     qc_dict: Qc
+
+
+@dataclass
+class ResponseError:
+    error: str
+    details: Optional[str] = None
+
+
+@dataclass
+class Response:
+    status: str
+    errors: list[ResponseError]
+    data: Any
