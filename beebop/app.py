@@ -690,7 +690,8 @@ def generate_microreact_url_internal(
             return jsonify(response_success({"cluster": cluster, "url": url}))
         case 500:
             raise InternalServerError(
-                "Microreact reported Internal Server Error. Most likely Token is invalid!"
+                "Microreact reported Internal Server Error. "
+                "Most likely Token is invalid!"
             )
         case 404:
             raise NotFound("Cannot reach Microreact API")
