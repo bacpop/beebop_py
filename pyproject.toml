@@ -6,7 +6,7 @@ authors = ["muppi1993 <clara.gronemeyer20@imperial.ac.uk>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.10,<3.11"
 Flask = "^2.0"
 jsonschema = "^4.4"
 pycodestyle = "^2.8.0"
