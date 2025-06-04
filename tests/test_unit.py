@@ -16,12 +16,12 @@ from flask import Flask
 from unittest.mock import Mock, patch, call
 from io import BytesIO
 from pathlib import Path
-import beebop.visualise
 from tests import setup
 import xml.etree.ElementTree as ET
 import pickle
 from pathlib import PurePath
 import pandas as pd
+from werkzeug.exceptions import NotFound
 
 from beebop import __version__ as beebop_version
 from beebop import app
@@ -442,30 +442,25 @@ def test_get_project_success(client):
 
 def test_get_project_returns_404_if_unknown_project_hash(client):
     hash = "unit_test_not_known"
-    result = app.get_project(hash)
-    assert result[1] == 404
-    response = read_data(result[0])["error"]
-    data = response["data"]
-    errors = response["errors"]
-    assert errors[0] == {
-        "error": "Project hash not found",
-        "detail": "Project hash does not have an associated job",
-    }
+    with pytest.raises(NotFound) as e_info:
+        app.get_project(hash)
+    assert (
+        e_info.value.description
+        == "Project hash does not have an associated job"
+    )
 
 
 @patch("rq.job.Job.fetch")
-def test_get_project_returns_500_if_status_error(mock_fetch):
+def test_get_project_returns_404_if_status_error(mock_fetch):
     hash = "unit_test_get_clusters_internal"
 
     def side_effect(id, connection):
         raise AttributeError("test")
 
     mock_fetch.side_effect = side_effect
-    result = app.get_project(hash)
-    assert result[1] == 500
-    response = read_data(result[0])["error"]
-    assert response["status"] == "failure"
-    assert response["errors"] == [{"error": "Unknown project hash"}]
+    with pytest.raises(NotFound) as e_info:
+        app.get_project(hash)
+    assert e_info.value.description == "Unknown project hash"
 
 
 @patch("rq.job.Job.fetch")
@@ -520,18 +515,18 @@ def test_get_status_response(client):
     hash = "unit_test_get_status_internal"
     run_test_job(hash)
     redis = Redis()
+
     result = app.get_status_response(hash, redis)
     assert read_data(result)["status"] == "success"
     assert read_data(result)["data"]["assign"] in status_options
     assert read_data(result)["data"]["visualise"] in status_options
     assert read_data(result)["data"]["visualiseClusters"] == {}
-    assert read_data(app.get_status_response("wrong-hash", redis)[0])[
-        "error"
-    ] == {
-        "status": "failure",
-        "errors": [{"error": "Unknown project hash"}],
-        "data": [],
-    }
+
+
+def test_get_status_response_not_found(client):
+    with pytest.raises(NotFound) as e_info:
+        app.get_status_response("wrong-hash", Redis())
+    assert e_info.value.description == "Unknown project hash"
 
 
 @patch("requests.post")

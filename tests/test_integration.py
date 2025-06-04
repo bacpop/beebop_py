@@ -72,7 +72,7 @@ def test_project_not_found(client):
     response = json.loads(response.data)["error"]
     assert response["status"] == "failure"
     err = response["errors"][0]
-    assert err["error"] == "Project hash not found"
+    assert err["error"] == "Resource not found"
     assert err["detail"] == "Project hash does not have an associated job"
 
 

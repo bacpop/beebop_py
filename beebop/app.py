@@ -311,7 +311,7 @@ def run_poppunk_internal(
     :param q: [redis queue]
     :param species: [type of species to be analyzed]
     :param amr_metadata: [AMR metadata for query samples]
-    :return json: [response object with all job IDs stored in 'data']
+    :return Response: [response object with all job IDs stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
     species_args = getattr(args.species, species, None)
@@ -516,7 +516,7 @@ def get_network_graphs(
     [returns all network pruned graphml files for a given project hash]
 
     :param p_hash: [project hash]
-    :return json: [response object with all graphml files stored in 'data']
+    :return Response: [response object with all graphml files stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
     try:
@@ -616,7 +616,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> Response:
 
     :param p_hash: [project hash]
     :param storage_location: [storage location]
-    :return json: [response object with cluster results stored in 'data']
+    :return Response: [response object with cluster results stored in 'data']
     """
     cluster_result = get_cluster_assignments(p_hash, storage_location)
     cluster_dict = {value["hash"]: value for value in cluster_result.values()}
@@ -663,7 +663,7 @@ def generate_microreact_url_internal(
     :param api_token: [this ust be provided by the user. The new API does
         not allow generating a URL without a token.]
     :param storage_location: [storage location]
-    :return json: [response object with URL stored in 'data']
+    :return Response: [response object with URL stored in 'data']
     """
     fs = PoppunkFileStore(storage_location)
 
