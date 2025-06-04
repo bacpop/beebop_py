@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional, Any
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
+from types import SimpleNamespace
 
 
 @dataclass
 class ClusteringConfig:
     species: str
     p_hash: str
-    args: dict
+    args: SimpleNamespace
     external_clusters_prefix: Optional[str]
     fs: PoppunkFileStore
     full_db_fs: DatabaseFileStore

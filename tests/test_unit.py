@@ -57,7 +57,11 @@ status_options = [
     "deferred",
 ]
 
-external_to_poppunk_clusters = {"GPSC16": "9", "GPSC29": "41", "GPSC8": "10"}
+external_to_poppunk_clusters = {
+    "GPSC16": ["9"],
+    "GPSC29": ["41"],
+    "GPSC8": ["10", "11"],
+}
 
 
 @pytest.fixture
@@ -197,10 +201,15 @@ def test_visualise(mocker):
 
 @patch("beebop.visualise.replace_filehashes")
 @patch("beebop.visualise.create_subgraph")
-def test_visualise_per_cluster(mock_create_subgraph, mock_replace_filehashes):
+@patch("beebop.visualise.get_internal_cluster")
+def test_visualise_per_cluster(
+    mock_get_internal_cluster, mock_create_subgraph, mock_replace_filehashes
+):
     p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
     wrapper = Mock()
+    internal_cluster = "9"
+    mock_get_internal_cluster.return_value = internal_cluster
 
     visualise.visualise_per_cluster(
         cluster,
@@ -211,24 +220,35 @@ def test_visualise_per_cluster(mock_create_subgraph, mock_replace_filehashes):
         external_to_poppunk_clusters,
     )
 
-    wrapper.create_visualisations.assert_called_with("16", "9")
+    wrapper.create_visualisations.assert_called_with(
+        "16", fs.include_file(p_hash, internal_cluster)
+    )
     mock_replace_filehashes.assert_called_with(
         fs.output_visualisations(p_hash, 16), setup.name_mapping
     )
     mock_create_subgraph.assert_called_with(
         fs.output_visualisations(p_hash, 16), setup.name_mapping, "16"
     )
+    mock_get_internal_cluster.assert_called_with(
+        external_to_poppunk_clusters, cluster, p_hash, fs
+    )
 
 
 @patch("beebop.visualise.replace_filehashes")
 @patch("os.remove")
 @patch("beebop.visualise.create_subgraph")
+@patch("beebop.visualise.get_internal_cluster")
 def test_visualise_per_cluster_last_cluster(
-    mock_create_subgraph, mock_remove, mock_replace_filehashes
+    mock_get_internal_cluster,
+    mock_create_subgraph,
+    mock_remove,
+    mock_replace_filehashes,
 ):
     p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
     wrapper = Mock()
+    internal_cluster = "9"
+    mock_get_internal_cluster.return_value = internal_cluster
 
     visualise.visualise_per_cluster(
         cluster,
@@ -240,7 +260,9 @@ def test_visualise_per_cluster_last_cluster(
         True,  # is_last_cluster_to_process
     )
 
-    wrapper.create_visualisations.assert_called_with("16", "9")
+    wrapper.create_visualisations.assert_called_with(
+        "16", fs.include_file(p_hash, internal_cluster)
+    )
     mock_create_subgraph.assert_called_with(
         fs.output_visualisations(p_hash, 16), setup.name_mapping, "16"
     )
@@ -1371,20 +1393,20 @@ def test_filter_queries():
 
 def test_delete_include_files(tmp_path):
     fs = Mock()
-    fs.include_files.side_effect = lambda _p_hash, cluster: str(
-        tmp_path / f"inlude_{cluster}.txt"
+    fs.include_file.side_effect = lambda _p_hash, cluster: str(
+        tmp_path / f"include_{cluster}.txt"
     )
     clusters = [10, 15, 20]
 
     for cluster in clusters:
-        include_file = tmp_path / f"inlude_{cluster}.txt"
+        (tmp_path / f"include_{cluster}.txt").touch()
 
     assignClusters.delete_include_files(fs, "test_hash", clusters)
 
-    assert fs.include_files.call_count == len(clusters)
+    assert fs.include_file.call_count == len(clusters)
     for cluster in clusters:
-        fs.include_files.assert_any_call("test_hash", cluster)
-        assert not (tmp_path / f"inlude_{cluster}.txt").exists()
+        fs.include_file.assert_any_call("test_hash", cluster)
+        assert not (tmp_path / f"include_{cluster}.txt").exists()
 
 
 def test_assign_clusters_to_result_dict_items():
@@ -1440,14 +1462,15 @@ def test_save_result(tmp_path, config):
         assert assign_result == pickle.load(f)
 
 
-def test__save_external_to_poppunk_clusters(
+def test_save_external_to_poppunk_clusters(
     tmp_path,
 ):
-    q_names = ["sample1", "sample2"]
-    q_clusters = [1, 2]
+    q_names = ["sample1", "sample2", "sample3"]
+    q_clusters = ["1", "2", "3"]
     external_clusters = {
         "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
         "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420;908"},
+        "sample3": {"cluster": "GPSC69", "raw_cluster_num": "69"},
     }
     fs = Mock()
     external_clusters_path = tmp_path / "external_clusters.pkl"
@@ -1461,8 +1484,8 @@ def test__save_external_to_poppunk_clusters(
     assert external_clusters_path.exists()
     with open(external_clusters_path, "rb") as f:
         assert pickle.load(f) == {
-            "GPSC69": "1",
-            "GPSC420": "2",
+            "GPSC69": {"1", "3"},
+            "GPSC420": {"2"},
         }
 
 
@@ -1846,3 +1869,58 @@ def test_process_unassignable_samples_no_samples():
     assignClusters.process_unassignable_samples([], fs, "")
 
     fs.output_qc_report.assert_not_called()
+
+
+def test_get_internal_cluster_no_external():
+    cluster = visualise.get_internal_cluster(None, "GPSC123", "hash", Mock())
+    assert cluster == "GPSC123"
+
+
+def test_get_internal_cluster_single_internal():
+    assign_cluster = "GPSC123"
+    external_to_poppunk_clusters = {assign_cluster: ["1"]}
+
+    cluster = visualise.get_internal_cluster(
+        external_to_poppunk_clusters,
+        assign_cluster,
+        "hash",
+        Mock(),
+    )
+    assert cluster == "1"
+
+
+@patch("beebop.visualise.create_combined_include_file")
+def test_get_internal_cluster_multiple_internal(
+    mock_create_combined_include_file,
+):
+    mock_create_combined_include_file.return_value = "1_2"
+    assign_cluster = "GPSC123"
+    external_to_poppunk_clusters = {assign_cluster: ["1", "2"]}
+
+    cluster = visualise.get_internal_cluster(
+        external_to_poppunk_clusters,
+        assign_cluster,
+        "hash",
+        Mock(),
+    )
+    assert cluster == "1_2"
+
+
+def test_create_combined_include_file(tmp_path):
+    internal_cluster = ["1", "2"]
+    fs = Mock()
+
+    fs.include_file.side_effect = lambda _p_hash, cluster: str(
+        tmp_path / f"include_{cluster}.txt"
+    )
+    for cluster in internal_cluster:
+        (tmp_path / f"include_{cluster}.txt").write_text(f"data for {cluster}")
+
+    cluster = visualise.create_combined_include_file(
+        fs, "hash", internal_cluster
+    )
+
+    with open(tmp_path / "include_1_2.txt", "r") as f:
+        content = f.read()
+        assert content == "data for 1\ndata for 2\n"
+    assert cluster == "1_2"
