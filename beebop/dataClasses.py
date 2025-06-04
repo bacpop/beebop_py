@@ -46,11 +46,11 @@ class SpeciesConfig:
 @dataclass
 class ResponseError:
     error: str
-    details: Optional[str] = None
+    detail: Optional[str] = None
 
 
 @dataclass
-class Response:
+class ResponseBody:
     status: str
     errors: list[ResponseError]
     data: Any

@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request, abort, send_file, wrappers
+from flask import Flask, jsonify, request, abort, send_file
+from flask.wrappers import Response
 from flask_expects_json import expects_json
 from waitress import serve
 from redis import Redis
@@ -19,33 +20,39 @@ from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from beebop.utils import get_cluster_num, get_component_filepath
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
-from beebop.dataClasses import SpeciesConfig, Response, ResponseError
-from typing import Any, Union
+from beebop.dataClasses import SpeciesConfig, ResponseBody, ResponseError
+from typing import Any, Union, Literal, Optional
+import logging
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
+#  setup environment
+JOB_TIMEOUT = 1200
 schemas = beebop.schemas.Schema()
-
 storage_location, dbs_location, redis_host = get_environment()
 args = get_args()
-app = Flask(__name__)
 redis = Redis(host=redis_host)
-JOB_TIMEOUT = 1200
+# setup app
+app = Flask(__name__)
+# setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def response_success(data: Any) -> Response:
+def response_success(data: Any) -> ResponseBody:
     """
     :param data: [data to be stored in response object]
     :return dict: [response object for successful response holding data]
     """
-    response = Response(status="success", errors=[], data=data)
+    response = ResponseBody(status="success", errors=[], data=data)
     return response
 
 
-def response_failure(error: ResponseError) -> Response:
+def response_failure(error: ResponseError) -> ResponseBody:
     """
     :param error: [error object with error message and details]
     :return Response: [response object for error response holding error message]
     """
-    response = Response(status="failure", errors=[error], data=[])
+    response = ResponseBody(status="failure", errors=[error], data=[])
     return response
 
 
@@ -56,7 +63,9 @@ def check_connection(redis) -> None:
     try:
         redis.ping()
     except (redis_exceptions.ConnectionError, ConnectionRefusedError):
-        abort(500, description="Redis not found")
+        raise InternalServerError(
+            "Redis connection error. Please check if Redis is running."
+        )
 
 
 def generate_zip(
@@ -144,51 +153,74 @@ def add_files(
 
 
 @app.errorhandler(500)
-def internal_server_error(e) -> json:
+def internal_server_error(e) -> tuple[Response, Literal[500]]:
     """
     :param e: [error]
-    :return json: [error response object]
+    :return Response: [error response object]
     """
+    logger.warning(f"Internal Server Error: {e}")
     return (
         jsonify(
             error=response_failure(
-                ResponseError(error="Internal Server Error", details=str(e))
+                ResponseError(
+                    error="Internal Server Error", detail=str(e.description)
+                )
             )
         ),
         500,
     )
 
 
-@app.errorhandler(404)
-def resource_not_found(e) -> json:
+@app.errorhandler(400)
+def bad_request(e) -> tuple[Response, Literal[400]]:
     """
     :param e: [error]
-    :return json: [error response object]
+    :return Response: [error response object]
     """
+    logger.warning(f"Bad Request: {e}")
     return (
         jsonify(
             error=response_failure(
-                ResponseError(error="Resource not found", details=str(e))
+                ResponseError(error="Bad Request", detail=str(e.description))
+            )
+        ),
+        400,
+    )
+
+
+@app.errorhandler(404)
+def not_found(e) -> tuple[Response, Literal[404]]:
+    """
+    :param e: [error]
+    :return Response: [error response object]
+    """
+    logger.warning(f"Not found: {e}")
+    return (
+        jsonify(
+            error=response_failure(
+                ResponseError(
+                    error="Resource not found", detail=str(e.description)
+                )
             )
         ),
         404,
     )
 
 
-@app.route("/version")
-def report_version() -> json:
+@app.route("/version", methods=["GET"])
+def report_version() -> Response:
     """
     [report version of beebop and poppunk (and ska in the future)
     wrapped in response object]
 
-    :return json: [response that stores version infos in 'data']
+    :return Response: [response that stores version infos in 'data']
     """
     vers = versions.get_version()
     return jsonify(response_success(vers))
 
 
 @app.route("/speciesConfig", methods=["GET"])
-def get_species_config() -> json:
+def get_species_config() -> Response:
     """
     Retrieves k-mer lists for all species specified in the arguments.
     This function extracts species arguments,
@@ -197,7 +229,7 @@ def get_species_config() -> json:
     containing the k-mers for each species.The result is then
     returned as a JSON response.
 
-    :return json: [JSON response containing a dictionary
+    :return Response: [JSON response containing a dictionary
         where each key is a species and the value is another
         dictionary with a list of k-mers for that species.]
     """
@@ -227,13 +259,13 @@ def get_species_kmers(species_db_name: str) -> dict:
 
 @app.route("/poppunk", methods=["POST"])
 @expects_json(schemas.run_poppunk)
-def run_poppunk() -> json:
+def run_poppunk() -> Response:
     """
     [run poppunks assing_query() and generate_visualisations().
     input: multiple sketches in json format together with project hash
     and filename mapping, schema can be found in spec/sketches.schema.json]
 
-    :return json: [response object with all job IDs stored in 'data']
+    :return Response: [response object with all job IDs stored in 'data']
     """
     sketches = request.json["sketches"].items()
     p_hash = request.json["projectHash"]
@@ -241,6 +273,7 @@ def run_poppunk() -> json:
     species = request.json["species"]
     amr_metadata = request.json["amrForMetadataCsv"]
     q = Queue(connection=redis)
+
     return run_poppunk_internal(
         sketches,
         p_hash,
@@ -262,7 +295,7 @@ def run_poppunk_internal(
     q: Queue,
     species: str,
     amr_metadata: list[dict],
-) -> json:
+) -> Response:
     """
     [Runs all poppunk functions we are interested in on the provided sketches.
     These are clustering with poppunk_assign, and creating visualisations
@@ -282,24 +315,14 @@ def run_poppunk_internal(
     fs = PoppunkFileStore(storage_location)
     species_args = getattr(args.species, species, None)
     if not species_args:
-        return (
-            jsonify(
-                error=response_failure(
-                    {
-                        "error": "Species not found",
-                        "detail": f"No database found for species: {species}",
-                    }
-                )
-            ),
-            400,
-        )
+        raise BadRequest(f"No database found for species: {species}")
 
     ref_db_fs, full_db_fs = setup_db_file_stores(species_args)
 
     # store json sketches in storage, and store an initial output_cluster file
     # to record sample hashes for the project
-    hashes_list = []
-    initial_output = {}
+    hashes_list: list[str] = []
+    initial_output: dict[int, dict[str, str]] = {}
     for i, (key, value) in enumerate(sketches):
         hashes_list.append(key)
         fs.input.put(key, value)
@@ -364,7 +387,7 @@ def add_amr_to_metadata(
     fs: PoppunkFileStore,
     p_hash: str,
     amr_metadata: list[dict],
-    metadata_file: str = None,
+    metadata_file: Optional[str] = None,
 ) -> None:
     """
     [Create new metadata file with AMR metadata
@@ -417,34 +440,33 @@ def setup_db_file_stores(
 
 
 @app.route("/status/<p_hash>")
-def get_status(p_hash) -> json:
+def get_status(p_hash) -> Response:
     """
     [returns job statuses for all jobs with given project hash. Possible
     values are: queued, started, deferred, finished, stopped, canceled,
     scheduled and failed]
 
     :param p_hash: [project hash]
-    :return json: [response object with job statuses]
+    :return Response: [response object with job statuses]
     """
     return get_status_response(p_hash, redis)
 
 
-def get_status_response(p_hash: str, redis: Redis) -> json:
+def get_status_response(p_hash: str, redis: Redis) -> Response:
     """
-    [returns jsonified response of all job statuses for a project]
+    [returns response of all job statuses for a project]
 
     :param p_hash: [project hash]
     :param redis: [Redis instance]
-    :return json: [response object with job statuses]
+    :return Response: [response object with job statuses]
     """
     response = get_status_internal(p_hash, redis)
-    if "error" in response:
-        return jsonify(error=response_failure(response)), 500
-    else:
-        return jsonify(response_success(response))
+    return jsonify(response_success(response))
 
 
-def get_status_internal(p_hash: str, redis: Redis) -> Union[dict, ResponseError]:
+def get_status_internal(
+    p_hash: str, redis: Redis
+) -> Union[dict, ResponseError]:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
     initial visualisations job that kicks off all other jobs
@@ -482,13 +504,15 @@ def get_status_internal(p_hash: str, redis: Redis) -> Union[dict, ResponseError]
             "visualiseClusters": visualise_cluster_statuses,
         }
     except AttributeError:
-        return ResponseError(error="Unknown project hash")
+        raise NotFound("Unknown project hash")
 
 
 @app.route("/results/networkGraphs/<p_hash>", methods=["GET"])
-def get_network_graphs(p_hash) -> json:
+def get_network_graphs(
+    p_hash,
+) -> Response:
     """
-    [returns all network pruined graphml files for a given project hash]
+    [returns all network pruned graphml files for a given project hash]
 
     :param p_hash: [project hash]
     :return json: [response object with all graphml files stored in 'data']
@@ -510,35 +534,14 @@ def get_network_graphs(p_hash) -> json:
         return jsonify(response_success(graphmls))
 
     except KeyError:
-        f = (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Cluster not found",
-                        details="No clusters found for the given project hash",
-                    )
-                )
-            ),
-            500,
-        )
-
+        raise NotFound("Cluster not found for the given project hash")
     except FileNotFoundError:
-        return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="File not found",
-                        details="GraphML files not found",
-                    )
-                )
-            ),
-            404,
-        )
+        raise NotFound("GraphML files not found for the given project hash")
 
 
 # get job result
 @app.route("/results/<result_type>", methods=["POST"])
-def get_results(result_type) -> json:
+def get_results(result_type) -> Response:
     """
     [Route to get results for the specified type of analysis.
     Request object includes:
@@ -554,32 +557,38 @@ def get_results(result_type) -> json:
             property 'type' specifying whether 'microreact' or 'network'
             results are required)
         - 'microreact' for the microreact URL for a given cluster
-        - 'graphml' for the content of the .graphml file for the specified
-            cluster]
-    :return json: [response object with result stored in 'data']
+    :return Response: [response object with result stored in 'data']
     """
-    if result_type == "assign":
-        p_hash = request.json["projectHash"]
-        return get_clusters_json(p_hash, storage_location)
-    elif result_type == "zip":
-        p_hash = request.json["projectHash"]
-        visualisation_type = request.json["type"]
-        cluster = str(request.json["cluster"])
-        return send_zip_internal(
-            p_hash, visualisation_type, cluster, storage_location
-        )
-    elif result_type == "microreact":
-        microreact_api_new_url = "https://microreact.org/api/projects/create"
-        p_hash = request.json["projectHash"]
-        cluster = str(request.json["cluster"])
-        api_token = str(request.json["apiToken"])
-        return generate_microreact_url_internal(
-            microreact_api_new_url,
-            p_hash,
-            cluster,
-            api_token,
-            storage_location,
-        )
+    logger.info(f"Request for results of type: {result_type}")
+    if request.json is None:
+        raise BadRequest("Request body is missing or not in JSON format.")
+    match result_type:
+        case "assign":
+            p_hash = request.json["projectHash"]
+            return get_clusters_json(p_hash, storage_location)
+        case "zip":
+            p_hash = request.json["projectHash"]
+            visualisation_type = request.json["type"]
+            cluster = str(request.json["cluster"])
+            return send_zip_internal(
+                p_hash, visualisation_type, cluster, storage_location
+            )
+        case "microreact":
+            microreact_api_new_url = (
+                "https://microreact.org/api/projects/create"
+            )
+            p_hash = request.json["projectHash"]
+            cluster = str(request.json["cluster"])
+            api_token = str(request.json["apiToken"])
+            return generate_microreact_url_internal(
+                microreact_api_new_url,
+                p_hash,
+                cluster,
+                api_token,
+                storage_location,
+            )
+        case _:
+            raise BadRequest("Invalid result type specified.")
 
 
 def get_cluster_assignments(
@@ -600,7 +609,7 @@ def get_cluster_assignments(
         return cluster_result
 
 
-def get_clusters_json(p_hash: str, storage_location: str) -> json:
+def get_clusters_json(p_hash: str, storage_location: str) -> Response:
     """
     [returns cluster assignment results as json response]
 
@@ -617,7 +626,7 @@ def get_clusters_json(p_hash: str, storage_location: str) -> json:
 
 def send_zip_internal(
     p_hash: str, type: str, cluster: str, storage_location: str
-) -> wrappers.Response:
+) -> Response:
     """
     [Generates a zipfile with visualisation results and returns zipfile]
 
@@ -641,7 +650,7 @@ def generate_microreact_url_internal(
     cluster: str,
     api_token: str,
     storage_location: str,
-) -> json:
+) -> Response:
     """
     [Generates Microreact URL to a microreact project with the users data
     already being uploaded.]
@@ -674,48 +683,21 @@ def generate_microreact_url_internal(
         data=json.dumps(json_microreact),
         headers=headers,
     )
-    if r.status_code == 200:
-        url = r.json()["url"]
-        return jsonify(response_success({"cluster": cluster, "url": url}))
-    elif r.status_code == 500:
-        return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Wrong Token",
-                        details="""
-            Microreact reported Internal Server Error.
-            Most likely Token is invalid!""",
-                    )
-                )
-            ),
-            500,
-        )
-    elif r.status_code == 404:
-        return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Resource not found",
-                        details="Cannot reach Microreact API",
-                    )
-                )
-            ),
-            404,
-        )
-    else:
-        return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Unknown error",
-                        details=f"""Microreact API returned status code {r.status_code}.
-                Response text: {r.text}.""",
-                    )
-                )
-            ),
-            500,
-        )
+    match r.status_code:
+        case 200:
+            url = r.json()["url"]
+            return jsonify(response_success({"cluster": cluster, "url": url}))
+        case 500:
+            raise InternalServerError(
+                "Microreact reported Internal Server Error. Most likely Token is invalid!"
+            )
+        case 404:
+            raise NotFound("Cannot reach Microreact API")
+        case _:
+            raise InternalServerError(
+                f"Microreact API returned status code {r.status_code}. "
+                f"Response text: {r.text}."
+            )
 
 
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
@@ -743,7 +725,7 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
 
 
 @app.route("/project/<p_hash>", methods=["GET"])
-def get_project(p_hash) -> json:
+def get_project(p_hash) -> Response:
     """
     [Loads all project data for a given project hash so the project can be
     re-opened in beebop.]
@@ -753,47 +735,34 @@ def get_project(p_hash) -> json:
     """
     job_id = redis.hget("beebop:hash:job:assign", p_hash)
     if job_id is None:
-        return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Project hash not found",
-                        details="Project hash does not have an associated job",
-                    )
-                )
-            ),
-            404,
-        )
+        raise NotFound("Project hash does not have an associated job")
 
     status = get_status_internal(p_hash, redis)
 
-    if "error" in status:
-        return jsonify(error=response_failure(status)), 500
-    else:
-        clusters_result = get_cluster_assignments(p_hash, storage_location)
-        failed_samples = get_failed_samples_internal(p_hash, storage_location)
+    clusters_result = get_cluster_assignments(p_hash, storage_location)
+    failed_samples = get_failed_samples_internal(p_hash, storage_location)
 
-        fs = PoppunkFileStore(storage_location)
-        passed_samples = {}
-        for value in clusters_result.values():
-            sample_hash = value["hash"]
-            sketch = fs.input.get(sample_hash)
-            passed_samples[sample_hash] = {
-                "hash": sample_hash,
-                "sketch": sketch,
+    fs = PoppunkFileStore(storage_location)
+    passed_samples = {}
+    for value in clusters_result.values():
+        sample_hash = value["hash"]
+        sketch = fs.input.get(sample_hash)
+        passed_samples[sample_hash] = {
+            "hash": sample_hash,
+            "sketch": sketch,
+        }
+        # Cluster may not have been assigned yet
+        passed_samples[sample_hash]["cluster"] = value.get("cluster")
+
+    return jsonify(
+        response_success(
+            {
+                "hash": p_hash,
+                "samples": {**passed_samples, **failed_samples},
+                "status": status,
             }
-            # Cluster may not have been assigned yet
-            passed_samples[sample_hash]["cluster"] = value.get("cluster")
-
-        return jsonify(
-            response_success(
-                {
-                    "hash": p_hash,
-                    "samples": {**passed_samples, **failed_samples},
-                    "status": status,
-                }
-            )
         )
+    )
 
 
 def get_failed_samples_internal(
