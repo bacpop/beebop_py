@@ -50,7 +50,8 @@ def response_success(data: Any) -> ResponseBody:
 def response_failure(error: ResponseError) -> ResponseBody:
     """
     :param error: [error object with error message and details]
-    :return Response: [response object for error response holding error message]
+    :return Response: [response object for error
+    response holding error message]
     """
     response = ResponseBody(status="failure", errors=[error], data=[])
     return response
