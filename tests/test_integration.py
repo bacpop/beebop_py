@@ -122,6 +122,25 @@ def test_network_results_zip(client):
     assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
 
 
+def test_get_results_invalid(client):
+    p_hash = "test_network_zip"
+    type = "network"
+
+    response = client.post(
+        "/results/bad_result",
+        json={"projectHash": p_hash, "cluster": "GPSC38", "type": type},
+    )
+
+    assert response.status_code == 400
+    res_data = json.loads(response.data.decode("utf-8"))
+    assert res_data["error"]["status"] == "failure"
+    assert res_data["error"]["errors"][0]["error"] == "Bad Request"
+    assert (
+        res_data["error"]["errors"][0]["detail"]
+        == "Invalid result type specified."
+    )
+
+
 def test_get_network_graphs(client):
     p_hash, _ = run_pneumo(client)
 
@@ -136,6 +155,19 @@ def test_get_network_graphs(client):
             x in graph_string
             for x in ["</graph>", "</graphml>", "</node>", "</edge>"]
         )
+
+
+def test_get_network_graphs_file_not_found(client):
+    p_hash = "not_a_real_hash"
+    response = client.get(f"/results/networkGraphs/{p_hash}")
+    assert response.status_code == 404
+    response_data = json.loads(response.data.decode("utf-8"))
+    assert response_data["error"]["status"] == "failure"
+    assert response_data["error"]["errors"][0]["error"] == "Resource not found"
+    assert (
+        response_data["error"]["errors"][0]["detail"]
+        == "GraphML files not found for the given project hash"
+    )
 
 
 def test_404(client):

@@ -31,7 +31,7 @@ from beebop import visualise
 from beebop import utils
 from beebop import dataClasses
 from beebop.poppunkWrapper import PoppunkWrapper
-
+from beebop.config import get_environment, ConfigurationError
 import beebop.schemas
 from beebop.filestore import PoppunkFileStore, FileStore, DatabaseFileStore
 import graph_tool.all as gt
@@ -1919,3 +1919,58 @@ def test_create_combined_include_file(tmp_path):
         content = f.read()
         assert content == "data for 1\ndata for 2\n"
     assert cluster == "1_2"
+
+
+@patch("os.getenv")
+def test_get_environment(mock_getenv):
+    mock_getenv.side_effect = lambda key: {
+        "STORAGE_LOCATION": "/path/to/storage",
+        "DBS_LOCATION": "/path/to/dbs",
+        "REDIS_HOST": "localhost",
+    }.get(key)
+
+    storage_location, dbs_location, redis_host = get_environment()
+
+    assert storage_location == "/path/to/storage"
+    assert dbs_location == "/path/to/dbs"
+    assert redis_host == "localhost"
+
+
+@patch("os.getenv")
+def test_get_environment_no_redis(mock_getenv):
+    mock_getenv.side_effect = lambda key: {
+        "STORAGE_LOCATION": "/path/to/storage",
+        "DBS_LOCATION": "/path/to/dbs",
+    }.get(key)
+
+    storage_location, dbs_location, redis_host = get_environment()
+
+    assert storage_location == "/path/to/storage"
+    assert dbs_location == "/path/to/dbs"
+    assert redis_host == "127.0.0.1"
+
+
+@patch("os.getenv")
+def test_get_environment_missing_dbs_location(mock_getenv):
+    mock_getenv.side_effect = lambda key: {
+        "STORAGE_LOCATION": "/path/to/storage",
+    }.get(key)
+
+    with pytest.raises(
+        ConfigurationError,
+        match="DBS_LOCATION environment variable is not set.",
+    ) as e_info:
+        get_environment()
+
+
+@patch("os.getenv")
+def test_get_environment_missing_storage_location(mock_getenv):
+    mock_getenv.side_effect = lambda key: {
+        "DBS_LOCATION": "/path/to/dbs",
+    }.get(key)
+
+    with pytest.raises(
+        ConfigurationError,
+        match="STORAGE_LOCATION environment variable is not set.",
+    ) as e_info:
+        get_environment()
