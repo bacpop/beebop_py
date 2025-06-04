@@ -1466,7 +1466,7 @@ def test_save_external_to_poppunk_clusters(
     tmp_path,
 ):
     q_names = ["sample1", "sample2", "sample3"]
-    q_clusters = [1, 2, 3]
+    q_clusters = ["1", "2", "3"]
     external_clusters = {
         "sample1": {"cluster": "GPSC69", "raw_cluster_num": "69"},
         "sample2": {"cluster": "GPSC420", "raw_cluster_num": "420;908"},
@@ -1484,8 +1484,8 @@ def test_save_external_to_poppunk_clusters(
     assert external_clusters_path.exists()
     with open(external_clusters_path, "rb") as f:
         assert pickle.load(f) == {
-            "GPSC69": [1, 3],
-            "GPSC420": [2],
+            "GPSC69": {"1", "3"},
+            "GPSC420": {"2"},
         }
 
 
