@@ -10,6 +10,7 @@ from beebop.utils import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 import os
+from typing import Optional
 
 
 def visualise(
@@ -46,10 +47,11 @@ def visualise(
     current_job = get_current_job(redis)
     # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
-    external_to_poppunk_clusters = None
+    external_to_poppunk_clusters: Optional[dict[str, set[str]]] = None
+
     try:
-        with open(fs.external_to_poppunk_clusters(p_hash), "rb") as dict:
-            external_to_poppunk_clusters = pickle.load(dict)
+        with open(fs.external_to_poppunk_clusters(p_hash), "rb") as pkl_file:
+            external_to_poppunk_clusters = pickle.load(pkl_file)
     except FileNotFoundError:
         print("no external cluster info found")
 
@@ -72,7 +74,7 @@ def queue_visualisation_jobs(
     fs: PoppunkFileStore,
     wrapper: PoppunkWrapper,
     name_mapping: dict,
-    external_to_poppunk_clusters: dict,
+    external_to_poppunk_clusters: Optional[dict[str, set[str]]],
     redis: Redis,
     queue_kwargs: dict,
 ) -> None:
@@ -135,7 +137,7 @@ def visualise_per_cluster(
     fs: PoppunkFileStore,
     wrapper: PoppunkWrapper,
     name_mapping: dict,
-    external_to_poppunk_clusters: dict[str, list[str]] = None,
+    external_to_poppunk_clusters: Optional[dict[str, set[str]]],
     is_last_cluster_to_process: bool = False,
 ) -> None:
     """
@@ -176,7 +178,7 @@ def visualise_per_cluster(
 
 
 def get_internal_cluster(
-    external_to_poppunk_clusters: dict[str, list[str]],
+    external_to_poppunk_clusters: Optional[dict[str, set[str]]],
     assign_cluster: str,
     p_hash: str,
     fs: PoppunkFileStore,
@@ -201,7 +203,7 @@ def get_internal_cluster(
 
     internal_clusters = external_to_poppunk_clusters[assign_cluster]
     if len(internal_clusters) == 1:
-        return internal_clusters[0]
+        return internal_clusters.pop()
 
     return create_combined_include_file(fs, p_hash, internal_clusters)
 
@@ -209,7 +211,7 @@ def get_internal_cluster(
 def create_combined_include_file(
     fs: PoppunkFileStore,
     p_hash: str,
-    internal_clusters: list[str],
+    internal_clusters: set[str],
 ) -> str:
     """
     [Creates a combined include file for multiple internal clusters.

@@ -7,12 +7,13 @@ from beebop.utils import (
 import re
 import os
 import pickle
-from typing import Union, ItemsView
+from typing import Union
 from beebop.poppunkWrapper import PoppunkWrapper
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import shutil
 from beebop.dataClasses import ClusteringConfig
 from collections import defaultdict
+from collections.abc import ItemsView
 from types import SimpleNamespace
 
 
