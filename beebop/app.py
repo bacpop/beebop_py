@@ -440,8 +440,8 @@ def setup_db_file_stores(
     return ref_db_fs, full_db_fs
 
 
-@app.route("/status/<p_hash>")
-def get_status(p_hash) -> Response:
+@app.route("/status/<string:p_hash>")
+def get_status(p_hash: str) -> Response:
     """
     [returns job statuses for all jobs with given project hash. Possible
     values are: queued, started, deferred, finished, stopped, canceled,
@@ -508,9 +508,9 @@ def get_status_internal(
         raise NotFound("Unknown project hash")
 
 
-@app.route("/results/networkGraphs/<p_hash>", methods=["GET"])
+@app.route("/results/networkGraphs/<string:p_hash>", methods=["GET"])
 def get_network_graphs(
-    p_hash,
+    p_hash: str,
 ) -> Response:
     """
     [returns all network pruned graphml files for a given project hash]
@@ -541,8 +541,8 @@ def get_network_graphs(
 
 
 # get job result
-@app.route("/results/<result_type>", methods=["POST"])
-def get_results(result_type) -> Response:
+@app.route("/results/<string:result_type>", methods=["POST"])
+def get_results(result_type: str) -> Response:
     """
     [Route to get results for the specified type of analysis.
     Request object includes:
@@ -726,8 +726,8 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
     json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add
 
 
-@app.route("/project/<p_hash>", methods=["GET"])
-def get_project(p_hash) -> Response:
+@app.route("/project/<string:p_hash>", methods=["GET"])
+def get_project(p_hash: str) -> Response:
     """
     [Loads all project data for a given project hash so the project can be
     re-opened in beebop.]
