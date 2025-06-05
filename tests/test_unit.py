@@ -573,15 +573,15 @@ def test_generate_microreact_url_internal_API_error_404(mock_post):
     api_token = os.environ["MICROREACT_TOKEN"]
     cluster = "24"
 
-    result = app.generate_microreact_url_internal(
-        microreact_api_new_url,
-        project_hash,
-        cluster,
-        api_token,
-        storage_location,
-    )
-    error = read_data(result[0])["error"]
-    assert error["errors"][0]["error"] == "Resource not found"
+    with pytest.raises(NotFound) as e_info:
+        app.generate_microreact_url_internal(
+            microreact_api_new_url,
+            project_hash,
+            cluster,
+            api_token,
+            storage_location,
+        )
+    assert e_info.value.description == "Cannot reach Microreact API"
 
 
 @patch("requests.post")
@@ -597,38 +597,47 @@ def test_generate_microreact_url_internal_API_error_500(mock_post):
     api_token = os.environ["MICROREACT_TOKEN"]
     cluster = "24"
 
-    result = app.generate_microreact_url_internal(
-        microreact_api_new_url,
-        project_hash,
-        cluster,
-        api_token,
-        storage_location,
+    with pytest.raises(InternalServerError) as e_info:
+        app.generate_microreact_url_internal(
+            microreact_api_new_url,
+            project_hash,
+            cluster,
+            api_token,
+            storage_location,
+        )
+    assert (
+        e_info.value.description
+        == "Microreact reported Internal Server Error. "
+        "Most likely Token is invalid!"
     )
-    error = read_data(result[0])["error"]
-    assert error["errors"][0]["error"] == "Wrong Token"
 
 
 @patch("requests.post")
 def test_generate_microreact_url_internal_API_other_error(mock_post):
+    status_code = 456
+    error_text = "random error"
     mock_post.return_value = Mock()
-    mock_post.return_value.status_code = 456
-    mock_post.return_value.json.return_value = {"error": "Unexpected error"}
+    mock_post.return_value.status_code = status_code
+    mock_post.return_value.text = error_text
 
     microreact_api_new_url = "https://dummy.url"
     project_hash = "test_microreact_api"
     api_token = os.environ["MICROREACT_TOKEN"]
     cluster = "24"
 
-    result = app.generate_microreact_url_internal(
-        microreact_api_new_url,
-        project_hash,
-        cluster,
-        api_token,
-        storage_location,
+    with pytest.raises(InternalServerError) as e_info:
+        app.generate_microreact_url_internal(
+            microreact_api_new_url,
+            project_hash,
+            cluster,
+            api_token,
+            storage_location,
+        )
+    assert (
+        e_info.value.description
+        == f"Microreact API returned status code {status_code}. "
+        f"Response text: {error_text}."
     )
-    error = read_data(result[0])["error"]["errors"][0]
-    assert error["error"] == "Unknown error"
-    assert "Microreact API returned status code 456." in error["detail"]
 
 
 def test_send_zip_internal(client):

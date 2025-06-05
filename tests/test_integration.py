@@ -104,7 +104,12 @@ def test_results_microreact(client):
     )
     error = json.loads(error_response.data)["error"]
     assert error["status"] == "failure"
-    assert error["errors"][0]["error"] == "Wrong Token"
+    assert error["errors"][0]["error"] == "Internal Server Error"
+    assert (
+        error["errors"][0]["detail"]
+        == "Microreact reported Internal Server Error. "
+        "Most likely Token is invalid!"
+    )
 
 
 def test_network_results_zip(client):
