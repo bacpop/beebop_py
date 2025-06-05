@@ -10,19 +10,6 @@ from pathlib import PurePath
 import graph_tool.all as gt
 
 
-def get_args() -> SimpleNamespace:
-    """
-    [Read in fixed arguments to poppunk that are always set, or used as
-    defaults. This is needed because of the large number of arguments that
-    poppunk needs]
-
-    :return dict: [arguments loaded from json]
-    """
-    with open("./beebop/resources/args.json") as a:
-        args_json = a.read()
-    return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
-
-
 def get_cluster_num(cluster: str) -> str:
     """
     [Extract the numeric part from a cluster label, regardless of the prefix.]

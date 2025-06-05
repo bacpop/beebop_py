@@ -4,11 +4,11 @@ import jsonschema
 from tests import setup
 import beebop.schemas
 import time
-from typing import Literal
+from typing import Literal, Callable
 
 
 def wait_until(
-    condition: callable, interval=300, timeout=10000
+    condition: Callable[[], bool], interval=300, timeout=10000
 ) -> Literal[True]:
     """
     Wait until a condition is met or timeout occurs.
