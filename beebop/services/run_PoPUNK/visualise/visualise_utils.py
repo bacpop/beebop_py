@@ -1,11 +1,13 @@
-import os
 import fileinput
-import random
 import glob
+import os
+import random
 from pathlib import PurePath
-import graph_tool.all as gt
 from typing import Optional
-from beebop.models.filestore import PoppunkFileStore
+
+import graph_tool.all as gt
+
+from beebop.models import PoppunkFileStore
 
 
 def replace_filehashes(folder: str, filename_dict: dict) -> None:

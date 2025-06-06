@@ -1,6 +1,6 @@
 from PopPUNK.web import summarise_clusters, sketch_to_hdf5
 from PopPUNK.utils import setupDBFuncs
-from beebop.utils import (
+from beebop.config import (
     get_external_clusters_from_file,
     update_external_clusters_csv,
 )

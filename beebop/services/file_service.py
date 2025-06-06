@@ -1,14 +1,14 @@
-import pickle
-import os
-from io import BytesIO
 import glob
+import os
+import pickle
 import zipfile
-from typing import Optional
-import pandas as pd
+from io import BytesIO
 from pathlib import PurePath
-from beebop.models.filestore import PoppunkFileStore
-from beebop.models.dataclasses import SpeciesConfig
-from beebop.models.filestore import DatabaseFileStore
+from typing import Optional
+
+import pandas as pd
+
+from beebop.models import DatabaseFileStore, PoppunkFileStore, SpeciesConfig
 
 
 def get_cluster_assignments(

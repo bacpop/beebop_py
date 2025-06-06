@@ -1,9 +1,11 @@
-import os
-from types import SimpleNamespace
 import json
-from .schemas import Schema
-from redis import Redis
+import os
 from pathlib import PurePath
+from types import SimpleNamespace
+
+from redis import Redis
+
+from .schemas import Schema
 
 
 class ConfigurationError(Exception):

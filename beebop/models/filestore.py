@@ -1,8 +1,8 @@
-import os
 import json
+import os
+import shutil
 from pathlib import PurePath
 from typing import Optional
-import shutil
 
 
 class FileStore:
@@ -239,7 +239,7 @@ class PoppunkFileStore:
         return str(PurePath(self.output_tmp(p_hash), f"{p_hash}_query.subset"))
 
     def external_previous_query_clustering_tmp(self, p_hash) -> str:
-        """
+        """>
         :param p_hash (str): The hash value representing the query.
         :return str: [The file path to the external]
         """

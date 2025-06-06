@@ -1,5 +1,5 @@
 from typing import Any
-from beebop.models.dataclasses import ResponseError, ResponseBody
+from beebop.models import ResponseError, ResponseBody
 
 
 def response_success(data: Any) -> ResponseBody:

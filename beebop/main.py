@@ -1,9 +1,11 @@
-from waitress import serve
-from flask import Flask
-from .utils import Config
 import logging
+
+from flask import Flask
+from waitress import serve
+
 from .api.error_handlers import register_error_handlers
 from .api.routes import register_routes
+from .config import Config
 
 
 def create_app() -> Flask:

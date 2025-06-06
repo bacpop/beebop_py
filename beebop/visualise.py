@@ -2,11 +2,11 @@ from rq import get_current_job, Queue
 from rq.job import Dependency
 from redis import Redis
 from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import (
+from beebop.config import (
     replace_filehashes,
     create_subgraph,
 )
-from beebop.utils import get_cluster_num
+from beebop.config import get_cluster_num
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import pickle
 import os

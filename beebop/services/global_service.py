@@ -1,6 +1,7 @@
-from beebop import __version__ as beebop_version
 from PopPUNK import __version__ as poppunk_version
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
+
+from beebop import __version__ as beebop_version
 
 
 def get_version() -> list:

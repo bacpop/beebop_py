@@ -1,8 +1,8 @@
 import logging
 from flask import jsonify, Response
 from typing import Literal
-from beebop.models.dataclasses import ResponseError
-from .helpers import response_failure
+from beebop.models import ResponseError
+from .api_utils import response_failure
 
 logger = logging.getLogger(__name__)
 

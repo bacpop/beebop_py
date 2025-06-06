@@ -1,22 +1,24 @@
+import pickle
+from types import SimpleNamespace
+from typing import Optional
+
+from flask import current_app
 from redis import Redis
 from rq import Queue
-import pickle
-from flask import current_app
-from types import SimpleNamespace
-from typing import Optional, Tuple
 from werkzeug.exceptions import BadRequest
-from beebop.models.filestore import PoppunkFileStore
-from beebop.models.dataclasses import SpeciesConfig
+
+from beebop.models import PoppunkFileStore, SpeciesConfig
 from beebop.services.file_service import (
-    setup_db_file_stores,
     add_amr_to_metadata,
+    setup_db_file_stores,
 )
-from beebop.utils.redis import check_connection
-from .assign.assign import get_clusters
-from .visualise.visualise import visualise
+from beebop.services.job_service import check_redis_connection
+
+from .assign import assign_clusters
+from .visualise import visualise
 
 
-class PoppunkJobRunner:
+class PoPUNKJobRunner:
     """Service class for running PopPUNK jobs"""
 
     def __init__(self, species: str):
@@ -56,7 +58,10 @@ class PoppunkJobRunner:
         amr_metadata: list[dict],
     ) -> dict:
         """
-        Run all PopPUNK functions on the provided sketches.
+        Run all PopPUNK jobs (assign and visualise).
+        This method handles the submission of cluster assignment and
+        visualization jobs to the Redis queue, prepares the necessary data,
+        and manages the output directory.
 
         :param sketches: All sketches in json format
         :param p_hash: Project hash
@@ -68,7 +73,7 @@ class PoppunkJobRunner:
         hashes_list = self._store_sketches_and_setup_output(sketches, p_hash)
 
         # Validate Redis connection
-        check_connection(self.redis)
+        check_redis_connection(self.redis)
 
         # Setup job configuration
         queue_kwargs = self._get_queue_kwargs()
@@ -118,7 +123,7 @@ class PoppunkJobRunner:
     ):
         """Submit cluster assignment job to Redis queue"""
         job_assign = self.queue.enqueue(
-            get_clusters,
+            assign_clusters,
             hashes_list,
             p_hash,
             self.fs,
@@ -175,7 +180,8 @@ def run_PopPUNK_jobs(
     amr_metadata: list[dict],
 ) -> dict:
     """
-    Convenience function to run PopPUNK jobs.
+    Convenience function to run assign and
+    visualise PopPUNK jobs.
 
     :param sketches: All sketches in json format
     :param p_hash: Project hash
@@ -184,5 +190,5 @@ def run_PopPUNK_jobs(
     :param amr_metadata: AMR metadata for query samples
     :return: Dictionary with job IDs
     """
-    runner = PoppunkJobRunner(species)
+    runner = PoPUNKJobRunner(species)
     return runner.run_jobs(sketches, p_hash, name_mapping, amr_metadata)

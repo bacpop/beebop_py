@@ -17,7 +17,7 @@ import pandas as pd
 from beebop import versions, assignClusters, visualise
 from beebop.config import get_environment, get_args
 from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.utils import get_cluster_num, get_component_filepath
+from beebop.config import get_cluster_num, get_component_filepath
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 import beebop.schemas
 from beebop.dataClasses import SpeciesConfig, ResponseBody, ResponseError

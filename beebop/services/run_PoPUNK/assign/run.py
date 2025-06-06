@@ -1,28 +1,28 @@
-import re
-import os
 import pickle
 import shutil
-from typing import Union
 from collections import defaultdict
 from collections.abc import ItemsView
 from types import SimpleNamespace
-from PopPUNK.web import summarise_clusters, sketch_to_hdf5
+from typing import Union
+
 from PopPUNK.utils import setupDBFuncs
-from beebop.services.poppunk.poppunkWrapper import PoppunkWrapper
-from beebop.models.filestore import PoppunkFileStore, DatabaseFileStore
-from beebop.models.dataclasses import ClusteringConfig
-from .helpers import (
-    update_external_clusters_csv,
-    get_external_clusters_from_file,
+from PopPUNK.web import sketch_to_hdf5, summarise_clusters
+
+from beebop.models import ClusteringConfig, DatabaseFileStore, PoppunkFileStore
+from beebop.services.run_PoPUNK.poppunkWrapper import PoppunkWrapper
+
+from .assign_utils import (
     create_sketches_dict,
-    preprocess_sketches,
     filter_queries,
+    get_external_clusters_from_file,
     handle_files_manipulation,
+    preprocess_sketches,
     process_unassignable_samples,
+    update_external_clusters_csv,
 )
 
 
-def get_clusters(
+def assign_clusters(
     hashes_list: list,
     p_hash: str,
     fs: PoppunkFileStore,

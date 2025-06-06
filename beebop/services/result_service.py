@@ -1,14 +1,34 @@
-from io import BytesIO
 import json
+from datetime import datetime
+from io import BytesIO
+
 import requests
+from werkzeug.exceptions import InternalServerError, NotFound
+
+from beebop.models import PoppunkFileStore
+
+from .cluster_service import get_cluster_num
 from .file_service import (
     add_files,
+    get_cluster_assignments,
+    get_failed_samples_internal,
     get_network_files_for_zip,
 )
-from .cluster_service import get_cluster_num
-from beebop.models.filestore import PoppunkFileStore
-from werkzeug.exceptions import InternalServerError, NotFound
-from datetime import datetime
+
+
+def get_clusters_results(p_hash: str, fs: PoppunkFileStore) -> dict:
+    """
+    [returns cluster assignment results]
+
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore instance]
+    :return dict: [dictionary with cluster results]
+    """
+    cluster_result = get_cluster_assignments(p_hash, fs)
+    cluster_dict = {value["hash"]: value for value in cluster_result.values()}
+    failed_samples = get_failed_samples_internal(p_hash, fs)
+
+    return {**cluster_dict, **failed_samples}
 
 
 def generate_zip(

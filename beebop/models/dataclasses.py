@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional, Any
-from .filestore import PoppunkFileStore, DatabaseFileStore
 from types import SimpleNamespace
+from typing import Any, Optional
+
+from .filestore import DatabaseFileStore, PoppunkFileStore
 
 
 @dataclass

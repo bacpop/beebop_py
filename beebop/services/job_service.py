@@ -1,9 +1,10 @@
 from typing import Union
+
 from redis import Redis
-from beebop.models.dataclasses import ResponseError
-from beebop.utils.redis import check_connection
 from rq.job import Job
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import InternalServerError, NotFound
+
+from beebop.models import ResponseError
 
 
 def get_project_status(
@@ -18,7 +19,7 @@ def get_project_status(
     :param redis: [Redis instance]
     :return: [dict with job statuses]
     """
-    check_connection(redis)
+    check_redis_connection(redis)
 
     def get_status_job(job, p_hash, redis):
         id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
@@ -47,3 +48,15 @@ def get_project_status(
         }
     except AttributeError:
         raise NotFound("Unknown project hash")
+
+
+def check_redis_connection(redis) -> None:
+    """
+    :param redis: [Redis instance]
+    """
+    try:
+        redis.ping()
+    except (ConnectionError, ConnectionRefusedError):
+        raise InternalServerError(
+            "Redis connection error. Please check if Redis is running."
+        )

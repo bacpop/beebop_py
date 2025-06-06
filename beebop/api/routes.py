@@ -1,30 +1,28 @@
-from flask import Response, jsonify, Flask, current_app, request, send_file
+import logging
+from types import SimpleNamespace
+
+from flask import Flask, Response, current_app, jsonify, request, send_file
 from flask_expects_json import expects_json
 from redis import Redis
-from types import SimpleNamespace
-from typing import Optional
-from beebop.models.dataclasses import SpeciesConfig
-import logging
-from rq import Queue
-from beebop.utils import Schema
-from beebop.services.index_service import get_version, get_species_kmers
-from werkzeug.exceptions import NotFound, BadRequest
-from .helpers import response_success
-from beebop.services.job_service import get_project_status
+from werkzeug.exceptions import BadRequest, NotFound
+
+from beebop.config import Schema
+from beebop.models import PoppunkFileStore
+from beebop.services.cluster_service import get_cluster_num
 from beebop.services.file_service import (
     get_cluster_assignments,
     get_failed_samples_internal,
 )
-from beebop.models.filestore import PoppunkFileStore
-from beebop.services.cluster_service import (
-    get_cluster_num,
+from beebop.services.global_service import get_species_kmers, get_version
+from beebop.services.job_service import get_project_status
+from beebop.services.run_PoPUNK import run_PopPUNK_jobs
+from beebop.services.result_service import (
+    generate_microreact_url_internal,
+    generate_zip,
     get_clusters_results,
 )
-from beebop.services.result_service import (
-    generate_zip,
-    generate_microreact_url_internal,
-)
-from beebop.services.poppunk.run import run_PopPUNK_jobs
+
+from .api_utils import response_success
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +130,6 @@ def register_routes(app: Flask):
         :param p_hash: [project hash]
         :return Response: [response object with all graphml files stored in 'data']
         """
-        fs = PoppunkFileStore(storage_location)
         try:
             cluster_result = get_cluster_assignments(p_hash, fs)
             graphmls = {}

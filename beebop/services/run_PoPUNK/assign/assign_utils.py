@@ -1,10 +1,11 @@
-import pandas as pd
-from beebop.services.cluster_service import get_lowest_cluster
-import re
-from beebop.models.filestore import PoppunkFileStore
-from PopPUNK.web import sketch_to_hdf5
 import os
-from beebop.models.dataclasses import ClusteringConfig
+import re
+
+import pandas as pd
+from PopPUNK.web import sketch_to_hdf5
+
+from beebop.models import ClusteringConfig, PoppunkFileStore
+from beebop.services.cluster_service import get_lowest_cluster
 
 
 def update_external_clusters_csv(
