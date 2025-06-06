@@ -128,7 +128,8 @@ def register_routes(app: Flask):
         [returns all network pruned graphml files for a given project hash]
 
         :param p_hash: [project hash]
-        :return Response: [response object with all graphml files stored in 'data']
+        :return Response: [response object with all 
+        graphml files stored in 'data']
         """
         try:
             cluster_result = get_cluster_assignments(p_hash, fs)
