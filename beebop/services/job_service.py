@@ -1,14 +1,14 @@
 from typing import Union
 
-from redis import Redis
 from rq.job import Job
-from werkzeug.exceptions import InternalServerError, NotFound
+from werkzeug.exceptions import NotFound
 
 from beebop.models import ResponseError
+from beebop.config import RedisManager
 
 
 def get_project_status(
-    p_hash: str, redis: Redis
+    p_hash: str, redis_manager: RedisManager
 ) -> Union[dict, ResponseError]:
     """
     [returns statuses of all jobs from a given project (cluster assignment,
@@ -19,24 +19,15 @@ def get_project_status(
     :param redis: [Redis instance]
     :return: [dict with job statuses]
     """
-    check_redis_connection(redis)
-
-    def get_status_job(job, p_hash, redis):
-        id = redis.hget(f"beebop:hash:job:{job}", p_hash).decode("utf-8")
-        return Job.fetch(id, connection=redis).get_status()
+    redis_manager.check_redis_connection()
 
     try:
-        status_assign = get_status_job("assign", p_hash, redis)
+        status_assign = get_status_job("assign", p_hash, redis_manager)
         if status_assign == "finished":
-            visualise = get_status_job("visualise", p_hash, redis)
-            visualise_cluster_statuses = {
-                cluster.decode("utf-8"): Job.fetch(
-                    status.decode("utf-8"), connection=redis
-                ).get_status()
-                for cluster, status in redis.hgetall(
-                    f"beebop:hash:job:visualise:{p_hash}"
-                ).items()
-            }
+            visualise = get_status_job("visualise", p_hash, redis_manager)
+            visualise_cluster_statuses = get_visualisation_statuses(
+                p_hash, redis_manager
+            )
         else:
             visualise = "waiting"
             visualise_cluster_statuses = {}
@@ -50,13 +41,28 @@ def get_project_status(
         raise NotFound("Unknown project hash")
 
 
-def check_redis_connection(redis) -> None:
+def get_status_job(
+    job_type: str, p_hash: str, redis_manager: RedisManager
+) -> str:
+    id = redis_manager.get_job_status(job_type, p_hash).decode("utf-8")
+    return Job.fetch(id, connection=redis_manager.redis).get_status()
+
+
+def get_visualisation_statuses(
+    p_hash: str, redis_manager: RedisManager
+) -> dict:
     """
-    :param redis: [Redis instance]
+    [returns statuses of all visualisation jobs for a given project hash]
+
+    :param p_hash: [project hash]
+    :param redis_wrapper: [RedisWrapper instance]
+    :return: [dict with cluster visualisation job statuses]
     """
-    try:
-        redis.ping()
-    except (ConnectionError, ConnectionRefusedError):
-        raise InternalServerError(
-            "Redis connection error. Please check if Redis is running."
-        )
+    return {
+        cluster.decode("utf-8"): Job.fetch(
+            status.decode("utf-8"), connection=redis_manager.redis
+        ).get_status()
+        for cluster, status in redis_manager.get_visualisation_statuses(
+            p_hash
+        ).items()
+    }

@@ -7,13 +7,12 @@ from redis import Redis
 from rq import Queue
 from werkzeug.exceptions import BadRequest
 
+from beebop.config import PoppunkFileStore, RedisManager
 from beebop.models import SpeciesConfig
-from beebop.config import PoppunkFileStore
 from beebop.services.file_service import (
     add_amr_to_metadata,
     setup_db_file_stores,
 )
-from beebop.services.job_service import check_redis_connection
 
 from .assign import assign_clusters
 from .visualise import visualise
@@ -32,6 +31,7 @@ class PopPUNKJobRunner:
 
         self.redis_host: str = config["redis_host"]
         self.redis: Redis = config["redis"]
+        self.redis_manager = RedisManager(self.redis)
         self.args: SimpleNamespace = config["args"]
         self.job_timeout: int = config["job_timeout"]
         self.dbs_location: str = config["dbs_location"]
@@ -72,9 +72,6 @@ class PopPUNKJobRunner:
         """
         # Prepare data and setup output directory
         hashes_list = self._store_sketches_and_setup_output(sketches, p_hash)
-
-        # Validate Redis connection
-        check_redis_connection(self.redis)
 
         # Setup job configuration
         queue_kwargs = self._get_queue_kwargs()
@@ -134,7 +131,8 @@ class PopPUNKJobRunner:
             self.species,
             **queue_kwargs,
         )
-        self.redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+
+        self.redis_manager.set_job_status("assign", p_hash, job_assign.id)
         return job_assign
 
     def _submit_visualization_job(
@@ -152,7 +150,7 @@ class PopPUNKJobRunner:
         )
 
         # Clean up previous visualize cluster job results
-        self.redis.delete(f"beebop:hash:job:visualise:{p_hash}")
+        self.redis_manager.delete_job("visualise", p_hash)
 
         job_visualise = self.queue.enqueue(
             visualise,
@@ -169,7 +167,9 @@ class PopPUNKJobRunner:
             depends_on=job_assign,
             **queue_kwargs,
         )
-        self.redis.hset("beebop:hash:job:visualise", p_hash, job_visualise.id)
+        self.redis_manager.set_job_status(
+            "visualise", p_hash, job_visualise.id
+        )
         return job_visualise
 
 

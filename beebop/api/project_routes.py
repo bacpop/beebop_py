@@ -13,7 +13,7 @@ from flask_expects_json import expects_json
 from redis import Redis
 from werkzeug.exceptions import BadRequest, NotFound
 
-from beebop.config import PoppunkFileStore, Schema
+from beebop.config import PoppunkFileStore, Schema, RedisManager
 from beebop.services.cluster_service import get_cluster_num
 from beebop.services.file_service import (
     get_cluster_assignments,
@@ -26,7 +26,6 @@ from beebop.services.result_service import (
     get_clusters_results,
 )
 from beebop.services.run_PopPUNK import run_PopPUNK_jobs
-
 from .api_utils import response_success
 
 
@@ -41,13 +40,38 @@ class ProjectRoutes:
         self.project_bp = Blueprint("project_bp", __name__)
 
         with app.app_context():
-            self.redis: Redis = current_app.config["redis"]
+            self.redis_manager = RedisManager(current_app.config["redis"])
             self.storage_location: str = current_app.config["storage_location"]
             self.schemas: Schema = current_app.config["schemas"]
             self.fs = PoppunkFileStore(self.storage_location)
         self._setup_routes()
 
     def _setup_routes(self):
+
+        @self.project_bp.route("/poppunk", methods=["POST"])
+        @expects_json(self.schemas.run_poppunk)
+        def run_PopPUNK() -> Response:
+            """
+            [run poppunks assing_query() and generate_visualisations().
+            input: multiple sketches in json format together with project hash
+            and filename mapping, schema can be found in spec/sketches.schema.json]
+
+            :return Response: [response object with all job IDs stored in 'data']
+            """
+            if request.json is None:
+                raise BadRequest(
+                    "Request body is missing or not in JSON format."
+                )
+            sketches = request.json["sketches"].items()
+            p_hash = request.json["projectHash"]
+            name_mapping = request.json["names"]
+            species = request.json["species"]
+            amr_metadata = request.json["amrForMetadataCsv"]
+
+            job_ids = run_PopPUNK_jobs(
+                sketches, p_hash, name_mapping, species, amr_metadata
+            )
+            return jsonify(response_success(job_ids))
 
         @self.project_bp.route("/status/<string:p_hash>", methods=["GET"])
         def get_status(p_hash: str) -> Response:
@@ -59,7 +83,7 @@ class ProjectRoutes:
             :param p_hash: [project hash]
             :return Response: [response object with job statuses]
             """
-            response = get_project_status(p_hash, self.redis)
+            response = get_project_status(p_hash, self.redis_manager)
             return jsonify(response_success(response))
 
         @self.project_bp.route("/project/<string:p_hash>", methods=["GET"])
@@ -71,11 +95,11 @@ class ProjectRoutes:
             :param p_hash: [identifying hash for the project]
             :return: [project data]
             """
-            job_id = self.redis.hget("beebop:hash:job:assign", p_hash)
+            job_id = self.redis_manager.get_job_status("assign", p_hash)
             if job_id is None:
                 raise NotFound("Project hash does not have an associated job")
 
-            status = get_project_status(p_hash, self.redis)
+            status = get_project_status(p_hash, self.redis_manager)
 
             clusters_result = get_cluster_assignments(p_hash, self.fs)
             failed_samples = get_failed_samples_internal(p_hash, self.fs)
@@ -198,31 +222,6 @@ class ProjectRoutes:
                     )
                 case _:
                     raise BadRequest("Invalid result type specified.")
-
-        @self.project_bp.route("/poppunk", methods=["POST"])
-        @expects_json(self.schemas.run_poppunk)
-        def run_PopPUNK() -> Response:
-            """
-            [run poppunks assing_query() and generate_visualisations().
-            input: multiple sketches in json format together with project hash
-            and filename mapping, schema can be found in spec/sketches.schema.json]
-
-            :return Response: [response object with all job IDs stored in 'data']
-            """
-            if request.json is None:
-                raise BadRequest(
-                    "Request body is missing or not in JSON format."
-                )
-            sketches = request.json["sketches"].items()
-            p_hash = request.json["projectHash"]
-            name_mapping = request.json["names"]
-            species = request.json["species"]
-            amr_metadata = request.json["amrForMetadataCsv"]
-
-            job_ids = run_PopPUNK_jobs(
-                sketches, p_hash, name_mapping, species, amr_metadata
-            )
-            return jsonify(response_success(job_ids))
 
     def get_blueprint(self) -> Blueprint:
         """

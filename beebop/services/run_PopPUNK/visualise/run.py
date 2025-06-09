@@ -6,7 +6,7 @@ from redis import Redis
 from rq import Queue, get_current_job
 from rq.job import Dependency
 
-from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore, RedisManager
 from beebop.services.cluster_service import get_cluster_num
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
@@ -48,7 +48,7 @@ def visualise(
 
     redis = Redis(host=redis_host)
     # get results from previous job
-    current_job = get_current_job(redis)
+    current_job = get_current_job(connection=redis)
     if not current_job or not current_job.dependency:
         raise ValueError("Current job or its dependencies are not set.")
     # gets first dependency result (i.e assign_clusters)
@@ -103,6 +103,7 @@ def queue_visualisation_jobs(
         to the queue when enqueuing jobs.
     """
     q = Queue(connection=redis)
+    redis_manager = RedisManager(redis)
     queries_clusters = set(
         [item["cluster"] for item in assign_result.values()]
     )
@@ -129,10 +130,8 @@ def queue_visualisation_jobs(
             **queue_kwargs,
         )
 
-        redis.hset(
-            f"beebop:hash:job:visualise:{p_hash}",
-            assign_cluster,
-            cluster_visualise_job.id,
+        redis_manager.set_visualisation_job(
+            p_hash, assign_cluster, cluster_visualise_job.id
         )
         previous_job = cluster_visualise_job
 
