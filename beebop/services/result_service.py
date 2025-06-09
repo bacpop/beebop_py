@@ -5,7 +5,7 @@ from io import BytesIO
 import requests
 from werkzeug.exceptions import InternalServerError, NotFound
 
-from beebop.models import PoppunkFileStore
+from beebop.config import PoppunkFileStore
 
 from .cluster_service import get_cluster_num
 from .file_service import (

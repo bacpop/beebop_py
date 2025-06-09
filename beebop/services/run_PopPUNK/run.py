@@ -7,7 +7,8 @@ from redis import Redis
 from rq import Queue
 from werkzeug.exceptions import BadRequest
 
-from beebop.models import PoppunkFileStore, SpeciesConfig
+from beebop.models import SpeciesConfig
+from beebop.config import PoppunkFileStore
 from beebop.services.file_service import (
     add_amr_to_metadata,
     setup_db_file_stores,
@@ -18,7 +19,7 @@ from .assign import assign_clusters
 from .visualise import visualise
 
 
-class PoPUNKJobRunner:
+class PopPUNKJobRunner:
     """Service class for running PopPUNK jobs"""
 
     def __init__(self, species: str):
@@ -190,5 +191,5 @@ def run_PopPUNK_jobs(
     :param amr_metadata: AMR metadata for query samples
     :return: Dictionary with job IDs
     """
-    runner = PoPUNKJobRunner(species)
+    runner = PopPUNKJobRunner(species)
     return runner.run_jobs(sketches, p_hash, name_mapping, amr_metadata)

@@ -8,7 +8,8 @@ from typing import Optional
 
 import pandas as pd
 
-from beebop.models import DatabaseFileStore, PoppunkFileStore, SpeciesConfig
+from beebop.models import SpeciesConfig
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 
 
 def get_cluster_assignments(

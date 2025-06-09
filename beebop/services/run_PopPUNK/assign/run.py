@@ -9,7 +9,7 @@ from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
 
 from beebop.models import ClusteringConfig, DatabaseFileStore, PoppunkFileStore
-from beebop.services.run_PoPUNK.poppunkWrapper import PoppunkWrapper
+from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .assign_utils import (
     create_sketches_dict,

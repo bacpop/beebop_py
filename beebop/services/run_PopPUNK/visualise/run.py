@@ -6,9 +6,9 @@ from redis import Redis
 from rq import Queue, get_current_job
 from rq.job import Dependency
 
-from beebop.models import DatabaseFileStore, PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.services.cluster_service import get_cluster_num
-from beebop.services.run_PoPUNK.poppunkWrapper import PoppunkWrapper
+from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .visualise_utils import (
     create_subgraph,

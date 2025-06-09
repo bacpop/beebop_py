@@ -7,7 +7,7 @@ from redis import Redis
 from werkzeug.exceptions import BadRequest, NotFound
 
 from beebop.config import Schema
-from beebop.models import PoppunkFileStore
+from beebop.config import PoppunkFileStore
 from beebop.services.cluster_service import get_cluster_num
 from beebop.services.file_service import (
     get_cluster_assignments,
@@ -15,7 +15,7 @@ from beebop.services.file_service import (
 )
 from beebop.services.global_service import get_species_kmers, get_version
 from beebop.services.job_service import get_project_status
-from beebop.services.run_PoPUNK import run_PopPUNK_jobs
+from beebop.services.run_PopPUNK import run_PopPUNK_jobs
 from beebop.services.result_service import (
     generate_microreact_url_internal,
     generate_zip,
@@ -128,7 +128,7 @@ def register_routes(app: Flask):
         [returns all network pruned graphml files for a given project hash]
 
         :param p_hash: [project hash]
-        :return Response: [response object with all 
+        :return Response: [response object with all
         graphml files stored in 'data']
         """
         try:

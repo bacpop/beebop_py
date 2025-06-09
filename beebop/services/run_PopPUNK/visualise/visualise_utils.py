@@ -7,7 +7,7 @@ from typing import Optional
 
 import graph_tool.all as gt
 
-from beebop.models import PoppunkFileStore
+from beebop.config import PoppunkFileStore
 
 
 def replace_filehashes(folder: str, filename_dict: dict) -> None:
