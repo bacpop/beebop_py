@@ -40,7 +40,7 @@ class ConfigRoutes:
                 {"name": "beebop", "version": beebop_version},
                 {"name": "poppunk", "version": poppunk_version},
             ]
-            return jsonify(response_success(versions))
+            return response_success(versions)
 
         @self.config_bp.route("/speciesConfig", methods=["GET"])
         def get_species_config() -> Response:
@@ -63,7 +63,7 @@ class ConfigRoutes:
                 )
                 for species, species_args in all_species_args.items()
             }
-            return jsonify(response_success(species_config))
+            return response_success(species_config)
 
     def _get_kmer_info(self, db_path: str) -> dict:
         """

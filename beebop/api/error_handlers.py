@@ -17,15 +17,11 @@ def register_error_handlers(app):
         :param e: [error]
         :return Response: [error response object]
         """
-        logger.warning(f"Internal Server Error: {e}")
+        logger.exception(f"Internal Server Error: {e}")
         return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Internal Server Error",
-                        detail=str(e.description),
-                    )
-                )
+            response_failure(
+                error_message="Internal Server Error",
+                error_detail=str(e.description),
             ),
             500,
         )
@@ -36,14 +32,10 @@ def register_error_handlers(app):
         :param e: [error]
         :return Response: [error response object]
         """
-        logger.warning(f"Bad Request: {e}")
+        logger.exception(f"Bad Request: {e}")
         return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Bad Request", detail=str(e.description)
-                    )
-                )
+            response_failure(
+                error_message="Bad Request", error_detail=str(e.description)
             ),
             400,
         )
@@ -54,14 +46,11 @@ def register_error_handlers(app):
         :param e: [error]
         :return Response: [error response object]
         """
-        logger.warning(f"Not found: {e}")
+        logger.exception(f"Not found: {e}")
         return (
-            jsonify(
-                error=response_failure(
-                    ResponseError(
-                        error="Resource not found", detail=str(e.description)
-                    )
-                )
+            response_failure(
+                error_message="Resource not found",
+                error_detail=str(e.description),
             ),
             404,
         )

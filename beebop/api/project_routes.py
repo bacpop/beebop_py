@@ -74,7 +74,7 @@ class ProjectRoutes:
             job_ids = run_PopPUNK_jobs(
                 sketches, p_hash, name_mapping, species, amr_metadata
             )
-            return jsonify(response_success(job_ids))
+            return response_success(job_ids)
 
         @self.project_bp.route("/status/<string:p_hash>", methods=["GET"])
         def get_status(p_hash: str) -> Response:
@@ -87,7 +87,7 @@ class ProjectRoutes:
             :return Response: [response object with job statuses]
             """
             response = get_project_status(p_hash, self.redis_manager)
-            return jsonify(response_success(response))
+            return response_success(response)
 
         @self.project_bp.route("/project/<string:p_hash>", methods=["GET"])
         def get_project(p_hash: str) -> Response:
@@ -118,14 +118,12 @@ class ProjectRoutes:
                 # Cluster may not have been assigned yet
                 passed_samples[sample_hash]["cluster"] = value.get("cluster")
 
-            return jsonify(
-                response_success(
-                    {
-                        "hash": p_hash,
-                        "samples": {**passed_samples, **failed_samples},
-                        "status": status,
-                    }
-                )
+            return response_success(
+                {
+                    "hash": p_hash,
+                    "samples": {**passed_samples, **failed_samples},
+                    "status": status,
+                }
             )
 
         @self.project_bp.route(
@@ -154,7 +152,7 @@ class ProjectRoutes:
                     with open(path, "r") as graphml_file:
                         graph = graphml_file.read()
                     graphmls[cluster] = graph
-                return jsonify(response_success(graphmls))
+                return response_success(graphmls)
 
             except KeyError:
                 raise NotFound("Cluster not found for the given project hash")
@@ -193,7 +191,7 @@ class ProjectRoutes:
                 case "assign":
                     p_hash = request.json["projectHash"]
                     cluster_results = get_clusters_results(p_hash, self.fs)
-                    return jsonify(response_success(cluster_results))
+                    return response_success(cluster_results)
                 case "zip":
                     p_hash = request.json["projectHash"]
                     visualisation_type = request.json["type"]
@@ -220,9 +218,8 @@ class ProjectRoutes:
                         api_token,
                         self.fs,
                     )
-                    return jsonify(
-                        response_success({"cluster": cluster, "url": url})
-                    )
+                    return response_success({"cluster": cluster, "url": url})
+
                 case _:
                     raise BadRequest("Invalid result type specified.")
 
