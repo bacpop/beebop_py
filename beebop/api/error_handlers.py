@@ -1,7 +1,7 @@
 import logging
 from typing import Literal
 
-from flask import Response, jsonify
+from flask import Response
 
 from beebop.models import ResponseError
 
@@ -11,6 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 def register_error_handlers(app):
+    """
+    [registers error handlers for common HTTP
+    error codes with the Flask app.]
+
+    :param app: [Flask application instance]
+    """
+
     @app.errorhandler(500)
     def internal_server_error(e) -> tuple[Response, Literal[500]]:
         """

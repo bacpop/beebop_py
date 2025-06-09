@@ -8,6 +8,12 @@ from .config import Config
 
 
 def create_app() -> Flask:
+    """
+    [Setups flask app with config context,
+    routes, logging and exception handlers]
+
+    :return: [Flask app instance]
+    """
     app = Flask(__name__)
     app.config.update(Config().__dict__)
     logging.basicConfig(level=logging.INFO)

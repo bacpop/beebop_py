@@ -16,7 +16,7 @@ def get_project_status(
     ,and visualisations for all clusters)]
 
     :param p_hash: [project hash]
-    :param redis: [Redis instance]
+    :param redis_manager: [RedisManager instance]
     :return: [dict with job statuses]
     """
     redis_manager.check_redis_connection()
@@ -57,7 +57,7 @@ def get_visualisation_statuses(
     [returns statuses of all visualisation jobs for a given project hash]
 
     :param p_hash: [project hash]
-    :param redis_wrapper: [RedisWrapper instance]
+    :param redis_manager: [RedisManager instance]
     :return: [dict with cluster visualisation job statuses]
     """
     return {

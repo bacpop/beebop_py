@@ -82,7 +82,7 @@ def generate_microreact_url_internal(
     :param cluster: [cluster number]
     :param api_token: [this ust be provided by the user. The new API does
         not allow generating a URL without a token.]
-    :param storage_location: [storage location]
+    :param fs: [PoppunkFileStore instance]
     :return Response: [response object with URL stored in 'data']
     """
     cluster_num = get_cluster_num(cluster)

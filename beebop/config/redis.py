@@ -70,20 +70,19 @@ class RedisManager:
         return self.redis.hgetall(f"beebop:hash:job:visualise:{p_hash}")
 
     def set_visualisation_job(
-        self, p_hash: str, assign_cluster: str, cluster_visualise_job_id: str
+        self, p_hash: str, assign_cluster: str, job_id: str
     ) -> None:
         """
         [sets a visualisation job for a specific cluster in a project]
 
         :param p_hash: [project hash]
         :param assign_cluster: [cluster identifier]
-        :param cluster_visualise_job: [visualisation job object
-        with ID attribute]
+        :param job_id: [visualisation job ID]
         """
         self.redis.hset(
             f"beebop:hash:job:visualise:{p_hash}",
             assign_cluster,
-            cluster_visualise_job_id,
+            job_id,
         )
 
     def check_redis_connection(self) -> None:
