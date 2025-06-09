@@ -3,8 +3,7 @@ import logging
 from flask import Flask
 from waitress import serve
 
-from .api.error_handlers import register_error_handlers
-from .api.routes import register_routes
+from .api import ConfigRoutes, ProjectRoutes, register_error_handlers
 from .config import Config
 
 
@@ -13,8 +12,11 @@ def create_app() -> Flask:
     app.config.update(Config().__dict__)
     logging.basicConfig(level=logging.INFO)
 
+    # Register error handlers
     register_error_handlers(app)
-    register_routes(app)
+    # Register blueprints for routes
+    app.register_blueprint(ConfigRoutes(app).get_blueprint())
+    app.register_blueprint(ProjectRoutes(app).get_blueprint())
 
     return app
 

@@ -4,8 +4,8 @@ import re
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
-from beebop.models import ClusteringConfig
 from beebop.config import PoppunkFileStore
+from beebop.models import ClusteringConfig
 from beebop.services.cluster_service import get_lowest_cluster
 
 
