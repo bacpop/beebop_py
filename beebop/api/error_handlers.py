@@ -10,7 +10,7 @@ from .api_utils import response_failure
 logger = logging.getLogger(__name__)
 
 
-def register_error_handlers(app):
+def register_error_handlers(app) -> None:
     """
     [registers error handlers for common HTTP
     error codes with the Flask app.]

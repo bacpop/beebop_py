@@ -14,7 +14,8 @@ def response_success(data: Any) -> Response:
 
 def response_failure(error_message: str, error_detail: str) -> Response:
     """
-    :param error: [error object with error message and details]
+    :param error_message: [error message to be returned]
+    :param error_detail: [detailed error information]
     :return Response: [response object for error
     response holding error message]
     """
