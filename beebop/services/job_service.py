@@ -50,8 +50,9 @@ def get_status_job(
     [Get status of rq job]
 
     :param job_type: [type of job, either assign or visualise]
-    :p_hash: [hash of project]
-    :redis_manager: [RedisManager instance]
+    :param p_hash: [hash of project]
+    :param redis_manager: [RedisManager instance]
+    :return [status of job]
     """
     id = redis_manager.get_job_status(job_type, p_hash).decode("utf-8")
     return Job.fetch(id, connection=redis_manager.redis).get_status()
