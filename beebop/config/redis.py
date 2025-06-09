@@ -1,5 +1,5 @@
 from werkzeug.exceptions import InternalServerError
-from typing import Union, Literal
+from typing import Literal
 
 
 class RedisManager:
@@ -20,7 +20,7 @@ class RedisManager:
 
     def get_job_status(
         self,
-        job_type: Union[Literal["assign"], Literal["visualise"]],
+        job_type: Literal["assign", "visualise"],
         p_hash: str,
     ) -> bytes:
         """
@@ -34,7 +34,7 @@ class RedisManager:
 
     def set_job_status(
         self,
-        job_type: Union[Literal["assign"], Literal["visualise"]],
+        job_type: Literal["assign", "visualise"],
         p_hash: str,
         job_id: str,
     ) -> None:
@@ -49,7 +49,7 @@ class RedisManager:
 
     def delete_job(
         self,
-        job_type: Union[Literal["assign"], Literal["visualise"]],
+        job_type: Literal["assign", "visualise"],
         p_hash: str,
     ) -> None:
         """

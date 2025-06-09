@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Literal
 
 from rq.job import Job
 from werkzeug.exceptions import NotFound
@@ -42,7 +42,9 @@ def get_project_status(
 
 
 def get_status_job(
-    job_type: str, p_hash: str, redis_manager: RedisManager
+    job_type: Literal["assign", "visualise"],
+    p_hash: str,
+    redis_manager: RedisManager,
 ) -> str:
     id = redis_manager.get_job_status(job_type, p_hash).decode("utf-8")
     return Job.fetch(id, connection=redis_manager.redis).get_status()
