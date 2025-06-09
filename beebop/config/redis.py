@@ -4,12 +4,14 @@ from typing import Union, Literal
 
 class RedisManager:
     """
-    [manages Redis operations for job status tracking and visualization data storage]
+    [manages Redis operations for job status tracking
+    and visualization data storage]
     """
 
     def __init__(self, redis_client):
         """
-        [initializes the Redis manager with a Redis client and checks connection]
+        [initializes the Redis manager with a Redis client
+        and checks connection]
 
         :param redis_client: [Redis client instance]
         """
@@ -75,7 +77,8 @@ class RedisManager:
 
         :param p_hash: [project hash]
         :param assign_cluster: [cluster identifier]
-        :param cluster_visualise_job: [visualisation job object with ID attribute]
+        :param cluster_visualise_job: [visualisation job object
+        with ID attribute]
         """
         self.redis.hset(
             f"beebop:hash:job:visualise:{p_hash}",

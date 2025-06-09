@@ -13,7 +13,8 @@ from .api_utils import response_success
 class ConfigRoutes:
     """
     Class to handle configuration-related routes in the Flask application.
-    This class encapsulates the logic for handling configuration-related API endpoints.
+    This class encapsulates the
+    logic for handling configuration-related API endpoints.
     """
 
     def __init__(self, app: Flask):

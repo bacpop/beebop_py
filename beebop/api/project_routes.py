@@ -32,7 +32,8 @@ from .api_utils import response_success
 class ProjectRoutes:
     """
     Class to handle configuration-related routes in the Flask application.
-    This class encapsulates the logic for handling configuration-related API endpoints.
+    This class encapsulates the logic for
+    handling configuration-related API endpoints.
     """
 
     def __init__(self, app: Flask):
@@ -54,9 +55,11 @@ class ProjectRoutes:
             """
             [run poppunks assing_query() and generate_visualisations().
             input: multiple sketches in json format together with project hash
-            and filename mapping, schema can be found in spec/sketches.schema.json]
+            and filename mapping, schema can be
+            found in spec/sketches.schema.json]
 
-            :return Response: [response object with all job IDs stored in 'data']
+            :return Response: [response object with all
+            job IDs stored in 'data']
             """
             if request.json is None:
                 raise BadRequest(
@@ -76,9 +79,9 @@ class ProjectRoutes:
         @self.project_bp.route("/status/<string:p_hash>", methods=["GET"])
         def get_status(p_hash: str) -> Response:
             """
-            [returns job statuses for all jobs with given project hash. Possible
-            values are: queued, started, deferred, finished, stopped, canceled,
-            scheduled and failed]
+            [returns job statuses for all jobs with given project hash.
+            Possible values are: queued, started, deferred,
+            finished, stopped, canceled, scheduled and failed]
 
             :param p_hash: [project hash]
             :return Response: [response object with job statuses]
@@ -89,8 +92,8 @@ class ProjectRoutes:
         @self.project_bp.route("/project/<string:p_hash>", methods=["GET"])
         def get_project(p_hash: str) -> Response:
             """
-            [Loads all project data for a given project hash so the project can be
-            re-opened in beebop.]
+            [Loads all project data for a given project hash so the project can
+            be re-opened in beebop.]
 
             :param p_hash: [identifying hash for the project]
             :return: [project data]
@@ -170,14 +173,14 @@ class ProjectRoutes:
                 project_hash
                 type - only for 'zip' results, can be 'microreact' or 'network'
                 cluster - for 'zip', 'microreact' and 'graphml' results
-                api_token - only required for  'microreact' URL generation. This
-                must be provided by the user in the frontend]
+                api_token - only required for  'microreact' URL generation.
+                This must be provided by the user in the frontend]
 
             :param result_type: [can be
                 - 'assign' for clusters
-                - 'zip' for visualisation results as zip folders (with the json
-                    property 'type' specifying whether 'microreact' or 'network'
-                    results are required)
+                - 'zip' for visualisation results as zip folders
+                    (with the json property 'type' specifying whether
+                    'microreact' or 'network' results are required)
                 - 'microreact' for the microreact URL for a given cluster
             :return Response: [response object with result stored in 'data']
             """
@@ -226,7 +229,8 @@ class ProjectRoutes:
     def get_blueprint(self) -> Blueprint:
         """
         Returns the Flask Blueprint for the project routes.
-        This method is used to register the blueprint with the Flask application.
+        This method is used to register the blueprint
+        with the Flask application.
 
         :return: Flask Blueprint for project routes
         """

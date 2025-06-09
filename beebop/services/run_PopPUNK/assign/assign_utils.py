@@ -4,8 +4,8 @@ import re
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
-from beebop.config import PoppunkFileStore
 from beebop.models import ClusteringConfig
+from beebop.config import PoppunkFileStore
 from beebop.services.cluster_service import get_lowest_cluster
 
 
@@ -125,7 +125,8 @@ def get_external_clusters_from_file(
     valid_clusters = filtered_df[found_mask]
     hash_cluster_info = {
         sample: {
-            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "cluster":
+                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
             "raw_cluster_num": cluster,
         }
         for sample, cluster in zip(
