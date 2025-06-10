@@ -150,7 +150,7 @@ class PopPUNKJobRunner:
         )
 
         # Clean up previous visualize cluster job results
-        self.redis_manager.delete_job("visualise", p_hash)
+        self.redis_manager.delete_visualisation_statuses(p_hash)
 
         job_visualise = self.queue.enqueue(
             visualise,

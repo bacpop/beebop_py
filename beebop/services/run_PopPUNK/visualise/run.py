@@ -130,7 +130,7 @@ def queue_visualisation_jobs(
             **queue_kwargs,
         )
 
-        redis_manager.set_visualisation_job(
+        redis_manager.set_visualisation_status(
             p_hash, assign_cluster, cluster_visualise_job.id
         )
         previous_job = cluster_visualise_job

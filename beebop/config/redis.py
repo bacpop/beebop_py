@@ -47,18 +47,16 @@ class RedisManager:
         """
         self.redis.hset(f"beebop:hash:job:{job_type}", p_hash, job_id)
 
-    def delete_job(
+    def delete_visualisation_statuses(
         self,
-        job_type: Literal["assign", "visualise"],
         p_hash: str,
     ) -> None:
         """
-        [deletes all jobs of a specific type for a given project hash]
+        [deletes all visualisation jobs for a given project hash]
 
-        :param job_type: Type of job (assign or visualise)
         :param p_hash: [project hash]
         """
-        self.redis.delete(f"beebop:hash:job:{job_type}:{p_hash}")
+        self.redis.delete(f"beebop:hash:job:visualise:{p_hash}")
 
     def get_visualisation_statuses(self, p_hash: str) -> dict:
         """
@@ -69,7 +67,7 @@ class RedisManager:
         """
         return self.redis.hgetall(f"beebop:hash:job:visualise:{p_hash}")
 
-    def set_visualisation_job(
+    def set_visualisation_status(
         self, p_hash: str, assign_cluster: str, job_id: str
     ) -> None:
         """

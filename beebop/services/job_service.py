@@ -1,6 +1,6 @@
 from typing import Union, Literal
 
-from rq.job import Job
+from rq.job import Job, JobStatus
 from werkzeug.exceptions import NotFound
 
 from beebop.models import ResponseError
@@ -45,14 +45,14 @@ def get_status_job(
     job_type: Literal["assign", "visualise"],
     p_hash: str,
     redis_manager: RedisManager,
-) -> str:
+) -> JobStatus:
     """
     [Get status of rq job]
 
     :param job_type: [type of job, either assign or visualise]
     :param p_hash: [hash of project]
     :param redis_manager: [RedisManager instance]
-    :return [status of job]
+    :return [job status]
     """
     id = redis_manager.get_job_status(job_type, p_hash).decode("utf-8")
     return Job.fetch(id, connection=redis_manager.redis).get_status()
