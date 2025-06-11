@@ -1,15 +1,20 @@
 import pytest
 import shutil
-
-from beebop.app import app as flask_app
+import pandas as pd
+from unittest.mock import Mock
+from beebop.models import ClusteringConfig
+from beebop.app import create_app
+from types import SimpleNamespace
 
 
 @pytest.fixture()
 def app():
-    app = flask_app
-    app.config.update({
-        "TESTING": True,
-    })
+    app = create_app()
+    app.config.update(
+        {
+            "TESTING": True,
+        }
+    )
 
     yield app
 
@@ -25,5 +30,38 @@ def client(app):
 
 @pytest.fixture(scope="session", autouse=True)
 def copy_files():
-    storageLocation = './tests/results'
-    shutil.copytree('./tests/files', storageLocation, dirs_exist_ok=True)
+    storageLocation = "./tests/results"
+    shutil.copytree("./tests/files", storageLocation, dirs_exist_ok=True)
+
+
+@pytest.fixture
+def sample_clustering_csv(tmp_path):
+    # Create data as dictionary
+    data = {
+        "sample": ["sample1", "sample2", "sample3", "sample4", "sample5"],
+        "Cluster": ["10", "309;20;101", "30", "40", None],  # Using None for NA
+    }
+
+    # Create DataFrame
+    df = pd.DataFrame(data)
+
+    # Define path and save CSV
+    csv_path = tmp_path / "samples.csv"
+    df.to_csv(csv_path, index=False)
+
+    return str(csv_path)
+
+
+@pytest.fixture
+def clustering_config():
+    return ClusteringConfig(
+        "species",
+        "p_hash",
+        SimpleNamespace(),
+        "prefix",
+        Mock(),
+        Mock(),
+        Mock(),
+        Mock(),
+        "outdir",
+    )

@@ -2,21 +2,23 @@ import json
 import jsonschema
 import os
 import re
-import beebop.schemas
+from beebop.config import Schema
 from tests import setup
 from tests.test_utils import (
     read_data,
     assert_all_finished,
     run_poppunk,
     assert_correct_poppunk_results,
+    run_test_job,
+    generate_json_pneumo,
 )
 
-schemas = beebop.schemas.Schema()
+schemas = Schema()
 
 
 def run_pneumo(client):
     # generate sketches
-    sketches = json.loads(setup.generate_json_pneumo())
+    sketches = json.loads(generate_json_pneumo())
     name_mapping = {"6930_8_9": "6930_8_9.fa", "7622_5_91": "7622_5_91.fa"}
     # submit new job
     p_hash = "integration_test_run_poppunk_pneumo"
@@ -232,3 +234,71 @@ def test_run_poppunk_streptococcus_pyogenes(client):
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert_all_finished(project_data)
+
+
+def test_get_status_response(client):
+    p_hash = "unit_test_get_status_internal"
+    run_test_job(p_hash)
+
+    res = client.get(f"/status/{p_hash}")
+    data = read_data(res)
+
+    assert res.status_code == 200
+
+    assert data["assign"] in "finished"
+    assert data["visualise"] in "finished"
+    assert data["visualiseClusters"] == {}
+
+
+def test_get_status_response_not_found(client):
+    p_hash = "random_hash_not_found"
+
+    res = client.get(f"/status/{p_hash}")
+
+    assert res.status_code == 404
+
+    error = json.loads(res.data)["error"]
+    assert error["status"] == "failure"
+    err = error["errors"][0]
+    assert err["error"] == "Resource not found"
+    assert err["detail"] == "Unknown project hash"
+
+
+def test_get_species_config(client):
+    response = client.get("/speciesConfig")
+
+    data = read_data(response)
+
+    assert response.status_code == 200
+    assert jsonschema.validate(data, schemas.db_kmers) is None
+    for species in setup.all_species:
+        assert species in data
+
+
+def test_get_project_with_failed_samples(client):
+    p_hash = "unit_test_get_failed_samples_internal"
+    run_test_job(p_hash)
+
+    result = client.get(f"/project/{p_hash}")
+
+    assert result.status_code == 200
+    print(result)
+    samples = read_data(result)["samples"]
+    assert len(samples) == 2
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"]
+        == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
+    )
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0]
+        == "Failed distance QC (too high)"
+    )
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1]
+        == "Failed distance QC (too many zeros)"
+    )
+    assert (
+        samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"]
+        == "c448c13f7efd6a5e7e520a7495f3f40f"
+    )
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] == "GPSC3"

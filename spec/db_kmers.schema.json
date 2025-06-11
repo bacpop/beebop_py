@@ -1,13 +1,26 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "properties": {
-        "species": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "patternProperties": {
+    "^.*$": {
+      "type": "object",
+      "properties": {
+        "kmerMax": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kmerMin": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kmerStep": {
+          "type": "integer",
+          "minimum": 1
         }
-    },
-    "required": ["species"]
+      },
+      "required": ["kmerMax", "kmerMin", "kmerStep"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
 }

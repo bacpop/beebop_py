@@ -1,5 +1,6 @@
 import os
 import pickle
+from types import SimpleNamespace
 from typing import Optional
 
 from redis import Redis
@@ -21,7 +22,7 @@ def visualise(
     p_hash: str,
     fs: PoppunkFileStore,
     db_fs: DatabaseFileStore,
-    args: dict,
+    args: SimpleNamespace,
     name_mapping: dict,
     species: str,
     redis_host: str,

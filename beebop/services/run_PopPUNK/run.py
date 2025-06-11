@@ -16,6 +16,7 @@ from beebop.services.file_service import (
 
 from .assign import assign_clusters
 from .visualise import visualise
+from collections.abc import ItemsView
 
 
 class PopPUNKJobRunner:
@@ -53,7 +54,7 @@ class PopPUNKJobRunner:
 
     def run_jobs(
         self,
-        sketches: dict,
+        sketches: ItemsView,
         p_hash: str,
         name_mapping: dict,
         amr_metadata: list[dict],
@@ -90,7 +91,7 @@ class PopPUNKJobRunner:
         }
 
     def _store_sketches_and_setup_output(
-        self, sketches: dict, p_hash: str
+        self, sketches: ItemsView, p_hash: str
     ) -> list[str]:
         """Store sketches and setup initial output directory"""
         hashes_list: list[str] = []
@@ -174,7 +175,7 @@ class PopPUNKJobRunner:
 
 
 def run_PopPUNK_jobs(
-    sketches: dict,
+    sketches: ItemsView,
     p_hash: str,
     name_mapping: dict,
     species: str,

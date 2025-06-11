@@ -1,10 +1,16 @@
 import json
 import os
-import jsonschema
-from tests import setup
-import beebop.schemas
+import subprocess
 import time
-from typing import Literal, Callable
+from typing import Callable, Literal
+
+import jsonschema
+import pandas as pd
+from redis import Redis
+from rq import Queue
+
+from beebop.config import Schema
+from tests import hdf5_to_json, setup
 
 
 def wait_until(
@@ -38,8 +44,7 @@ def visualise_status_finished(client, p_hash):
     status = client.get("/status/" + p_hash)
     visualise_clusters_status = read_data(status)["visualiseClusters"]
     return len(visualise_clusters_status) > 0 and all(
-        status == "finished"
-        for status in visualise_clusters_status.values()
+        status == "finished" for status in visualise_clusters_status.values()
     )
 
 
@@ -61,7 +66,7 @@ def assert_all_finished(project_data):
 
 
 def run_assign_and_validate(client, p_hash):
-    schemas = beebop.schemas.Schema()
+    schemas = Schema()
     result = client.post("/results/assign", json={"projectHash": p_hash})
     result_object = json.loads(result.data.decode("utf-8"))
     assert result_object["status"] == "success"
@@ -116,3 +121,38 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
             + p_hash
             + f"/visualise_{cluster_num}/visualise_{cluster_num}.microreact"
         )
+
+
+def read_redis(name, key, redis):
+    return redis.hget(name, key).decode("utf-8")
+
+
+def dummy_fct():
+    return "Result"
+
+
+def run_test_job(p_hash):
+    # queue example job
+    redis = Redis()
+    q = Queue(connection=Redis(), is_async=False)
+    job_assign = q.enqueue(dummy_fct)
+    job_visualise = q.enqueue(dummy_fct)
+    job_network = q.enqueue(dummy_fct)
+    redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
+    redis.hset("beebop:hash:job:visualise", p_hash, job_visualise.id)
+    redis.hset("beebop:hash:job:network", p_hash, job_network.id)
+
+
+def generate_json_pneumo():
+    # generate hdf5 sketch from fasta file using pp-sketchlib
+    subprocess.run(
+        "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
+        shell=True,
+        cwd="tests/results",
+    )
+
+    # translate hdf5 into json
+    filepath = "tests/results/pneumo_sample.h5"
+    sketches_json = json.loads(hdf5_to_json.h5_to_json(filepath))
+
+    return json.dumps(sketches_json)

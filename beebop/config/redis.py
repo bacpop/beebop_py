@@ -1,5 +1,6 @@
 from werkzeug.exceptions import InternalServerError
 from typing import Literal
+from redis import Redis
 
 
 class RedisManager:
@@ -8,7 +9,7 @@ class RedisManager:
     and visualization data storage]
     """
 
-    def __init__(self, redis_client):
+    def __init__(self, redis_client: Redis):
         """
         [initializes the Redis manager with a Redis client
         and checks connection]
