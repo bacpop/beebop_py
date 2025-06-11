@@ -7,7 +7,8 @@ from beebop.config import RedisManager
 
 def test_redis_manager_initialization():
     """
-    Test the initialization of RedisManager to ensure it sets up the Redis client correctly.
+    Test the initialization of RedisManager to
+    ensure it sets up the Redis client correctly.
     """
     redis_mock = Mock(spec=Redis)
     redis_manager = RedisManager(redis_mock)
@@ -54,7 +55,8 @@ def test_set_job_status():
 
 def test_delete_visualisation_statuses():
     """
-    Test the delete_visualisation_statuses method to ensure it deletes the correct visualisation jobs.
+    Test the delete_visualisation_statuses method to
+    ensure it deletes the correct visualisation jobs.
     """
     redis_mock = Mock(spec=Redis)
     redis_manager = RedisManager(redis_mock)
@@ -69,7 +71,8 @@ def test_delete_visualisation_statuses():
 
 def test_get_visualisation_statuses():
     """
-    Test the get_visualisation_statuses method to ensure it retrieves the correct visualisation job IDs.
+    Test the get_visualisation_statuses method to ensure
+    it retrieves the correct visualisation job IDs.
     """
     redis_mock = Mock(spec=Redis)
     redis_manager = RedisManager(redis_mock)
@@ -89,7 +92,8 @@ def test_get_visualisation_statuses():
 
 def test_set_visualisation_status():
     """
-    Test the set_visualisation_status method to ensure it sets the visualisation job ID correctly.
+    Test the set_visualisation_status method to
+    ensure it sets the visualisation job ID correctly.
     """
     redis_mock = Mock(spec=Redis)
     redis_manager = RedisManager(redis_mock)

@@ -240,7 +240,8 @@ def test_create_combined_include_file(tmp_path):
         if os.path.exists(combined_include_file_path):
             with open(combined_include_file_path, "r", errors="ignore") as f:
                 content = f.read()
-                assert (
-                    content
-                    == f"data for {cluster.split('_')[0]}\ndata for {cluster.split('_')[1]}\n"
+                expected_content = (
+                    f"data for {cluster.split('_')[0]}\n"
+                    f"data for {cluster.split('_')[1]}\n"
                 )
+                assert content == expected_content

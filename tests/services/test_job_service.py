@@ -75,7 +75,8 @@ def test_get_project_status_attribute_error(mocker):
 
 def test_get_status_job(mocker):
     """
-    Test the get_status_job function to ensure it returns the correct job status.
+    Test the get_status_job function to ensure it
+    returns the correct job status.
     """
     mock_redis_manager.reset_mock(side_effect=True)
 
@@ -97,7 +98,8 @@ def test_get_status_job(mocker):
 
 def test_get_visualisation_statuses(mocker):
     """
-    Test the get_visualisation_statuses function to ensure it returns the correct statuses.
+    Test the get_visualisation_statuses
+    function to ensure it returns the correct statuses.
     """
     mock_redis_manager.reset_mock(side_effect=True)
     mock_job_1 = Mock()

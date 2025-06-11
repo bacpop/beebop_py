@@ -13,8 +13,7 @@ from tests import setup
 from tests.test_utils import read_redis, wait_until
 
 """
-Run tests with application context, 
-via client fixture from conftest.py
+Run tests with application context, via client fixture from conftest.py
 """
 
 
