@@ -55,7 +55,6 @@ def test_run_PopPUNK_jobs(client):
     }.items()
     name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
     project_hash = "unit_test_run_poppunk_internal"
-    results_storage_location = setup.storage_location + "/results"
     redis = Redis()
     queue = Queue(connection=Redis())
     job_ids = run_PopPUNK_jobs(
@@ -80,8 +79,8 @@ def test_run_PopPUNK_jobs(client):
         == job_ids["assign"]
     )
     # writes initial output file linking project hash with sample hashes
-    results_fs = PoppunkFileStore(results_storage_location)
-    with open(results_fs.output_cluster(project_hash), "rb") as f:
+
+    with open(setup.fs.output_cluster(project_hash), "rb") as f:
         initial_output = pickle.load(f)
         assert initial_output[0]["hash"] == "e868c76fec83ee1f69a95bd27b8d5e76"
         assert initial_output[1]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
