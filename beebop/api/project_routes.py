@@ -5,15 +5,14 @@ from flask import (
     Flask,
     Response,
     current_app,
-    jsonify,
     request,
     send_file,
 )
 from flask_expects_json import expects_json
-from redis import Redis
 from werkzeug.exceptions import BadRequest, NotFound
 
-from beebop.config import PoppunkFileStore, Schema, RedisManager
+from beebop.config import PoppunkFileStore, Schema
+from beebop.db import RedisManager
 from beebop.services.cluster_service import get_cluster_num
 from beebop.services.file_service import (
     get_cluster_assignments,

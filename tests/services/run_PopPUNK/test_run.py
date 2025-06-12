@@ -6,8 +6,8 @@ from redis import Redis
 from rq import Queue, SimpleWorker
 from rq.job import Job
 
-from beebop.config import RedisManager
-from beebop.config.filestore import FileStore, PoppunkFileStore
+from beebop.db import RedisManager
+from beebop.config.filepaths import FileStore
 from beebop.services.run_PopPUNK.run import PopPUNKJobRunner, run_PopPUNK_jobs
 from tests import setup
 from tests.test_utils import read_redis, wait_until

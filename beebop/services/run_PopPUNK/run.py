@@ -7,7 +7,8 @@ from redis import Redis
 from rq import Queue
 from werkzeug.exceptions import BadRequest
 
-from beebop.config import PoppunkFileStore, RedisManager
+from beebop.config import PoppunkFileStore
+from beebop.db import RedisManager
 from beebop.models import SpeciesConfig
 from beebop.services.file_service import (
     add_amr_to_metadata,

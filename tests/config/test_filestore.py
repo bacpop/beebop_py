@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 import random
 import string
-from beebop.config.filestore import (
+from beebop.config.filepaths import (
     DatabaseFileStore,
     PoppunkFileStore,
     FileStore,

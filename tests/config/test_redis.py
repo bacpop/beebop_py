@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 from redis import Redis
 
-from beebop.config import RedisManager
+from beebop.db import RedisManager
 
 
 def test_redis_manager_initialization():

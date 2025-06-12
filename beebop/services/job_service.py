@@ -4,7 +4,7 @@ from rq.job import Job, JobStatus
 from werkzeug.exceptions import NotFound
 
 from beebop.models import ResponseError
-from beebop.config import RedisManager
+from beebop.db import RedisManager
 
 
 def get_project_status(
