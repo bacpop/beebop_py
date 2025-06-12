@@ -7,7 +7,7 @@ def read_schema(name: str) -> dict:
     :param name: [name of schema]
     :return dict: [json schema deserialized to dict]
     """
-    with open('spec/'+name+'.schema.json', 'r', encoding="utf-8") as file:
+    with open("spec/" + name + ".schema.json", "r", encoding="utf-8") as file:
         schema_data = file.read()
     schema = json.loads(schema_data)
     return schema

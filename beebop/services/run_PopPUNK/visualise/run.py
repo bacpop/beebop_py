@@ -1,23 +1,29 @@
-from rq import get_current_job, Queue
-from rq.job import Dependency
-from redis import Redis
-from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.utils import (
-    replace_filehashes,
-    create_subgraph,
-)
-from beebop.utils import get_cluster_num
-from beebop.filestore import PoppunkFileStore, DatabaseFileStore
-import pickle
 import os
+import pickle
+from types import SimpleNamespace
 from typing import Optional
+
+from redis import Redis
+from rq import Queue, get_current_job
+from rq.job import Dependency
+
+from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.db import RedisManager
+from beebop.services.cluster_service import get_cluster_num
+from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
+
+from .visualise_utils import (
+    create_subgraph,
+    get_internal_cluster,
+    replace_filehashes,
+)
 
 
 def visualise(
     p_hash: str,
     fs: PoppunkFileStore,
     db_fs: DatabaseFileStore,
-    args: dict,
+    args: SimpleNamespace,
     name_mapping: dict,
     species: str,
     redis_host: str,
@@ -44,7 +50,9 @@ def visualise(
 
     redis = Redis(host=redis_host)
     # get results from previous job
-    current_job = get_current_job(redis)
+    current_job = get_current_job(connection=redis)
+    if not current_job or not current_job.dependency:
+        raise ValueError("Current job or its dependencies are not set.")
     # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters: Optional[dict[str, set[str]]] = None
@@ -97,6 +105,7 @@ def queue_visualisation_jobs(
         to the queue when enqueuing jobs.
     """
     q = Queue(connection=redis)
+    redis_manager = RedisManager(redis)
     queries_clusters = set(
         [item["cluster"] for item in assign_result.values()]
     )
@@ -104,7 +113,7 @@ def queue_visualisation_jobs(
     last_cluster_idx = len(queries_clusters) - 1
     for idx, assign_cluster in enumerate(queries_clusters):
         dependency = (
-            Dependency(previous_job, allow_failure=True)
+            Dependency([previous_job], allow_failure=True)
             if previous_job
             else None
         )
@@ -123,10 +132,8 @@ def queue_visualisation_jobs(
             **queue_kwargs,
         )
 
-        redis.hset(
-            f"beebop:hash:job:visualise:{p_hash}",
-            assign_cluster,
-            cluster_visualise_job.id,
+        redis_manager.set_visualisation_status(
+            p_hash, assign_cluster, cluster_visualise_job.id
         )
         previous_job = cluster_visualise_job
 
@@ -175,63 +182,3 @@ def visualise_per_cluster(
     create_subgraph(output_folder, name_mapping, cluster_no)
     if is_last_cluster_to_process:
         os.remove(fs.tmp_output_metadata(p_hash))
-
-
-def get_internal_cluster(
-    external_to_poppunk_clusters: Optional[dict[str, set[str]]],
-    assign_cluster: str,
-    p_hash: str,
-    fs: PoppunkFileStore,
-) -> str:
-    """
-    [Determines the internal cluster name based on
-    the external cluster mapping.
-    In the edge case where the external cluster maps
-    to multiple internal clusters,
-    it creates a combined include file.]
-
-    :param external_to_poppunk_clusters: [dict mapping external clusters
-        to internal clusters]
-    :param assign_cluster: [the external cluster number]
-    :param p_hash: [project hash to find input data (output from
-        assignClusters)]
-    :param fs: [PoppunkFileStore with paths to input data]
-    :return: [internal cluster name or combined include file name]
-    """
-    if not external_to_poppunk_clusters:
-        return assign_cluster
-
-    internal_clusters = external_to_poppunk_clusters[assign_cluster]
-    if len(internal_clusters) == 1:
-        return internal_clusters.pop()
-
-    return create_combined_include_file(fs, p_hash, internal_clusters)
-
-
-def create_combined_include_file(
-    fs: PoppunkFileStore,
-    p_hash: str,
-    internal_clusters: set[str],
-) -> str:
-    """
-    [Creates a combined include file for multiple internal clusters.
-    The combined file contains the contents of
-    all specified internal clusters.]
-
-    :param fs: [PoppunkFileStore with paths to input data]
-    :param p_hash: [project hash to find input data (output from
-        assignClusters)]
-    :param internal_clusters: [list of internal cluster names to combine]
-    :return: [combined internal cluster]
-    """
-    combined_internal_cluster = "_".join(internal_clusters)
-    with open(
-        fs.include_file(p_hash, combined_internal_cluster), "w"
-    ) as combined_include_file:
-        for internal_cluster in internal_clusters:
-            with open(
-                fs.include_file(p_hash, internal_cluster), "r"
-            ) as include_file:
-                combined_include_file.write(include_file.read() + "\n")
-
-    return combined_internal_cluster

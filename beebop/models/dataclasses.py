@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, Any
-from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 from types import SimpleNamespace
+from typing import Any, Optional
+from beebop.config import PoppunkFileStore, DatabaseFileStore
 
 
 @dataclass
@@ -41,3 +41,16 @@ class SpeciesConfig:
     external_clusters_file: str
     db_metadata_file: str
     qc_dict: Qc
+
+
+@dataclass
+class ResponseError:
+    error: str
+    detail: Optional[str] = None
+
+
+@dataclass
+class ResponseBody:
+    status: str
+    errors: list[ResponseError]
+    data: Any

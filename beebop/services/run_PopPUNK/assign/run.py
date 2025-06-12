@@ -1,41 +1,28 @@
-from PopPUNK.web import summarise_clusters, sketch_to_hdf5
-from PopPUNK.utils import setupDBFuncs
-from beebop.utils import (
-    get_external_clusters_from_file,
-    update_external_clusters_csv,
-)
-import re
-import os
 import pickle
-from typing import Union
-from beebop.poppunkWrapper import PoppunkWrapper
-from beebop.filestore import PoppunkFileStore, DatabaseFileStore
 import shutil
-from beebop.dataClasses import ClusteringConfig
 from collections import defaultdict
 from collections.abc import ItemsView
 from types import SimpleNamespace
+from typing import Union
+
+from PopPUNK.utils import setupDBFuncs
+from PopPUNK.web import sketch_to_hdf5, summarise_clusters
+
+from beebop.models import ClusteringConfig, DatabaseFileStore, PoppunkFileStore
+from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
+
+from .assign_utils import (
+    create_sketches_dict,
+    filter_queries,
+    get_external_clusters_from_file,
+    handle_files_manipulation,
+    preprocess_sketches,
+    process_unassignable_samples,
+    update_external_clusters_csv,
+)
 
 
-def hex_to_decimal(sketches_dict) -> None:
-    """
-    [Converts all hexadecimal numbers in the sketches into decimal numbers.
-    These have been stored in hexadecimal format to not loose precision when
-    sending the sketches from the backend to the frontend]
-
-    :param sketches_dict: [dictionary holding all sketches]
-    """
-    for sample in list(sketches_dict.values()):
-        for key, value in sample.items():
-            if (
-                isinstance(value, list)
-                and isinstance(value[0], str)
-                and re.match("0x.*", value[0])
-            ):
-                sample[key] = list(map(lambda x: int(x, 16), value))
-
-
-def get_clusters(
+def assign_clusters(
     hashes_list: list,
     p_hash: str,
     fs: PoppunkFileStore,
@@ -116,29 +103,6 @@ def get_internal_clusters_result(
             ],
         )
     )
-
-
-def create_sketches_dict(hashes_list: list[str], fs: PoppunkFileStore) -> dict:
-    """
-    [Create a dictionary of sketches for all query samples]
-
-    :param hashes_list: [list of file hashes to get sketches for]
-    :param fs: [PoppunkFileStore with paths to input files]
-    :return dict: [dictionary with filehash (key) and sketch (value)]
-    """
-    return {hash: fs.input.get(hash) for hash in hashes_list}
-
-
-def preprocess_sketches(sketches_dict: dict, outdir: str) -> list:
-    """
-    [Convert hexadecimal sketches to decimal and save them to hdf5 file]
-
-    :param sketches_dict: [dictionary with filehash (key) and sketch (value)]
-    :param outdir: [path to output directory]
-    :return list: [list of sample hashes]
-    """
-    hex_to_decimal(sketches_dict)
-    return sketch_to_hdf5(sketches_dict, outdir)
 
 
 def assign_query_clusters(
@@ -279,37 +243,6 @@ def handle_not_found_queries(
     return query_names, query_clusters
 
 
-def handle_files_manipulation(
-    config: ClusteringConfig,
-    output_full_tmp: str,
-    not_found_query_clusters: set[str],
-) -> None:
-    """
-    [Handles file manipulations for queries that were not found in the
-    initial external clusters file.
-    This function copies include files from the
-    full assign output directory
-    to the output directory, deletes include files for queries
-    that were not found,
-    and merges the partial query graph files.]
-
-    :param config: [ClusteringConfig with all necessary information]
-    :param output_full_tmp: [path to temporary output directory]
-    :param not_found_query_clusters: [set of clusters assigned
-        to initial not found samples]
-    """
-    delete_include_files(
-        config.fs,
-        config.p_hash,
-        not_found_query_clusters,
-    )
-    copy_include_files(output_full_tmp, config.out_dir)
-    merge_txt_files(
-        config.fs.partial_query_graph(config.p_hash),
-        config.fs.partial_query_graph_tmp(config.p_hash),
-    )
-
-
 def update_external_clusters(
     config: ClusteringConfig,
     found_in_full_db_query_names: list[str],
@@ -359,121 +292,6 @@ def update_external_clusters(
     )
 
     external_clusters.update(external_clusters_full_db)
-
-
-def process_unassignable_samples(
-    unassignable_names: list[str], fs: PoppunkFileStore, p_hash: str
-) -> None:
-    """
-    [Process samples that are unassignable to external clusters.
-    These samples are added to the QC error report file.]
-
-    :param unassignable_names: [List of sample hashes that
-    are unassignable to external clusters.]
-    :param fs: [PoppunkFileStore with paths to input/output files.]
-    :param p_hash: [Project hash.]
-    """
-    if not unassignable_names:
-        return
-
-    qc_report_path = fs.output_qc_report(p_hash)
-    strain_assignment_error = (
-        "Unable to assign to an existing strain - potentially novel genotype"
-    )
-
-    with open(qc_report_path, "a") as report_file:
-        for sample_hash in unassignable_names:
-            report_file.write(f"{sample_hash}\t{strain_assignment_error}\n")
-
-
-def merge_txt_files(main_file: str, merge_file: str) -> None:
-    """
-    [Merge the contents of the merge file into the main file]
-
-    :param main_file: [path to main file]
-    :param merge_file: [path to merge file]
-    """
-
-    with open(merge_file, "r") as f:
-        merge_lines = set(f.read().splitlines())
-    with open(main_file, "r") as f:
-        main_lines = set(f.read().splitlines())
-
-    combined_lines = list(main_lines.union(merge_lines))
-    with open(main_file, "w") as f:
-        f.write("\n".join(combined_lines))
-
-
-def copy_include_files(output_full_tmp: str, outdir: str) -> None:
-    """
-    [Copy include files from the full assign output directory
-        to the output directory
-    where all files from the PopPUNK assign job are stored.
-    If the include file already exists in the output directory,
-    the contents of the full assign output include file are merged]
-
-    :param output_full_tmp: [path to full assign output directory]
-    :param outdir: [path to output directory]
-    """
-    include_files = [
-        f for f in os.listdir(output_full_tmp) if f.startswith("include")
-    ]
-    for include_file in include_files:
-        dest_file = f"{outdir}/{include_file}"
-        source_file = f"{output_full_tmp}/{include_file}"
-        if os.path.exists(dest_file):
-            merge_txt_files(dest_file, source_file)
-            os.remove(source_file)
-        else:
-            os.rename(source_file, dest_file)
-
-
-def filter_queries(
-    queries_names: list[str],
-    queries_clusters: list[str],
-    not_found: list[str],
-) -> tuple[list[str], list[str], set[str]]:
-    """
-    [Filter out queries that were not found in the
-        initial external clusters file.]
-
-    :param queries_names: [list of sample hashes]
-    :param queries_clusters: [list of sample PopPUNK clusters]
-    :param not_found: [list of sample hashes
-        that were not found]
-    :return tuple[list[str], list[str], set[str]]: [filtered sample hashes,
-        filtered sample PopPUNK clusters,
-            set of clusters assigned to not found samples]
-    """
-    filtered_names = [name for name in queries_names if name not in not_found]
-    filtered_clusters = [
-        cluster
-        for name, cluster in zip(queries_names, queries_clusters)
-        if name not in not_found
-    ]
-
-    return (
-        filtered_names,
-        filtered_clusters,
-        set(queries_clusters) - set(filtered_clusters),
-    )
-
-
-def delete_include_files(
-    fs: PoppunkFileStore, p_hash: str, clusters: set
-) -> None:
-    """
-    [Delete include files for samples that were not found
-        in the initial external clusters file.]
-
-    :param fs: [PoppunkFileStore with paths to input files]
-    :param p_hash: [project hash]
-    :param clusters: [set of cluster numbers to delete include
-    """
-    for cluster in clusters:
-        include_file = fs.include_file(p_hash, cluster)
-        if os.path.exists(include_file):
-            os.remove(include_file)
 
 
 def assign_clusters_to_result(

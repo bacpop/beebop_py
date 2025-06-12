@@ -1,8 +1,9 @@
+import shutil
+
 from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
-from beebop.filestore import DatabaseFileStore, PoppunkFileStore
-import shutil
-from typing import Optional
+
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 
 
 class PoppunkWrapper:

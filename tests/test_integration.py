@@ -2,21 +2,23 @@ import json
 import jsonschema
 import os
 import re
-import beebop.schemas
+from beebop.config import Schema
 from tests import setup
 from tests.test_utils import (
     read_data,
     assert_all_finished,
     run_poppunk,
     assert_correct_poppunk_results,
+    run_test_job,
+    generate_json_pneumo,
 )
 
-schemas = beebop.schemas.Schema()
+schemas = Schema()
 
 
 def run_pneumo(client):
     # generate sketches
-    sketches = json.loads(setup.generate_json_pneumo())
+    sketches = json.loads(generate_json_pneumo())
     name_mapping = {"6930_8_9": "6930_8_9.fa", "7622_5_91": "7622_5_91.fa"}
     # submit new job
     p_hash = "integration_test_run_poppunk_pneumo"
@@ -72,7 +74,7 @@ def test_project_not_found(client):
     response = json.loads(response.data)["error"]
     assert response["status"] == "failure"
     err = response["errors"][0]
-    assert err["error"] == "Project hash not found"
+    assert err["error"] == "Resource not found"
     assert err["detail"] == "Project hash does not have an associated job"
 
 
@@ -104,7 +106,12 @@ def test_results_microreact(client):
     )
     error = json.loads(error_response.data)["error"]
     assert error["status"] == "failure"
-    assert error["errors"][0]["error"] == "Wrong Token"
+    assert error["errors"][0]["error"] == "Internal Server Error"
+    assert (
+        error["errors"][0]["detail"]
+        == "Microreact reported Internal Server Error. "
+        "Most likely Token is invalid!"
+    )
 
 
 def test_network_results_zip(client):
@@ -122,6 +129,25 @@ def test_network_results_zip(client):
     assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
 
 
+def test_get_results_invalid(client):
+    p_hash = "test_network_zip"
+    type = "network"
+
+    response = client.post(
+        "/results/bad_result",
+        json={"projectHash": p_hash, "cluster": "GPSC38", "type": type},
+    )
+
+    assert response.status_code == 400
+    res_data = json.loads(response.data.decode("utf-8"))
+    assert res_data["error"]["status"] == "failure"
+    assert res_data["error"]["errors"][0]["error"] == "Bad Request"
+    assert (
+        res_data["error"]["errors"][0]["detail"]
+        == "Invalid result type specified."
+    )
+
+
 def test_get_network_graphs(client):
     p_hash, _ = run_pneumo(client)
 
@@ -136,6 +162,19 @@ def test_get_network_graphs(client):
             x in graph_string
             for x in ["</graph>", "</graphml>", "</node>", "</edge>"]
         )
+
+
+def test_get_network_graphs_file_not_found(client):
+    p_hash = "not_a_real_hash"
+    response = client.get(f"/results/networkGraphs/{p_hash}")
+    assert response.status_code == 404
+    response_data = json.loads(response.data.decode("utf-8"))
+    assert response_data["error"]["status"] == "failure"
+    assert response_data["error"]["errors"][0]["error"] == "Resource not found"
+    assert (
+        response_data["error"]["errors"][0]["detail"]
+        == "GraphML files not found for the given project hash"
+    )
 
 
 def test_404(client):
@@ -195,3 +234,71 @@ def test_run_poppunk_streptococcus_pyogenes(client):
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert_all_finished(project_data)
+
+
+def test_get_status_response(client):
+    p_hash = "unit_test_get_status_internal"
+    run_test_job(p_hash)
+
+    res = client.get(f"/status/{p_hash}")
+    data = read_data(res)
+
+    assert res.status_code == 200
+
+    assert data["assign"] in "finished"
+    assert data["visualise"] in "finished"
+    assert data["visualiseClusters"] == {}
+
+
+def test_get_status_response_not_found(client):
+    p_hash = "random_hash_not_found"
+
+    res = client.get(f"/status/{p_hash}")
+
+    assert res.status_code == 404
+
+    error = json.loads(res.data)["error"]
+    assert error["status"] == "failure"
+    err = error["errors"][0]
+    assert err["error"] == "Resource not found"
+    assert err["detail"] == "Unknown project hash"
+
+
+def test_get_species_config(client):
+    response = client.get("/speciesConfig")
+
+    data = read_data(response)
+
+    assert response.status_code == 200
+    assert jsonschema.validate(data, schemas.db_kmers) is None
+    for species in setup.all_species:
+        assert species in data
+
+
+def test_get_project_with_failed_samples(client):
+    p_hash = "unit_test_get_failed_samples_internal"
+    run_test_job(p_hash)
+
+    result = client.get(f"/project/{p_hash}")
+
+    assert result.status_code == 200
+    print(result)
+    samples = read_data(result)["samples"]
+    assert len(samples) == 2
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"]
+        == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
+    )
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0]
+        == "Failed distance QC (too high)"
+    )
+    assert (
+        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1]
+        == "Failed distance QC (too many zeros)"
+    )
+    assert (
+        samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"]
+        == "c448c13f7efd6a5e7e520a7495f3f40f"
+    )
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] == "GPSC3"

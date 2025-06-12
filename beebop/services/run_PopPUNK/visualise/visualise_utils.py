@@ -1,51 +1,13 @@
-from types import SimpleNamespace
-import json
-import os
-import re
 import fileinput
 import glob
-import pandas as pd
+import os
 import random
 from pathlib import PurePath
+from typing import Optional
+
 import graph_tool.all as gt
 
-
-def get_args() -> SimpleNamespace:
-    """
-    [Read in fixed arguments to poppunk that are always set, or used as
-    defaults. This is needed because of the large number of arguments that
-    poppunk needs]
-
-    :return dict: [arguments loaded from json]
-    """
-    with open("./beebop/resources/args.json") as a:
-        args_json = a.read()
-    return json.loads(args_json, object_hook=lambda d: SimpleNamespace(**d))
-
-
-def get_cluster_num(cluster: str) -> str:
-    """
-    [Extract the numeric part from a cluster label, regardless of the prefix.]
-
-    :param cluster: [cluster from assign result.
-    Can be prefixed with external_cluster_prefix]
-    :return str: [numeric part of the cluster]
-    """
-    match = re.search(r"\d+", str(cluster))
-    return match.group(0) if match else str(cluster)
-
-
-def cluster_nums_from_assign(assign_result: dict) -> list:
-    """
-    [Get all cluster numbers from a cluster assign result.]
-
-    :param assign_result: [cluster assign result, as returned through the API]
-    :return: [list of all external cluster numbers in the result]
-    """
-    result = set()
-    for item in assign_result.values():
-        result.add(get_cluster_num(item["cluster"]))
-    return list(result)
+from beebop.config import PoppunkFileStore
 
 
 def replace_filehashes(folder: str, filename_dict: dict) -> None:
@@ -219,142 +181,61 @@ def add_query_ref_to_graph(graph: gt.Graph, query_names: list) -> None:
     graph.vp.ref_query = vertex_property_ref_query
 
 
-def get_lowest_cluster(clusters_str: str) -> int:
+def get_internal_cluster(
+    external_to_poppunk_clusters: Optional[dict[str, set[str]]],
+    assign_cluster: str,
+    p_hash: str,
+    fs: PoppunkFileStore,
+) -> str:
     """
-    [Get numerically lowest cluster number from semicolon-separated clusters
-    string.]
+    [Determines the internal cluster name based on
+    the external cluster mapping.
+    In the edge case where the external cluster maps
+    to multiple internal clusters,
+    it creates a combined include file.]
 
-    :param clusters_str: [string of all clusters for a sample, separated by
-        semicolons]
-    :return int: [lowest cluster number from the string]
+    :param external_to_poppunk_clusters: [dict mapping external clusters
+        to internal clusters]
+    :param assign_cluster: [the external cluster number]
+    :param p_hash: [project hash to find input data (output from
+        assignClusters)]
+    :param fs: [PoppunkFileStore with paths to input data]
+    :return: [internal cluster name or combined include file name]
     """
-    clusters = map(int, clusters_str.split(";"))
-    return min(clusters)
+    if not external_to_poppunk_clusters:
+        return assign_cluster
+
+    internal_clusters = external_to_poppunk_clusters[assign_cluster]
+    if len(internal_clusters) == 1:
+        return internal_clusters.pop()
+
+    return create_combined_include_file(fs, p_hash, internal_clusters)
 
 
-def get_external_clusters_from_file(
-    previous_query_clustering_file: str,
-    hashes_list: list,
-    external_clusters_prefix: str,
-) -> tuple[dict[str, dict[str, str]], list[str]]:
+def create_combined_include_file(
+    fs: PoppunkFileStore,
+    p_hash: str,
+    internal_clusters: set[str],
+) -> str:
     """
-    [Finds sample hashes defined by hashes_list in
-    the given external clusters
-    file and returns a dictionary of sample hash to
-    external cluster name & raw external cluster number. If
-    there is a merged clusters for a sample, the lowest
-    cluster number is used for cluster. If any samples are found
-    but do  not
-    have a cluster assigned, they are returned separately.]
+    [Creates a combined include file for multiple internal clusters.
+    The combined file contains the contents of
+    all specified internal clusters.]
 
-    :param previous_query_clustering_file: [filename
-    of the project's external clusters file]
-    :param hashes_list: [list of sample hashes to find samples for]
-    :param external_clusters_prefix: prefix for external cluster name
-    :return tuple: [dictionary of sample hash to
-    external cluster name & raw external cluster number,
-    list of sample hashes not found in the external]
+    :param fs: [PoppunkFileStore with paths to input data]
+    :param p_hash: [project hash to find input data (output from
+        assignClusters)]
+    :param internal_clusters: [list of internal cluster names to combine]
+    :return: [combined internal cluster]
     """
-    filtered_df = get_df_filtered_by_samples(
-        previous_query_clustering_file, hashes_list
-    )
+    combined_internal_cluster = "_".join(internal_clusters)
+    with open(
+        fs.include_file(p_hash, combined_internal_cluster), "w"
+    ) as combined_include_file:
+        for internal_cluster in internal_clusters:
+            with open(
+                fs.include_file(p_hash, internal_cluster), "r"
+            ) as include_file:
+                combined_include_file.write(include_file.read() + "\n")
 
-    # Split into found and not found based on NaN values
-    found_mask = filtered_df["Cluster"].notna()
-    not_found_hashes = filtered_df[~found_mask]["sample"].tolist()
-
-    # Process only rows with valid clusters
-    valid_clusters = filtered_df[found_mask]
-    hash_cluster_info = {
-        sample: {
-            "cluster":
-                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
-            "raw_cluster_num": cluster,
-        }
-        for sample, cluster in zip(
-            valid_clusters["sample"], valid_clusters["Cluster"]
-        )
-    }
-
-    return hash_cluster_info, not_found_hashes
-
-
-def get_external_cluster_nums(
-    previous_query_clustering_file: str, hashes_list: list
-) -> dict[str, str]:
-    """
-    [Get external cluster numbers for samples in the external clusters file.]
-
-    :param previous_query_clustering_file: [Path to CSV file
-    containing sample data]
-    :param hashes_list: [List of sample hashes to find samples for]
-    :return dict: [Dictionary mapping sample names to external cluster names]
-    """
-    filtered_df = get_df_filtered_by_samples(
-        previous_query_clustering_file, hashes_list
-    )
-
-    sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
-    sample_cluster_num_mapping.index = filtered_df["sample"]
-
-    return sample_cluster_num_mapping.to_dict()
-
-
-def get_df_filtered_by_samples(
-    previous_query_clustering_file: str, hashes_list: list
-) -> pd.DataFrame:
-    """
-    [Filter a DataFrame by sample names.]
-
-    :param previous_query_clustering_file: [Path to CSV file
-    containing sample data]
-    :param hashes_list: [List of sample hashes to find samples for]
-    :return pd.DataFrame: [DataFrame containing sample data]
-    """
-    df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, hashes_list
-    )
-    return df[samples_mask]
-
-
-def update_external_clusters_csv(
-    dest_query_clustering_file: str,
-    source_query_clustering_file: str,
-    q_names: list,
-) -> None:
-    """
-    [Update the external clusters CSV file with the clusters of the samples
-    that were not found in the external clusters file.]
-
-    :param dest_query_clustering_file: [Path to CSV file
-    containing sample data to copy into]
-    :param source_query_clustering_file: [Path to CSV file
-    containing sample data to copy from]
-    :param q_names: [List of sample names to match]
-    """
-    df, samples_mask = get_df_sample_mask(dest_query_clustering_file, q_names)
-    sample_cluster_num_mapping = get_external_cluster_nums(
-        source_query_clustering_file, q_names
-    )
-
-    df.loc[samples_mask, "Cluster"] = [
-        sample_cluster_num_mapping[sample_id] for sample_id in q_names
-    ]
-    df.to_csv(dest_query_clustering_file, index=False)
-
-
-def get_df_sample_mask(
-    previous_query_clustering_file: str, samples: str
-) -> tuple[pd.DataFrame, pd.Series]:
-    """
-    Read a CSV file and create a boolean mask for matching sample names.
-
-    :param previous_query_clustering_file: [Path to CSV file
-        containing sample data
-        samples: List of sample names to match]
-    :param samples: [List of sample names to match]
-    :return tuple: [DataFrame containing sample data,
-        boolean mask for matching samples]
-    """
-    df = pd.read_csv(previous_query_clustering_file, dtype=str)
-    return df, df["sample"].isin(samples)
+    return combined_internal_cluster
