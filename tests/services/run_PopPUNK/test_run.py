@@ -44,7 +44,7 @@ def test_sets_up_PopPUNKJobRunner_no_species(client):
 
 
 def test_run_PopPUNK_jobs(client):
-    fs_json = FileStore("tests/files/json")
+    fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get(
             "e868c76fec83ee1f69a95bd27b8d5e76"

@@ -4,16 +4,16 @@ import pandas as pd
 from beebop.services.run_PopPUNK.assign import assign_clusters
 
 # Setup file storage and database file store
-storage_location = "tests/results"
+storage_location = "./tests/results"
 fs = PoppunkFileStore(storage_location)
 ref_db_fs = DatabaseFileStore(
-    "storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv"
+    "./storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv"
 )
 # Setup arguments for PopPUNK
 args = get_args()
 species = "Streptococcus pneumoniae"
 species_db_name = "GPS_v9_ref"
-output_folder = "tests/results/poppunk_output/"
+output_folder = "./tests/results/poppunk_output/"
 all_species: list[str] = list(vars(args.species).keys())
 
 
