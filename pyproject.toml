@@ -32,7 +32,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
-omit = [".*", "*/site-packages/*","*test_*"]
+omit = [".*", "*/site-packages/*","*test_*", "scripts/*"]
 
 [tool.coverage.report]
 fail_under = 90
