@@ -37,7 +37,7 @@ def generate_zip(fs: PoppunkFileStore, p_hash: str, result_type: str, cluster: s
 
     :param fs: [PoppunkFileStore with path to folder to be zipped]
     :param p_hash: [project hash]
-    :param type: [can be either 'microreact' or 'network']
+    :param result_type: [can be either 'microreact' or 'network']
     :param cluster: [cluster assigned]
     :return BytesIO: [memory file]
     """

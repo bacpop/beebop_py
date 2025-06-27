@@ -19,14 +19,14 @@ class FileStore:
 
     def filename(self, file_hash) -> str:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return str: [path to file incl. filename]
         """
         return os.path.join(self._path, f"{file_hash}.json")
 
     def get(self, file_hash) -> str:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return str: [sketch]
         """
         src = self.filename(file_hash)
@@ -39,14 +39,14 @@ class FileStore:
 
     def exists(self, file_hash) -> bool:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return bool: [whether file exists]
         """
         return os.path.exists(self.filename(file_hash))
 
     def put(self, file_hash, sketch) -> None:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :param sketch: [sketch to be stored]
         """
         dst = self.filename(file_hash)
