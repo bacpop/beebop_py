@@ -28,6 +28,5 @@ jobs:
         run: poetry run ruff check --output-format=github
       - name: Format with ruff
         run: poetry run ruff format --check --diff
-
       - name: checking docstrings with docsig
         run: poetry run docsig ./beebop/

@@ -137,7 +137,6 @@ def run_test_job(p_hash):
 
 
 def generate_json_pneumo():
-    
     # generate hdf5 sketch from fasta file using pp-sketchlib
     subprocess.run(
         "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",
