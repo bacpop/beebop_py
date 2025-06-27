@@ -8,7 +8,8 @@ from typing import Union
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
 
-from beebop.models import ClusteringConfig, DatabaseFileStore, PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.models import ClusteringConfig
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .assign_utils import (

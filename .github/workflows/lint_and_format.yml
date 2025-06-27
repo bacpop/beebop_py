@@ -1,4 +1,4 @@
-name: Lint and format with ruff
+name: Lint and format
 
 on:
   push:
@@ -18,7 +18,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/ruff-action@v3
+      - name: Lint and format with ruff
+        uses: astral-sh/ruff-action@v3
         with:
           args: "format --check --diff"
       - name: checking docstrings with docsig
