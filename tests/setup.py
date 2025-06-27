@@ -1,14 +1,13 @@
+import pandas as pd
+
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.config.config import get_args
-import pandas as pd
 from beebop.services.run_PopPUNK.assign import assign_clusters
 
 # Setup file storage and database file store
 storage_location = "./tests/results"
 fs = PoppunkFileStore(storage_location)
-ref_db_fs = DatabaseFileStore(
-    "./storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv"
-)
+ref_db_fs = DatabaseFileStore("./storage/dbs/GPS_v9_ref", "GPS_v9_external_clusters.csv")
 # Setup arguments for PopPUNK
 args = get_args()
 species = "Streptococcus pneumoniae"
@@ -23,9 +22,7 @@ def do_assign_clusters(p_hash: str):
     # setup output directory
     fs.setup_output_directory(p_hash)
     # setup metadata csv file for microreact
-    pd.DataFrame(amr_for_metadata_csv).to_csv(
-        fs.tmp_output_metadata(p_hash), index=False
-    )
+    pd.DataFrame(amr_for_metadata_csv).to_csv(fs.tmp_output_metadata(p_hash), index=False)
     hashes_list = [
         "02ff334f17f17d775b9ecd69046ed296",
         "9c00583e2f24fed5e3c6baa87a4bfa4c",

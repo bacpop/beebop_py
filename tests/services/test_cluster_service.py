@@ -1,5 +1,3 @@
-import pytest
-
 from beebop.services.cluster_service import get_cluster_num, get_lowest_cluster
 
 

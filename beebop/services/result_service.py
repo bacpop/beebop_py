@@ -1,5 +1,5 @@
+import datetime
 import json
-from datetime import datetime
 from io import BytesIO
 
 import requests
@@ -31,9 +31,7 @@ def get_clusters_results(p_hash: str, fs: PoppunkFileStore) -> dict:
     return {**cluster_dict, **failed_samples}
 
 
-def generate_zip(
-    fs: PoppunkFileStore, p_hash: str, type: str, cluster: str
-) -> BytesIO:
+def generate_zip(fs: PoppunkFileStore, p_hash: str, result_type: str, cluster: str) -> BytesIO:
     """
     [This generates a .zip folder with results data.]
 
@@ -46,21 +44,15 @@ def generate_zip(
     memory_file = BytesIO()
     cluster_num = get_cluster_num(cluster)
     visualisations_folder = fs.output_visualisations(p_hash, cluster_num)
-    network_files = get_network_files_for_zip(
-        visualisations_folder, cluster_num
-    )
+    network_files = get_network_files_for_zip(visualisations_folder, cluster_num)
 
-    if type == "microreact":
+    if result_type == "microreact":
         # microreact zip should include all files from the
         # visualisations folder except those which are
         # network files, hence set exclude to True
-        add_files(
-            memory_file, visualisations_folder, network_files, exclude=True
-        )
-    elif type == "network":
-        add_files(
-            memory_file, visualisations_folder, network_files, exclude=False
-        )
+        add_files(memory_file, visualisations_folder, network_files, exclude=True)
+    elif result_type == "network":
+        add_files(memory_file, visualisations_folder, network_files, exclude=False)
     memory_file.seek(0)
     return memory_file
 
@@ -106,17 +98,11 @@ def generate_microreact_url_internal(
         case 200:
             return r.json()["url"]
         case 500:
-            raise InternalServerError(
-                "Microreact reported Internal Server Error. "
-                "Most likely Token is invalid!"
-            )
+            raise InternalServerError("Microreact reported Internal Server Error. Most likely Token is invalid!")
         case 404:
             raise NotFound("Cannot reach Microreact API")
         case _:
-            raise InternalServerError(
-                f"Microreact API returned status code {r.status_code}. "
-                f"Response text: {r.text}."
-            )
+            raise InternalServerError(f"Microreact API returned status code {r.status_code}. Response text: {r.text}.")
 
 
 def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
@@ -127,9 +113,9 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
     :param cluster_num: [cluster number]
     """
     # update title
-    json_microreact["meta"][
-        "name"
-    ] = f"Cluster {cluster_num} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    json_microreact["meta"]["name"] = (
+        f"Cluster {cluster_num} - {datetime.datetime.now(tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')}"
+    )
 
     # default columns to show with widths sorted by queries first
     default_cols_to_add = [

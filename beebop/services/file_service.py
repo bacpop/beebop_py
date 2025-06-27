@@ -8,13 +8,11 @@ from typing import Optional
 
 import pandas as pd
 
-from beebop.models import SpeciesConfig
 from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.models import SpeciesConfig
 
 
-def get_cluster_assignments(
-    p_hash: str, fs: PoppunkFileStore
-) -> dict[int, dict[str, str]]:
+def get_cluster_assignments(p_hash: str, fs: PoppunkFileStore) -> dict[int, dict[str, str]]:
     """
     [returns cluster assignment results.
     Return of type:
@@ -29,9 +27,7 @@ def get_cluster_assignments(
         return cluster_result
 
 
-def get_failed_samples_internal(
-    p_hash: str, fs: PoppunkFileStore
-) -> dict[str, dict]:
+def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, dict]:
     """
     [Returns a dictionary of failed samples for a given project hash]
 
@@ -46,17 +42,15 @@ def get_failed_samples_internal(
     if os.path.exists(qc_report_file_path):
         with open(fs.output_qc_report(p_hash), "r") as f:
             for line in f:
-                hash, reasons = line.strip().split("\t")
-                failed_samples[hash] = {
+                sample_hash, reasons = line.strip().split("\t")
+                failed_samples[sample_hash] = {
                     "failReasons": reasons.split(","),
-                    "hash": hash,
+                    "hash": sample_hash,
                 }
     return failed_samples
 
 
-def get_network_files_for_zip(
-    visualisations_folder: str, cluster_num: str
-) -> list[str]:
+def get_network_files_for_zip(visualisations_folder: str, cluster_num: str) -> list[str]:
     """
     [Get the network files for a given cluster number,
     that will be used for network zip generation.
@@ -66,9 +60,7 @@ def get_network_files_for_zip(
     :param cluster_num: [cluster number]
     :return list[str]: [list of network files to be included in zip]
     """
-    network_file_name = os.path.basename(
-        get_component_filepath(visualisations_folder, cluster_num)
-    )
+    network_file_name = os.path.basename(get_component_filepath(visualisations_folder, cluster_num))
 
     return [
         network_file_name,
@@ -77,9 +69,7 @@ def get_network_files_for_zip(
     ]
 
 
-def get_component_filepath(
-    visualisations_folder: str, cluster_num: str
-) -> str:
+def get_component_filepath(visualisations_folder: str, cluster_num: str) -> str:
     """
     Get the filename of the network component
     for a given assigned cluster number.
@@ -100,9 +90,7 @@ def get_component_filepath(
         )
     )
     if not component_files:
-        raise FileNotFoundError(
-            f"No component files found for cluster {cluster_num}"
-        )
+        raise FileNotFoundError(f"No component files found for cluster {cluster_num}")
     return component_files[0]
 
 
@@ -126,16 +114,12 @@ def add_files(
     with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(path_folder):
             for file in files:
-                if (not exclude and file in file_list) or (
-                    exclude and file not in file_list
-                ):
+                if (not exclude and file in file_list) or (exclude and file not in file_list):
                     zipf.write(os.path.join(root, file), arcname=file)
     return memory_file
 
 
-def setup_db_file_stores(
-    species_args: SpeciesConfig, dbs_location: str
-) -> tuple[DatabaseFileStore, DatabaseFileStore]:
+def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tuple[DatabaseFileStore, DatabaseFileStore]:
     """
     [Initializes the reference and full database file stores
     with the given species arguments. If the full database
@@ -185,6 +169,4 @@ def add_amr_to_metadata(
         metadata = pd.read_csv(metadata_file)
     amr_df = pd.DataFrame(amr_metadata)
 
-    pd.concat([metadata, amr_df], ignore_index=True).to_csv(
-        fs.tmp_output_metadata(p_hash), index=False
-    )
+    pd.concat([metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Optional
-from beebop.config import PoppunkFileStore, DatabaseFileStore
+
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 
 
 @dataclass

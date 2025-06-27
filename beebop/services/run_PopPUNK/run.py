@@ -1,4 +1,5 @@
 import pickle
+from collections.abc import ItemsView
 from types import SimpleNamespace
 from typing import Optional
 
@@ -17,7 +18,6 @@ from beebop.services.file_service import (
 
 from .assign import assign_clusters
 from .visualise import visualise
-from collections.abc import ItemsView
 
 
 class PopPUNKJobRunner:
@@ -40,16 +40,12 @@ class PopPUNKJobRunner:
         self.storage_location: str = config["storage_location"]
 
         # Validate species configuration
-        self.species_args: Optional[SpeciesConfig] = getattr(
-            self.args.species, self.species, None
-        )
+        self.species_args: Optional[SpeciesConfig] = getattr(self.args.species, self.species, None)
         if not self.species_args:
             raise BadRequest(f"No database found for species: {self.species}")
 
         # Setup file stores and services
-        self.ref_db_fs, self.full_db_fs = setup_db_file_stores(
-            self.species_args, self.dbs_location
-        )
+        self.ref_db_fs, self.full_db_fs = setup_db_file_stores(self.species_args, self.dbs_location)
         self.queue = Queue(connection=self.redis)
         self.fs = PoppunkFileStore(self.storage_location)
 
@@ -82,18 +78,14 @@ class PopPUNKJobRunner:
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
 
         # Submit visualization job
-        job_visualise = self._submit_visualization_job(
-            p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs
-        )
+        job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
 
         return {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
         }
 
-    def _store_sketches_and_setup_output(
-        self, sketches: ItemsView, p_hash: str
-    ) -> list[str]:
+    def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
         """Store sketches and setup initial output directory"""
         hashes_list: list[str] = []
         initial_output: dict[int, dict[str, str]] = {}
@@ -118,9 +110,7 @@ class PopPUNKJobRunner:
             "failure_ttl": -1,
         }
 
-    def _submit_assign_job(
-        self, hashes_list: list[str], p_hash: str, queue_kwargs: dict
-    ):
+    def _submit_assign_job(self, hashes_list: list[str], p_hash: str, queue_kwargs: dict):
         """Submit cluster assignment job to Redis queue"""
         job_assign = self.queue.enqueue(
             assign_clusters,
@@ -147,9 +137,7 @@ class PopPUNKJobRunner:
     ):
         """Submit visualization job to Redis queue"""
         # Prepare metadata
-        add_amr_to_metadata(
-            self.fs, p_hash, amr_metadata, self.ref_db_fs.metadata
-        )
+        add_amr_to_metadata(self.fs, p_hash, amr_metadata, self.ref_db_fs.metadata)
 
         # Clean up previous visualize cluster job results
         self.redis_manager.delete_visualisation_statuses(p_hash)
@@ -169,9 +157,7 @@ class PopPUNKJobRunner:
             depends_on=job_assign,
             **queue_kwargs,
         )
-        self.redis_manager.set_job_status(
-            "visualise", p_hash, job_visualise.id
-        )
+        self.redis_manager.set_job_status("visualise", p_hash, job_visualise.id)
         return job_visualise
 
 

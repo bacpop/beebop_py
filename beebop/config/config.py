@@ -25,13 +25,9 @@ def get_environment() -> tuple[str, str, str]:
     dbs_location = os.getenv("DBS_LOCATION")
     redis_host = os.getenv("REDIS_HOST")
     if not storage_location:
-        raise ConfigurationError(
-            "STORAGE_LOCATION environment variable is not set."
-        )
+        raise ConfigurationError("STORAGE_LOCATION environment variable is not set.")
     if not dbs_location:
-        raise ConfigurationError(
-            "DBS_LOCATION environment variable is not set."
-        )
+        raise ConfigurationError("DBS_LOCATION environment variable is not set.")
     if not redis_host:
         redis_host = "127.0.0.1"
     return storage_location, dbs_location, redis_host

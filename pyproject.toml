@@ -9,23 +9,23 @@ readme = "README.md"
 python = ">=3.10,<3.11"
 Flask = "^2.0"
 jsonschema = "^4.4"
-pycodestyle = "^2.8.0"
 waitress = "^2.0.0"
 h5py = "^3.6.0"
 numpy = "^1.22.3"
 flask-expects-json = "^1.7.0"
 redis = "^4.3.1"
-pytest = "^7.1.2"
 rq = "^1.10.1"
 six = "^1.16.0"
-pytest-mock = "^3.8.2"
-pytest-unordered = "^0.5.1"
-pytest-xvfb = "^2.0.0"
-docsig = "^0.23.0"
 Pygments = "^2.13.0"
 
 [tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^6.4.1"}
+pytest = "^7.1.2"
+pytest-mock = "^3.8.2"
+pytest-unordered = "^0.5.1"
+pytest-xvfb = "^2.0.0"
+docsig = "^0.23.0"
+ruff = "^0.12.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -40,3 +40,53 @@ omit = [
     "shibokensupport/*",
     "signature_bootstrap.py",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ARG",
+    "B",
+    "C",
+    "DTZ",
+    "E",
+    "F",
+    "I",
+    "ICN",
+    "ISC",
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    "Q",
+    "RUF",
+    "T",
+    "UP",
+    "W",
+    "YTT",
+]
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Ignore checks for possible passwords
+    "S105", "S106", "S107",
+    # Ignore complexity
+    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+    # Ignore print statements
+    "T201",
+    # Unnecessary call to `encode` as UTF-8
+    "UP012",
+    # Unnecessary mode argument in `open` calls
+    "UP015",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "EM101","B017"]

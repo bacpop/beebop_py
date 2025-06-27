@@ -1,5 +1,6 @@
-import h5py
 import json
+
+import h5py
 import numpy as np
 
 
@@ -17,8 +18,7 @@ class NpEncoder(json.JSONEncoder):
 
 
 class MySketch:
-    def __init__(self, bases, bbits, codon_phased, length, missing_bases,
-                 sketchsize64, sketch_version):
+    def __init__(self, bases, bbits, codon_phased, length, missing_bases, sketchsize64, sketch_version):
         self.bases = bases
         self.bbits = bbits
         self.codon_phased = codon_phased
@@ -31,14 +31,15 @@ class MySketch:
 
 def h5_to_obj(element, sketch_version, codon_phased):
     sketch = MySketch(
-        element.attrs['base_freq'],
-        element.attrs['bbits'],
+        element.attrs["base_freq"],
+        element.attrs["bbits"],
         codon_phased,
-        element.attrs['length'],
-        element.attrs['missing_bases'],
-        element.attrs['sketchsize64'],
-        sketch_version)
-    for x in list(element.attrs['kmers']):
+        element.attrs["length"],
+        element.attrs["missing_bases"],
+        element.attrs["sketchsize64"],
+        sketch_version,
+    )
+    for x in list(element.attrs["kmers"]):
         setattr(sketch, str(x), element[str(x)][:])
     return sketch
 
@@ -49,11 +50,11 @@ def obj_to_json(sketch):
 
 
 def h5_to_json(input_file):
-    f = h5py.File(input_file, 'r')
-    sketches = f['sketches']
+    f = h5py.File(input_file, "r")
+    sketches = f["sketches"]
     # extract top level attributes
-    sketch_version = sketches.attrs['sketch_version']
-    codon_phased = bool(sketches.attrs['codon_phased'])
+    sketch_version = sketches.attrs["sketch_version"]
+    codon_phased = bool(sketches.attrs["codon_phased"])
     # loop through all elements and add them to a dict
     sketches_dict = {}
     for element_name in list(sketches.keys()):

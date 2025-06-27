@@ -1,10 +1,11 @@
+import logging
 from types import SimpleNamespace
 
-from flask import Blueprint, current_app, jsonify, Flask
+from flask import Blueprint, Flask, current_app
 from flask.wrappers import Response
 from PopPUNK import __version__ as poppunk_version
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
-import logging
+
 from beebop import __version__ as beebop_version
 
 from .api_utils import response_success
@@ -27,7 +28,6 @@ class ConfigRoutes:
         self._setup_routes()
 
     def _setup_routes(self):
-
         @self.config_bp.route("/version", methods=["GET"])
         def report_version() -> Response:
             """
@@ -58,9 +58,7 @@ class ConfigRoutes:
             """
             all_species_args = vars(self.args.species)
             species_config = {
-                species: self._get_kmer_info(
-                    f"{self.dbs_location}/{species_args.refdb}"
-                )
+                species: self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}")
                 for species, species_args in all_species_args.items()
             }
             return response_success(species_config)

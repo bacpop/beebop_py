@@ -52,16 +52,13 @@ def test_visualise(mocker):
 
         # microreact
         assert os.path.exists(
-            setup.fs.output_visualisations(p_hash, cluster_num)
-            + f"/visualise_{cluster_num}_core_NJ.nwk"
+            setup.fs.output_visualisations(p_hash, cluster_num) + f"/visualise_{cluster_num}_core_NJ.nwk"
         )
         assert os.path.exists(
-            setup.fs.output_visualisations(p_hash, cluster_num)
-            + f"/visualise_{cluster_num}_microreact_clusters.csv"
+            setup.fs.output_visualisations(p_hash, cluster_num) + f"/visualise_{cluster_num}_microreact_clusters.csv"
         )
         assert os.path.exists(
-            setup.fs.output_visualisations(p_hash, cluster_num)
-            + f"/visualise_{cluster_num}.microreact"
+            setup.fs.output_visualisations(p_hash, cluster_num) + f"/visualise_{cluster_num}.microreact"
         )
         # network
         assert os.path.exists(
@@ -74,17 +71,14 @@ def test_visualise(mocker):
             + f"_component_{cluster_num}.graphml"
         )
         assert os.path.exists(
-            setup.fs.output_visualisations(p_hash, cluster_num)
-            + f"/visualise_{cluster_num}_cytoscape.csv"
+            setup.fs.output_visualisations(p_hash, cluster_num) + f"/visualise_{cluster_num}_cytoscape.csv"
         )
 
 
 @patch("beebop.services.run_PopPUNK.visualise.run.replace_filehashes")
 @patch("beebop.services.run_PopPUNK.visualise.run.create_subgraph")
 @patch("beebop.services.run_PopPUNK.visualise.run.get_internal_cluster")
-def test_visualise_per_cluster(
-    mock_get_internal_cluster, mock_create_subgraph, mock_replace_filehashes
-):
+def test_visualise_per_cluster(mock_get_internal_cluster, mock_create_subgraph, mock_replace_filehashes):
     p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
     wrapper = Mock()
@@ -100,21 +94,12 @@ def test_visualise_per_cluster(
         external_to_poppunk_clusters,
     )
 
-    wrapper.create_visualisations.assert_called_with(
-        "16", setup.fs.include_file(p_hash, internal_cluster)
-    )
-    mock_replace_filehashes.assert_called_with(
-        setup.fs.output_visualisations(p_hash, 16), name_mapping
-    )
-    mock_create_subgraph.assert_called_with(
-        setup.fs.output_visualisations(p_hash, 16), name_mapping, "16"
-    )
-    mock_get_internal_cluster.assert_called_with(
-        external_to_poppunk_clusters, cluster, p_hash, setup.fs
-    )
+    wrapper.create_visualisations.assert_called_with("16", setup.fs.include_file(p_hash, internal_cluster))
+    mock_replace_filehashes.assert_called_with(setup.fs.output_visualisations(p_hash, 16), name_mapping)
+    mock_create_subgraph.assert_called_with(setup.fs.output_visualisations(p_hash, 16), name_mapping, "16")
+    mock_get_internal_cluster.assert_called_with(external_to_poppunk_clusters, cluster, p_hash, setup.fs)
 
 
-@patch("beebop.services.run_PopPUNK.visualise.run.replace_filehashes")
 @patch("os.remove")
 @patch("beebop.services.run_PopPUNK.visualise.run.create_subgraph")
 @patch("beebop.services.run_PopPUNK.visualise.run.get_internal_cluster")
@@ -122,7 +107,6 @@ def test_visualise_per_cluster_last_cluster(
     mock_get_internal_cluster,
     mock_create_subgraph,
     mock_remove,
-    mock_replace_filehashes,
 ):
     p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
@@ -140,12 +124,8 @@ def test_visualise_per_cluster_last_cluster(
         True,  # is_last_cluster_to_process
     )
 
-    wrapper.create_visualisations.assert_called_with(
-        "16", setup.fs.include_file(p_hash, internal_cluster)
-    )
-    mock_create_subgraph.assert_called_with(
-        setup.fs.output_visualisations(p_hash, 16), name_mapping, "16"
-    )
+    wrapper.create_visualisations.assert_called_with("16", setup.fs.include_file(p_hash, internal_cluster))
+    mock_create_subgraph.assert_called_with(setup.fs.output_visualisations(p_hash, 16), name_mapping, "16")
     mock_remove.assert_called_with(setup.fs.tmp_output_metadata(p_hash))
 
 
@@ -164,9 +144,7 @@ def test_queue_visualise_jobs(mocker):
     )
     mocker.patch("beebop.services.run_PopPUNK.visualise.run.Dependency")
     expected_hset_calls = [
-        call(
-            f"beebop:hash:job:visualise:{p_hash}", item["cluster"], mockJob.id
-        )
+        call(f"beebop:hash:job:visualise:{p_hash}", item["cluster"], mockJob.id)
         for item in setup.expected_assign_result.values()
     ]
     expected_enqueue_calls = [

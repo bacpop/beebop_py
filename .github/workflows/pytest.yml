@@ -134,6 +134,8 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         root_dir: ./main
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
 
     # Uncomment the next three lines to debug on failure with
     # tmate. However, don't leave them uncommented on merge as that

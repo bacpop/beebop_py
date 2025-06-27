@@ -46,7 +46,7 @@ def test_get_environment_missing_dbs_location(mock_getenv):
     with pytest.raises(
         ConfigurationError,
         match="DBS_LOCATION environment variable is not set.",
-    ) as e_info:
+    ) as _:
         get_environment()
 
 
@@ -59,7 +59,7 @@ def test_get_environment_missing_storage_location(mock_getenv):
     with pytest.raises(
         ConfigurationError,
         match="STORAGE_LOCATION environment variable is not set.",
-    ) as e_info:
+    ) as _:
         get_environment()
 
 
@@ -76,6 +76,4 @@ def test_config_setup():
     assert isinstance(config.schemas, Schema)
     assert isinstance(config.redis, Redis)
     assert hasattr(config, "args")
-    assert isinstance(
-        config.args, SimpleNamespace
-    )  # Assuming args is loaded as a SimpleNamespace
+    assert isinstance(config.args, SimpleNamespace)  # Assuming args is loaded as a SimpleNamespace

@@ -31,9 +31,7 @@ def test_get_job_status():
     job_id = redis_manager.get_job_status(job_type, p_hash)
 
     assert job_id == expected_job_id
-    redis_mock.hget.assert_called_once_with(
-        f"beebop:hash:job:{job_type}", p_hash
-    )
+    redis_mock.hget.assert_called_once_with(f"beebop:hash:job:{job_type}", p_hash)
 
 
 def test_set_job_status():
@@ -48,9 +46,7 @@ def test_set_job_status():
 
     redis_manager.set_job_status(job_type, p_hash, job_id)
 
-    redis_mock.hset.assert_called_once_with(
-        f"beebop:hash:job:{job_type}", p_hash, job_id
-    )
+    redis_mock.hset.assert_called_once_with(f"beebop:hash:job:{job_type}", p_hash, job_id)
 
 
 def test_delete_visualisation_statuses():
@@ -64,9 +60,7 @@ def test_delete_visualisation_statuses():
 
     redis_manager.delete_visualisation_statuses(p_hash)
 
-    redis_mock.delete.assert_called_once_with(
-        f"beebop:hash:job:visualise:{p_hash}"
-    )
+    redis_mock.delete.assert_called_once_with(f"beebop:hash:job:visualise:{p_hash}")
 
 
 def test_get_visualisation_statuses():
@@ -85,9 +79,7 @@ def test_get_visualisation_statuses():
     job_id = redis_manager.get_visualisation_statuses(p_hash)
 
     assert job_id == expected_job_id
-    redis_mock.hgetall.assert_called_once_with(
-        f"beebop:hash:job:{job_type}:{p_hash}"
-    )
+    redis_mock.hgetall.assert_called_once_with(f"beebop:hash:job:{job_type}:{p_hash}")
 
 
 def test_set_visualisation_status():
@@ -103,6 +95,4 @@ def test_set_visualisation_status():
 
     redis_manager.set_visualisation_status(p_hash, assign_cluster, job_id)
 
-    redis_mock.hset.assert_called_once_with(
-        f"beebop:hash:job:visualise:{p_hash}", assign_cluster, job_id
-    )
+    redis_mock.hset.assert_called_once_with(f"beebop:hash:job:visualise:{p_hash}", assign_cluster, job_id)

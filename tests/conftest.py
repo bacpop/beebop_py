@@ -1,10 +1,12 @@
-import pytest
 import shutil
-import pandas as pd
-from unittest.mock import Mock
-from beebop.models import ClusteringConfig
-from beebop.app import create_app
 from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pandas as pd
+import pytest
+
+from beebop.app import create_app
+from beebop.models import ClusteringConfig
 
 
 @pytest.fixture()

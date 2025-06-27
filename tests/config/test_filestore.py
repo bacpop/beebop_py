@@ -1,26 +1,24 @@
 import os
-from pathlib import PurePath
-from unittest.mock import patch
-import pytest
 import random
 import string
+from pathlib import PurePath
+from unittest.mock import patch
+
+import pytest
+
 from beebop.config.filepaths import (
     DatabaseFileStore,
-    PoppunkFileStore,
     FileStore,
+    PoppunkFileStore,
 )
 
 
 def test_set_metadata_database_filestore():
     metadata_file = "metadata.csv"
 
-    db_fs = DatabaseFileStore(
-        "./storage/dbs/GPS_v9_ref", db_metadata_file=metadata_file
-    )
+    db_fs = DatabaseFileStore("./storage/dbs/GPS_v9_ref", db_metadata_file=metadata_file)
 
-    assert db_fs.metadata == str(
-        PurePath("beebop", "resources", metadata_file)
-    )
+    assert db_fs.metadata == str(PurePath("beebop", "resources", metadata_file))
 
 
 def test_tmp_output_metadata(tmp_path):
@@ -33,15 +31,15 @@ def test_tmp_output_metadata(tmp_path):
 
 def test_pruned_network_output_component(tmp_path):
     fs = PoppunkFileStore(tmp_path)
-    hash = "hash"
+    p_hash = "hash"
     component = "909;1;2"
     cluster = "4"
 
-    result = fs.pruned_network_output_component(hash, component, cluster)
+    result = fs.pruned_network_output_component(p_hash, component, cluster)
 
     assert result == str(
         PurePath(
-            fs.output_visualisations(hash, cluster),
+            fs.output_visualisations(p_hash, cluster),
             f"pruned_visualise_{cluster}_component_{component}.graphml",
         )
     )
@@ -50,20 +48,19 @@ def test_pruned_network_output_component(tmp_path):
 @patch("os.makedirs")
 @patch("os.path.exists")
 @patch("shutil.rmtree")
-def test_setup_output_directory_removes_existing_directory(
-    mock_rmtree, mock_exists, mock_makedirs, tmp_path
-):
+def test_setup_output_directory_removes_existing_directory(mock_rmtree, mock_exists, mock_makedirs, tmp_path, new):
     fs = PoppunkFileStore(tmp_path)
+    
     # Test when the directory already exists
     mock_exists.return_value = True
-    dir = fs.output("mock_hash")
+    directory = fs.output("mock_hash")
 
     fs.setup_output_directory("mock_hash")
 
-    mock_exists.assert_called_once_with(dir)
-    mock_rmtree.assert_called_once_with(dir)
-    mock_makedirs.assert_called_with(dir)
-    assert os.path.exists(dir)
+    mock_exists.assert_called_once_with(directory)
+    mock_rmtree.assert_called_once_with(directory)
+    mock_makedirs.assert_called_with(directory)
+    assert os.path.exists(directory)
 
 
 def test_partial_query_graph(tmp_path):
@@ -89,11 +86,11 @@ def test_tmp(mock_makedirs, tmp_path):
 
 def test_setup_output_directory(tmp_path):
     fs = PoppunkFileStore(tmp_path)
-    hash = "unit_test_get_clusters_internal"
+    p_hash = "unit_test_get_clusters_internal"
 
-    fs.setup_output_directory(hash)
+    fs.setup_output_directory(p_hash)
 
-    assert os.path.exists(fs.output(hash))
+    assert os.path.exists(fs.output(p_hash))
 
 
 def test_filestore():

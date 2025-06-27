@@ -1,7 +1,8 @@
-import pandas as pd
-import graph_tool.all as gt
 import argparse
 import os
+
+import graph_tool.all as gt
+import pandas as pd
 
 # This script converts a graph-tool graph to a gzipped CSV file.
 # PopPUNK's GPU accelerated graphing library cuGraph cannot read .gt files,
@@ -11,20 +12,14 @@ import os
 def save_gt_graph_as_csv_gzip(graph: gt.Graph, gzip_output_filepath: str):
     edges = [(e.source(), e.target()) for e in graph.edges()]
     # Add vertices with no edges as source and destination as themselves
-    no_edge_vertices = [
-        (v, v)
-        for v in graph.get_vertices()
-        if len(graph.get_all_edges(v)) == 0
-    ]
+    no_edge_vertices = [(v, v) for v in graph.get_vertices() if len(graph.get_all_edges(v)) == 0]
     edges.extend(no_edge_vertices)
     df_edges = pd.DataFrame(edges, columns=["source", "destination"])
     df_edges.to_csv(gzip_output_filepath, index=False, compression="gzip")
 
 
 def get_input_output_paths():
-    parser = argparse.ArgumentParser(
-        description="Convert a graph-tool graph to a gzipped CSV file."
-    )
+    parser = argparse.ArgumentParser(description="Convert a graph-tool graph to a gzipped CSV file.")
     parser.add_argument(
         "-i",
         "--input",

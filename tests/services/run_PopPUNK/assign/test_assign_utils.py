@@ -1,7 +1,6 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
-from unittest.mock import Mock
 
 from beebop.services.run_PopPUNK.assign.assign_utils import (
     copy_include_files,
@@ -22,12 +21,8 @@ from beebop.services.run_PopPUNK.assign.assign_utils import (
 from tests.setup import fs
 
 
-@patch(
-    "beebop.services.run_PopPUNK.assign.assign_utils.get_external_cluster_nums"
-)
-def test_update_external_clusters_csv(
-    mock_get_external_cluster_nums, sample_clustering_csv
-):
+@patch("beebop.services.run_PopPUNK.assign.assign_utils.get_external_cluster_nums")
+def test_update_external_clusters_csv(mock_get_external_cluster_nums, sample_clustering_csv):
     not_found_samples = ["sample1", "sample3"]
     sample_cluster_num_mapping = {"sample1": "11", "sample3": "69;191"}
     source_query_clustering = "tmp_query_clustering.csv"
@@ -40,17 +35,11 @@ def test_update_external_clusters_csv(
 
     df = pd.read_csv(sample_clustering_csv)
 
-    mock_get_external_cluster_nums.assert_called_once_with(
-        source_query_clustering, not_found_samples
-    )
+    mock_get_external_cluster_nums.assert_called_once_with(source_query_clustering, not_found_samples)
     assert df.loc[df["sample"] == "sample1", "Cluster"].values[0] == "11"
-    assert (
-        df.loc[df["sample"] == "sample2", "Cluster"].values[0] == "309;20;101"
-    )  # Unchanged
+    assert df.loc[df["sample"] == "sample2", "Cluster"].values[0] == "309;20;101"  # Unchanged
     assert df.loc[df["sample"] == "sample3", "Cluster"].values[0] == "69;191"
-    assert (
-        df.loc[df["sample"] == "sample4", "Cluster"].values[0] == "40"
-    )  # Unchanged
+    assert df.loc[df["sample"] == "sample4", "Cluster"].values[0] == "40"  # Unchanged
 
 
 def test_get_df_sample_mask(sample_clustering_csv):
@@ -101,9 +90,7 @@ def test_get_external_clusters_from_file(sample_clustering_csv):
     samples = ["sample1", "sample2", "sample5"]
     prefix = "PRE"
 
-    external_clusters, not_found = get_external_clusters_from_file(
-        sample_clustering_csv, samples, prefix
-    )
+    external_clusters, not_found = get_external_clusters_from_file(sample_clustering_csv, samples, prefix)
 
     assert not_found == ["sample5"]
     assert external_clusters["sample1"] == {
@@ -118,12 +105,8 @@ def test_get_external_clusters_from_file(sample_clustering_csv):
 
 def test_create_sketches_dict():
     sketches = {
-        "e868c76fec83ee1f69a95bd27b8d5e76": fs.input.get(
-            "e868c76fec83ee1f69a95bd27b8d5e76"
-        ),
-        "f3d9b387e311d5ab59a8c08eb3545dbb": fs.input.get(
-            "f3d9b387e311d5ab59a8c08eb3545dbb"
-        ),
+        "e868c76fec83ee1f69a95bd27b8d5e76": fs.input.get("e868c76fec83ee1f69a95bd27b8d5e76"),
+        "f3d9b387e311d5ab59a8c08eb3545dbb": fs.input.get("f3d9b387e311d5ab59a8c08eb3545dbb"),
     }
 
     sketches_dict = create_sketches_dict(list(sketches.keys()), fs)
@@ -177,9 +160,7 @@ def test_filter_queries():
     q_clusters = ["1", "2", "3"]
     not_found = ["sample2"]
 
-    filtered_names, filtered_clusters, not_found_q_clusters = filter_queries(
-        q_names, q_clusters, not_found
-    )
+    filtered_names, filtered_clusters, not_found_q_clusters = filter_queries(q_names, q_clusters, not_found)
 
     assert filtered_names == ["sample1", "sample3"]
     assert filtered_clusters == ["1", "3"]
@@ -189,21 +170,13 @@ def test_filter_queries():
 @patch("beebop.services.run_PopPUNK.assign.assign_utils.merge_txt_files")
 @patch("beebop.services.run_PopPUNK.assign.assign_utils.copy_include_files")
 @patch("beebop.services.run_PopPUNK.assign.assign_utils.delete_include_files")
-def test_handle_files_manipulation(
-    mock_delete, mock_copy, mock_merge, clustering_config
-):
+def test_handle_files_manipulation(mock_delete, mock_copy, mock_merge, clustering_config):
     outdir_tmp = "outdir_tmp"
     not_found_query_clusters = {"1234", "6969"}
-    clustering_config.fs.partial_query_graph.return_value = (
-        "partial_query_graph"
-    )
-    clustering_config.fs.partial_query_graph_tmp.return_value = (
-        "partial_query_graph_tmp"
-    )
+    clustering_config.fs.partial_query_graph.return_value = "partial_query_graph"
+    clustering_config.fs.partial_query_graph_tmp.return_value = "partial_query_graph_tmp"
 
-    handle_files_manipulation(
-        clustering_config, outdir_tmp, not_found_query_clusters
-    )
+    handle_files_manipulation(clustering_config, outdir_tmp, not_found_query_clusters)
 
     mock_delete.assert_called_once_with(
         clustering_config.fs,
@@ -211,16 +184,12 @@ def test_handle_files_manipulation(
         not_found_query_clusters,
     )
     mock_copy.assert_called_once_with(outdir_tmp, clustering_config.out_dir)
-    mock_merge.assert_called_once_with(
-        "partial_query_graph", "partial_query_graph_tmp"
-    )
+    mock_merge.assert_called_once_with("partial_query_graph", "partial_query_graph_tmp")
 
 
 def test_delete_include_files(tmp_path):
     fs = Mock()
-    fs.include_file.side_effect = lambda _p_hash, cluster: str(
-        tmp_path / f"include_{cluster}.txt"
-    )
+    fs.include_file.side_effect = lambda _p_hash, cluster: str(tmp_path / f"include_{cluster}.txt")
     clusters = {"10", "15", "20"}
 
     for cluster in clusters:
@@ -284,15 +253,13 @@ def test_copy_include_file_conflict(tmp_path):
 
     copy_include_files(str(output_full_tmp), str(outdir))
 
-    assert not (
-        output_full_tmp / include_files_tmp[0]
-    ).exists()  # Original removed
+    assert not (output_full_tmp / include_files_tmp[0]).exists()  # Original removed
     included_file_content = (outdir / include_files[0]).read_text()
     assert "new content" in included_file_content  # New content
     assert "original content" in included_file_content  # Original content
 
 
-def test_merge_partial_query_graphs(tmp_path, clustering_config):
+def test_merge_partial_query_graphs(tmp_path):
     tmp_file = tmp_path / "tmp_query.subset"
     main_file = tmp_path / "main_query.subset"
 
@@ -304,20 +271,13 @@ def test_merge_partial_query_graphs(tmp_path, clustering_config):
     main_file_queries = list(main_file.read_text().splitlines())
 
     assert len(main_file_queries) == 5
-    assert sorted(main_file_queries) == sorted(
-        ["sample1", "sample2", "sample3", "sample4", "sample10"]
-    )
+    assert sorted(main_file_queries) == sorted(["sample1", "sample2", "sample3", "sample4", "sample10"])
 
 
 def test_process_unassignable_samples(tmp_path):
     unassignable_samples = ["sample1", "sample2"]
-    strain_assignment_error = (
-        "Unable to assign to an existing strain - potentially novel genotype"
-    )
-    expected_output = [
-        f"{sample}\t{strain_assignment_error}"
-        for sample in unassignable_samples
-    ]
+    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype"
+    expected_output = [f"{sample}\t{strain_assignment_error}" for sample in unassignable_samples]
     fs = Mock()
     report_path = tmp_path / "qc_report.txt"
 

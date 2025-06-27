@@ -1,12 +1,14 @@
+import os
 from unittest.mock import Mock, patch
+
 import graph_tool.all as gt
 import pytest
-import os
+
 from beebop.services.run_PopPUNK.visualise.visualise_utils import (
+    add_neighbor_nodes,
     add_query_ref_to_graph,
     build_subgraph,
     create_combined_include_file,
-    add_neighbor_nodes,
     create_subgraph,
     get_component_filepath,
     get_internal_cluster,
@@ -15,7 +17,6 @@ from beebop.services.run_PopPUNK.visualise.visualise_utils import (
 
 
 def test_replace_filehashes(tmp_path):
-
     folder = tmp_path / "replace_filehashes"
     folder.mkdir()
 
@@ -45,12 +46,8 @@ def test_replace_filehashes(tmp_path):
 
 
 @patch("beebop.services.run_PopPUNK.visualise.visualise_utils.build_subgraph")
-@patch(
-    "beebop.services.run_PopPUNK.visualise.visualise_utils.add_query_ref_to_graph"
-)
-@patch(
-    "beebop.services.run_PopPUNK.visualise.visualise_utils.get_component_filepath"
-)
+@patch("beebop.services.run_PopPUNK.visualise.visualise_utils.add_query_ref_to_graph")
+@patch("beebop.services.run_PopPUNK.visualise.visualise_utils.get_component_filepath")
 def test_create_subgraph(
     mock_get_component_filepath,
     mock_add_query_ref_to_graph,
@@ -69,15 +66,9 @@ def test_create_subgraph(
     create_subgraph("network_folder", filename_dict, "1")
 
     mock_get_component_filepath.assert_called_once_with("network_folder", "1")
-    mock_build_subgraph.assert_called_once_with(
-        "network_component_1.graphml", query_names
-    )
-    mock_add_query_ref_to_graph.assert_called_once_with(
-        mock_subgraph, query_names
-    )
-    mock_subgraph.save.assert_called_once_with(
-        "network_component_1.graphml", fmt="graphml"
-    )
+    mock_build_subgraph.assert_called_once_with("network_component_1.graphml", query_names)
+    mock_add_query_ref_to_graph.assert_called_once_with(mock_subgraph, query_names)
+    mock_subgraph.save.assert_called_once_with("network_component_1.graphml", fmt="graphml")
 
 
 def test_component_filepath(tmp_path):
@@ -90,10 +81,7 @@ def test_component_filepath(tmp_path):
     visualisations_folder.mkdir()
 
     # Create a mock component file
-    component_file = (
-        visualisations_folder
-        / f"visualise_{cluster_num}_component_{cluster_num}.graphml"
-    )
+    component_file = visualisations_folder / f"visualise_{cluster_num}_component_{cluster_num}.graphml"
     component_file.touch()
 
     result = get_component_filepath(str(visualisations_folder), cluster_num)
@@ -132,9 +120,7 @@ def test_build_subgraph(mock_load_graph):
 
 
 @patch("beebop.services.run_PopPUNK.visualise.visualise_utils.gt.load_graph")
-@patch(
-    "beebop.services.run_PopPUNK.visualise.visualise_utils.add_neighbor_nodes"
-)
+@patch("beebop.services.run_PopPUNK.visualise.visualise_utils.add_neighbor_nodes")
 def test_build_subgraph_no_prune(mock_add_neighbor_nodes, mock_load_graph):
     graph = gt.complete_graph(10)  # 50 nodes fully conected
     query_names = ["sample1", "sample2", "sample3"]
@@ -198,9 +184,7 @@ def test_get_internal_cluster_single_internal():
     assert cluster == "1"
 
 
-@patch(
-    "beebop.services.run_PopPUNK.visualise.visualise_utils.create_combined_include_file"
-)
+@patch("beebop.services.run_PopPUNK.visualise.visualise_utils.create_combined_include_file")
 def test_get_internal_cluster_multiple_internal(
     mock_create_combined_include_file,
 ):
@@ -228,9 +212,7 @@ def test_create_combined_include_file(tmp_path):
         (include_path(cluster)).write_text(f"data for {cluster}")
 
     fs = Mock()
-    fs.include_file.side_effect = lambda _p_hash, cluster: str(
-        include_path(cluster)
-    )
+    fs.include_file.side_effect = lambda _p_hash, cluster: str(include_path(cluster))
 
     cluster = create_combined_include_file(fs, "hash", internal_cluster)
 
@@ -240,8 +222,5 @@ def test_create_combined_include_file(tmp_path):
         if os.path.exists(combined_include_file_path):
             with open(combined_include_file_path, "r", errors="ignore") as f:
                 content = f.read()
-                expected_content = (
-                    f"data for {cluster.split('_')[0]}\n"
-                    f"data for {cluster.split('_')[1]}\n"
-                )
+                expected_content = f"data for {cluster.split('_')[0]}\ndata for {cluster.split('_')[1]}\n"
                 assert content == expected_content

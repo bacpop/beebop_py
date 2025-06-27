@@ -1,16 +1,18 @@
 import json
-import jsonschema
 import os
 import re
+
+import jsonschema
+
 from beebop.config import Schema
 from tests import setup
 from tests.test_utils import (
-    read_data,
     assert_all_finished,
-    run_poppunk,
     assert_correct_poppunk_results,
-    run_test_job,
     generate_json_pneumo,
+    read_data,
+    run_poppunk,
+    run_test_job,
 )
 
 schemas = Schema()
@@ -39,12 +41,7 @@ def run_pneumo(client):
 def test_request_version(client):
     response = client.get("/version")
     schema = schemas.version
-    assert (
-        jsonschema.validate(
-            json.loads(response.data.decode("utf-8"))["data"], schema
-        )
-        is None
-    )
+    assert jsonschema.validate(json.loads(response.data.decode("utf-8"))["data"], schema) is None
 
 
 def test_run_poppunk_pneumo(client):
@@ -57,13 +54,9 @@ def test_run_poppunk_pneumo(client):
     assert len(project_data["samples"]) == 2
 
     # check response data matches the generated data
-    assert (
-        project_data["samples"]["7622_5_91"]["sketch"] == sketches["7622_5_91"]
-    )
+    assert project_data["samples"]["7622_5_91"]["sketch"] == sketches["7622_5_91"]
     assert project_data["samples"]["7622_5_91"]["cluster"] == "GPSC3"
-    assert (
-        project_data["samples"]["6930_8_9"]["sketch"] == sketches["6930_8_9"]
-    )
+    assert project_data["samples"]["6930_8_9"]["sketch"] == sketches["6930_8_9"]
     assert project_data["samples"]["6930_8_9"]["cluster"] == "GPSC60"
     assert_all_finished(project_data)
 
@@ -107,45 +100,35 @@ def test_results_microreact(client):
     error = json.loads(error_response.data)["error"]
     assert error["status"] == "failure"
     assert error["errors"][0]["error"] == "Internal Server Error"
-    assert (
-        error["errors"][0]["detail"]
-        == "Microreact reported Internal Server Error. "
-        "Most likely Token is invalid!"
-    )
+    assert error["errors"][0]["detail"] == "Microreact reported Internal Server Error. Most likely Token is invalid!"
 
 
 def test_network_results_zip(client):
     p_hash = "test_network_zip"
-    type = "network"
+    result_type = "network"
     response = client.post(
         "/results/zip",
-        json={"projectHash": p_hash, "cluster": "GPSC38", "type": type},
+        json={"projectHash": p_hash, "cluster": "GPSC38", "type": result_type},
     )
     assert "visualise_38_component_38.graphml".encode("utf-8") in response.data
-    assert (
-        "pruned_visualise_38_component_38.graphml".encode("utf-8")
-        in response.data
-    )
+    assert "pruned_visualise_38_component_38.graphml".encode("utf-8") in response.data
     assert "visualise_38_cytoscape.csv".encode("utf-8") in response.data
 
 
 def test_get_results_invalid(client):
     p_hash = "test_network_zip"
-    type = "network"
+    result_type = "network"
 
     response = client.post(
         "/results/bad_result",
-        json={"projectHash": p_hash, "cluster": "GPSC38", "type": type},
+        json={"projectHash": p_hash, "cluster": "GPSC38", "type": result_type},
     )
 
     assert response.status_code == 400
     res_data = json.loads(response.data.decode("utf-8"))
     assert res_data["error"]["status"] == "failure"
     assert res_data["error"]["errors"][0]["error"] == "Bad Request"
-    assert (
-        res_data["error"]["errors"][0]["detail"]
-        == "Invalid result type specified."
-    )
+    assert res_data["error"]["errors"][0]["detail"] == "Invalid result type specified."
 
 
 def test_get_network_graphs(client):
@@ -153,15 +136,10 @@ def test_get_network_graphs(client):
 
     response = client.get(f"/results/networkGraphs/{p_hash}")
     graph_string_3 = json.loads(response.data.decode("utf-8"))["data"]["GPSC3"]
-    graph_string_60 = json.loads(response.data.decode("utf-8"))["data"][
-        "GPSC60"
-    ]
+    graph_string_60 = json.loads(response.data.decode("utf-8"))["data"]["GPSC60"]
     assert response.status_code == 200
     for graph_string in [graph_string_3, graph_string_60]:
-        assert all(
-            x in graph_string
-            for x in ["</graph>", "</graphml>", "</node>", "</edge>"]
-        )
+        assert all(x in graph_string for x in ["</graph>", "</graphml>", "</node>", "</edge>"])
 
 
 def test_get_network_graphs_file_not_found(client):
@@ -171,10 +149,7 @@ def test_get_network_graphs_file_not_found(client):
     response_data = json.loads(response.data.decode("utf-8"))
     assert response_data["error"]["status"] == "failure"
     assert response_data["error"]["errors"][0]["error"] == "Resource not found"
-    assert (
-        response_data["error"]["errors"][0]["detail"]
-        == "GraphML files not found for the given project hash"
-    )
+    assert response_data["error"]["errors"][0]["detail"] == "GraphML files not found for the given project hash"
 
 
 def test_404(client):
@@ -285,20 +260,8 @@ def test_get_project_with_failed_samples(client):
     print(result)
     samples = read_data(result)["samples"]
     assert len(samples) == 2
-    assert (
-        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"]
-        == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
-    )
-    assert (
-        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0]
-        == "Failed distance QC (too high)"
-    )
-    assert (
-        samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1]
-        == "Failed distance QC (too many zeros)"
-    )
-    assert (
-        samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"]
-        == "c448c13f7efd6a5e7e520a7495f3f40f"
-    )
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0] == "Failed distance QC (too high)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1] == "Failed distance QC (too many zeros)"
+    assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"] == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] == "GPSC3"
