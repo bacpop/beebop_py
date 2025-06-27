@@ -48,9 +48,9 @@ def test_pruned_network_output_component(tmp_path):
 @patch("os.makedirs")
 @patch("os.path.exists")
 @patch("shutil.rmtree")
-def test_setup_output_directory_removes_existing_directory(mock_rmtree, mock_exists, mock_makedirs, tmp_path, new):
+def test_setup_output_directory_removes_existing_directory(mock_rmtree, mock_exists, mock_makedirs, tmp_path):
     fs = PoppunkFileStore(tmp_path)
-    
+
     # Test when the directory already exists
     mock_exists.return_value = True
     directory = fs.output("mock_hash")
