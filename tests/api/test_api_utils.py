@@ -1,6 +1,7 @@
-from beebop.api.api_utils import response_success, response_failure
-from unittest.mock import patch
 from typing import Any
+from unittest.mock import patch
+
+from beebop.api.api_utils import response_failure, response_success
 
 
 @patch("beebop.api.api_utils.jsonify")

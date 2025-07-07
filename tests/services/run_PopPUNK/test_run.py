@@ -1,13 +1,14 @@
 import pickle
 from types import SimpleNamespace
+
 import pytest
-from werkzeug.exceptions import BadRequest
 from redis import Redis
 from rq import Queue, SimpleWorker
 from rq.job import Job
+from werkzeug.exceptions import BadRequest
 
-from beebop.db import RedisManager
 from beebop.config.filepaths import FileStore
+from beebop.db import RedisManager
 from beebop.services.run_PopPUNK.run import PopPUNKJobRunner, run_PopPUNK_jobs
 from tests import setup
 from tests.test_utils import read_redis, wait_until
@@ -17,7 +18,7 @@ Run tests with application context, via client fixture from conftest.py
 """
 
 
-def test_sets_up_PopPUNKJobRunner(client):
+def test_sets_up_PopPUNKJobRunner():
     runner = PopPUNKJobRunner(setup.species)
 
     assert runner.storage_location is not None
@@ -43,15 +44,11 @@ def test_sets_up_PopPUNKJobRunner_no_species(client):
             PopPUNKJobRunner("non_existent_species")
 
 
-def test_run_PopPUNK_jobs(client):
+def test_run_PopPUNK_jobs():
     fs_json = FileStore("./tests/files/json")
     sketches = {
-        "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get(
-            "e868c76fec83ee1f69a95bd27b8d5e76"
-        ),
-        "f3d9b387e311d5ab59a8c08eb3545dbb": fs_json.get(
-            "f3d9b387e311d5ab59a8c08eb3545dbb"
-        ),
+        "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get("e868c76fec83ee1f69a95bd27b8d5e76"),
+        "f3d9b387e311d5ab59a8c08eb3545dbb": fs_json.get("f3d9b387e311d5ab59a8c08eb3545dbb"),
     }.items()
     name_mapping = {"hash1": "name1.fa", "hash2": "name2.fa"}
     project_hash = "unit_test_run_poppunk_internal"
@@ -74,10 +71,7 @@ def test_run_PopPUNK_jobs(client):
     status_options = ["queued", "started", "finished", "scheduled", "deferred"]
     assert job_assign.get_status() in status_options
     # saves p-hash with job id in redis
-    assert (
-        read_redis("beebop:hash:job:assign", project_hash, redis)
-        == job_ids["assign"]
-    )
+    assert read_redis("beebop:hash:job:assign", project_hash, redis) == job_ids["assign"]
     # writes initial output file linking project hash with sample hashes
 
     with open(setup.fs.output_cluster(project_hash), "rb") as f:
@@ -94,7 +88,4 @@ def test_run_PopPUNK_jobs(client):
     # submits visualisation jobs to queue
     job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
     assert job_visualise.get_status() in status_options
-    assert (
-        read_redis("beebop:hash:job:visualise", project_hash, redis)
-        == job_ids["visualise"]
-    )
+    assert read_redis("beebop:hash:job:visualise", project_hash, redis) == job_ids["visualise"]

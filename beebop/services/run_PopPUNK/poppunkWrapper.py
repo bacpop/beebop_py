@@ -104,9 +104,7 @@ class PoppunkWrapper:
             include_files=include_file,
             model_dir=self.db_fs.db,
             previous_clustering=self.db_fs.previous_clustering,
-            previous_query_clustering=(
-                self.fs.previous_query_clustering(self.p_hash)
-            ),
+            previous_query_clustering=(self.fs.previous_query_clustering(self.p_hash)),
             previous_mst=None,
             previous_distances=None,
             network_file=None,

@@ -8,7 +8,8 @@ from typing import Union
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
 
-from beebop.models import ClusteringConfig, DatabaseFileStore, PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.models import ClusteringConfig
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .assign_utils import (
@@ -83,9 +84,7 @@ def assign_clusters(
     return result
 
 
-def get_internal_clusters_result(
-    queries_names: list[str], queries_clusters: list[str]
-) -> dict:
+def get_internal_clusters_result(queries_names: list[str], queries_clusters: list[str]) -> dict:
     """
     [Get internal clusters result]
 
@@ -97,10 +96,7 @@ def get_internal_clusters_result(
     return assign_clusters_to_result(
         zip(
             queries_names,
-            [
-                {"cluster": cluster, "raw_cluster_num": cluster}
-                for cluster in queries_clusters
-            ],
+            [{"cluster": cluster, "raw_cluster_num": cluster} for cluster in queries_clusters],
         )
     )
 
@@ -121,9 +117,7 @@ def assign_query_clusters(
     :param outdir: [path to output directory
         where all files from PopPUNK assign job are stored]
     """
-    wrapper = PoppunkWrapper(
-        config.fs, db_fs, config.args, config.p_hash, config.species
-    )
+    wrapper = PoppunkWrapper(config.fs, db_fs, config.args, config.p_hash, config.species)
     wrapper.assign_clusters(config.db_funcs, qNames, outdir)
 
 
@@ -145,29 +139,23 @@ def handle_external_clusters(
     :param queries_clusters: [list of sample PopPUNK clusters]
     :return dict: [dict with filehash (key) and external cluster (value)]
     """
-    previous_query_clustering = config.fs.previous_query_clustering(
-        config.p_hash
-    )
+    previous_query_clustering = config.fs.previous_query_clustering(config.p_hash)
     external_clusters, not_found_query_names = get_external_clusters_from_file(
         previous_query_clustering,
         queries_names,
         config.external_clusters_prefix,
     )
     if not_found_query_names:
-        queries_names, queries_clusters, not_found_query_clusters = (
-            filter_queries(
-                queries_names, queries_clusters, not_found_query_names
-            )
+        queries_names, queries_clusters, not_found_query_clusters = filter_queries(
+            queries_names, queries_clusters, not_found_query_names
         )
         output_full_tmp = config.fs.output_tmp(config.p_hash)
-        found_query_names_full_db, found_query_clusters_full_db = (
-            handle_not_found_queries(
-                config,
-                sketches_dict,
-                not_found_query_names,
-                output_full_tmp,
-                not_found_query_clusters,
-            )
+        found_query_names_full_db, found_query_clusters_full_db = handle_not_found_queries(
+            config,
+            sketches_dict,
+            not_found_query_names,
+            output_full_tmp,
+            not_found_query_clusters,
         )
         queries_names.extend(found_query_names_full_db)
         queries_clusters.extend(found_query_clusters_full_db)
@@ -217,16 +205,10 @@ def handle_not_found_queries(
     :return tuple[list, list]: [list initial not found sample hashes,
         list of clusters assigned to initial not found samples]
     """
-    not_found_sketches_dict = {
-        key: value
-        for key, value in sketches_dict.items()
-        if key in not_found_query_names
-    }
+    not_found_sketches_dict = {key: value for key, value in sketches_dict.items() if key in not_found_query_names}
     sketch_to_hdf5(not_found_sketches_dict, output_full_tmp)
 
-    assign_query_clusters(
-        config, config.full_db_fs, not_found_query_names, output_full_tmp
-    )
+    assign_query_clusters(config, config.full_db_fs, not_found_query_names, output_full_tmp)
     query_names, query_clusters, _, _, _, _, _ = summarise_clusters(
         output_full_tmp,
         config.species,
@@ -269,9 +251,7 @@ def update_external_clusters(
     :param previous_query_clustering: [path to previous
         query clustering file]
     """
-    not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(
-        config.p_hash
-    )
+    not_found_prev_querying = config.fs.external_previous_query_clustering_tmp(config.p_hash)
 
     update_external_clusters_csv(
         previous_query_clustering,
@@ -279,17 +259,13 @@ def update_external_clusters(
         found_in_full_db_query_names,
     )
 
-    external_clusters_full_db, not_found_query_names_full_db = (
-        get_external_clusters_from_file(
-            not_found_prev_querying,
-            found_in_full_db_query_names,
-            config.external_clusters_prefix,
-        )
+    external_clusters_full_db, not_found_query_names_full_db = get_external_clusters_from_file(
+        not_found_prev_querying,
+        found_in_full_db_query_names,
+        config.external_clusters_prefix,
     )
 
-    process_unassignable_samples(
-        not_found_query_names_full_db, config.fs, config.p_hash
-    )
+    process_unassignable_samples(not_found_query_names_full_db, config.fs, config.p_hash)
 
     external_clusters.update(external_clusters_full_db)
 
@@ -308,9 +284,9 @@ def assign_clusters_to_result(
         and sample hash and cluster number (value)]
     """
     result = {}
-    for i, (hash, cluster_info) in enumerate(query_cluster_mapping):
+    for i, (p_hash, cluster_info) in enumerate(query_cluster_mapping):
         result[i] = {
-            "hash": hash,
+            "hash": p_hash,
             "cluster": cluster_info["cluster"],
             "raw_cluster_num": cluster_info["raw_cluster_num"],
         }

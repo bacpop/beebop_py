@@ -1,15 +1,16 @@
-from beebop.services.result_service import (
-    get_clusters_results,
-    generate_zip,
-    generate_microreact_url_internal,
-    update_microreact_json,
-)
-from unittest.mock import patch, Mock
-from beebop.config import PoppunkFileStore
 import os
+from unittest.mock import Mock, patch
+
 import pytest
 from werkzeug.exceptions import InternalServerError, NotFound
-from tests.test_utils import read_data
+
+from beebop.config import PoppunkFileStore
+from beebop.services.result_service import (
+    generate_microreact_url_internal,
+    generate_zip,
+    get_clusters_results,
+    update_microreact_json,
+)
 from tests.setup import storage_location
 
 fs = PoppunkFileStore(storage_location)
@@ -25,9 +26,7 @@ def test_update_microreact_json():
     update_microreact_json(json_microreact, cluster_num)
 
     # Check title gets updated with correct format
-    assert json_microreact["meta"]["name"].startswith(
-        f"Cluster {cluster_num} - "
-    )
+    assert json_microreact["meta"]["name"].startswith(f"Cluster {cluster_num} - ")
     assert ":" in json_microreact["meta"]["name"]  # Check datetime got added
 
     # Check expected columns were added
@@ -78,9 +77,7 @@ def test_get_clusters_results(mock_failed_samples, mock_cluster_assignments):
 @patch("beebop.services.result_service.get_cluster_num", return_value="123")
 @patch("beebop.services.result_service.get_network_files_for_zip")
 @patch("beebop.services.result_service.add_files")
-def test_generate_zip_network(
-    mock_add_files, mock_get_network_files_for_zip, mock_get_cluster_num
-):
+def test_generate_zip_network(mock_add_files, mock_get_network_files_for_zip, mock_get_cluster_num):
     mock_get_network_files_for_zip.return_value = [
         "file1.graphml",
         "file2.graphml",
@@ -91,9 +88,7 @@ def test_generate_zip_network(
     zip_path = generate_zip(fs, "test_project", "network", "123")
 
     mock_get_cluster_num.assert_called_once_with("123")
-    mock_get_network_files_for_zip.assert_called_once_with(
-        "/path/to/visualisations", "123"
-    )
+    mock_get_network_files_for_zip.assert_called_once_with("/path/to/visualisations", "123")
     mock_add_files.assert_called_once_with(
         zip_path,
         "/path/to/visualisations",
@@ -105,9 +100,7 @@ def test_generate_zip_network(
 @patch("beebop.services.result_service.get_cluster_num", return_value="123")
 @patch("beebop.services.result_service.get_network_files_for_zip")
 @patch("beebop.services.result_service.add_files")
-def test_generate_zip_microreact(
-    mock_add_files, mock_get_network_files_for_zip, mock_get_cluster_num
-):
+def test_generate_zip_microreact(mock_add_files, mock_get_network_files_for_zip, mock_get_cluster_num):
     mock_get_network_files_for_zip.return_value = [
         "file1.graphml",
         "file2.graphml",
@@ -118,9 +111,7 @@ def test_generate_zip_microreact(
     zip_path = generate_zip(fs, "test_project", "microreact", "123")
 
     mock_get_cluster_num.assert_called_once_with("123")
-    mock_get_network_files_for_zip.assert_called_once_with(
-        "/path/to/visualisations", "123"
-    )
+    mock_get_network_files_for_zip.assert_called_once_with("/path/to/visualisations", "123")
     mock_add_files.assert_called_once_with(
         zip_path,
         "/path/to/visualisations",
@@ -190,9 +181,7 @@ def test_generate_microreact_url_internal_API_error_404(mock_post):
 def test_generate_microreact_url_internal_API_error_500(mock_post):
     mock_post.return_value = Mock()
     mock_post.return_value.status_code = 500
-    mock_post.return_value.json.return_value = {
-        "error": "Internal Server Error"
-    }
+    mock_post.return_value.json.return_value = {"error": "Internal Server Error"}
 
     microreact_api_new_url = "https://dummy.url"
     project_hash = "test_microreact_api"
@@ -207,11 +196,7 @@ def test_generate_microreact_url_internal_API_error_500(mock_post):
             api_token,
             fs,
         )
-    assert (
-        e_info.value.description
-        == "Microreact reported Internal Server Error. "
-        "Most likely Token is invalid!"
-    )
+    assert e_info.value.description == "Microreact reported Internal Server Error. Most likely Token is invalid!"
 
 
 @patch("requests.post")
@@ -236,7 +221,5 @@ def test_generate_microreact_url_internal_API_other_error(mock_post):
             fs,
         )
     assert (
-        e_info.value.description
-        == f"Microreact API returned status code {status_code}. "
-        f"Response text: {error_text}."
+        e_info.value.description == f"Microreact API returned status code {status_code}. Response text: {error_text}."
     )

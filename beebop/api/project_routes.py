@@ -25,6 +25,7 @@ from beebop.services.result_service import (
     get_clusters_results,
 )
 from beebop.services.run_PopPUNK import run_PopPUNK_jobs
+
 from .api_utils import response_success
 
 
@@ -47,7 +48,6 @@ class ProjectRoutes:
         self._setup_routes()
 
     def _setup_routes(self):
-
         @self.project_bp.route("/poppunk", methods=["POST"])
         @expects_json(self.schemas.run_poppunk)
         def run_PopPUNK() -> Response:
@@ -61,18 +61,14 @@ class ProjectRoutes:
             job IDs stored in 'data']
             """
             if request.json is None:
-                raise BadRequest(
-                    "Request body is missing or not in JSON format."
-                )
+                raise BadRequest("Request body is missing or not in JSON format.")
             sketches = request.json["sketches"].items()
             p_hash = request.json["projectHash"]
             name_mapping = request.json["names"]
             species = request.json["species"]
             amr_metadata = request.json["amrForMetadataCsv"]
 
-            job_ids = run_PopPUNK_jobs(
-                sketches, p_hash, name_mapping, species, amr_metadata
-            )
+            job_ids = run_PopPUNK_jobs(sketches, p_hash, name_mapping, species, amr_metadata)
             return response_success(job_ids)
 
         @self.project_bp.route("/status/<string:p_hash>", methods=["GET"])
@@ -125,9 +121,7 @@ class ProjectRoutes:
                 }
             )
 
-        @self.project_bp.route(
-            "/results/networkGraphs/<string:p_hash>", methods=["GET"]
-        )
+        @self.project_bp.route("/results/networkGraphs/<string:p_hash>", methods=["GET"])
         def get_network_graphs(
             p_hash: str,
         ) -> Response:
@@ -153,16 +147,12 @@ class ProjectRoutes:
                     graphmls[cluster] = graph
                 return response_success(graphmls)
 
-            except KeyError:
-                raise NotFound("Cluster not found for the given project hash")
-            except FileNotFoundError:
-                raise NotFound(
-                    "GraphML files not found for the given project hash"
-                )
+            except KeyError as e:
+                raise NotFound("Cluster not found for the given project hash") from e
+            except FileNotFoundError as e:
+                raise NotFound("GraphML files not found for the given project hash") from e
 
-        @self.project_bp.route(
-            "/results/<string:result_type>", methods=["POST"]
-        )
+        @self.project_bp.route("/results/<string:result_type>", methods=["POST"])
         def get_results(result_type: str) -> Response:
             """
             [Route to get results for the specified type of analysis.
@@ -183,9 +173,7 @@ class ProjectRoutes:
             """
             self.logger.info(f"Request for results of type: {result_type}")
             if request.json is None:
-                raise BadRequest(
-                    "Request body is missing or not in JSON format."
-                )
+                raise BadRequest("Request body is missing or not in JSON format.")
             match result_type:
                 case "assign":
                     p_hash = request.json["projectHash"]
@@ -195,18 +183,14 @@ class ProjectRoutes:
                     p_hash = request.json["projectHash"]
                     visualisation_type = request.json["type"]
                     cluster = str(request.json["cluster"])
-                    zip_file = generate_zip(
-                        self.fs, p_hash, visualisation_type, cluster
-                    )
+                    zip_file = generate_zip(self.fs, p_hash, visualisation_type, cluster)
                     return send_file(
                         zip_file,
                         download_name=visualisation_type + ".zip",
                         as_attachment=True,
                     )
                 case "microreact":
-                    microreact_api_new_url = (
-                        "https://microreact.org/api/projects/create"
-                    )
+                    microreact_api_new_url = "https://microreact.org/api/projects/create"
                     p_hash = request.json["projectHash"]
                     cluster = str(request.json["cluster"])
                     api_token = str(request.json["apiToken"])

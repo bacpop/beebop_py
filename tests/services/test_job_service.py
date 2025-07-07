@@ -1,8 +1,9 @@
-from beebop.services import job_service
 from unittest.mock import Mock, call
+
 import pytest
 from werkzeug.exceptions import NotFound
 
+from beebop.services import job_service
 
 mock_redis_manager = Mock()
 mock_redis_manager.get_job_status.return_value = b"job_id"
@@ -20,13 +21,9 @@ def test_get_project_status_assign_finished(mocker):
 
     mock_job = Mock()
     mock_job.get_status.return_value = "finished"
-    mocker.patch(
-        "beebop.services.job_service.Job.fetch", return_value=mock_job
-    )
+    mocker.patch("beebop.services.job_service.Job.fetch", return_value=mock_job)
 
-    status = job_service.get_project_status(
-        "test_project_hash", mock_redis_manager
-    )
+    status = job_service.get_project_status("test_project_hash", mock_redis_manager)
 
     assert status == {
         "assign": "finished",
@@ -47,13 +44,9 @@ def test_get_project_status_assign_unfinished(mocker):
 
     mock_job = Mock()
     mock_job.get_status.return_value = "running"
-    mocker.patch(
-        "beebop.services.job_service.Job.fetch", return_value=mock_job
-    )
+    mocker.patch("beebop.services.job_service.Job.fetch", return_value=mock_job)
 
-    status = job_service.get_project_status(
-        "test_project_hash", mock_redis_manager
-    )
+    status = job_service.get_project_status("test_project_hash", mock_redis_manager)
 
     assert status == {
         "assign": "running",
@@ -62,7 +55,7 @@ def test_get_project_status_assign_unfinished(mocker):
     }
 
 
-def test_get_project_status_attribute_error(mocker):
+def test_get_project_status_attribute_error():
     """
     Test the get_project_status function when an AttributeError is raised.
     """
@@ -82,18 +75,12 @@ def test_get_status_job(mocker):
 
     mock_job = Mock()
     mock_job.get_status.return_value = "finished"
-    mocker.patch(
-        "beebop.services.job_service.Job.fetch", return_value=mock_job
-    )
+    mocker.patch("beebop.services.job_service.Job.fetch", return_value=mock_job)
 
-    status = job_service.get_status_job(
-        "assign", "test_project_hash", mock_redis_manager
-    )
+    status = job_service.get_status_job("assign", "test_project_hash", mock_redis_manager)
 
     assert status == "finished"
-    mock_redis_manager.get_job_status.assert_called_once_with(
-        "assign", "test_project_hash"
-    )
+    mock_redis_manager.get_job_status.assert_called_once_with("assign", "test_project_hash")
 
 
 def test_get_visualisation_statuses(mocker):
@@ -113,14 +100,10 @@ def test_get_visualisation_statuses(mocker):
         side_effect=[mock_job_1, mock_job_2],
     )
 
-    statuses = job_service.get_visualisation_statuses(
-        "test_project_hash", mock_redis_manager
-    )
+    statuses = job_service.get_visualisation_statuses("test_project_hash", mock_redis_manager)
 
     assert statuses == {
         "GPSC1": "finished",
         "GPSC2": "running",
     }
-    mock_redis_manager.get_visualisation_statuses.assert_called_once_with(
-        "test_project_hash"
-    )
+    mock_redis_manager.get_visualisation_statuses.assert_called_once_with("test_project_hash")

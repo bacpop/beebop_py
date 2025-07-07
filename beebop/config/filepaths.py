@@ -17,39 +17,39 @@ class FileStore:
         self._path = path
         os.makedirs(path, exist_ok=True)
 
-    def filename(self, hash) -> str:
+    def filename(self, file_hash) -> str:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return str: [path to file incl. filename]
         """
-        return os.path.join(self._path, f"{hash}.json")
+        return os.path.join(self._path, f"{file_hash}.json")
 
-    def get(self, hash) -> str:
+    def get(self, file_hash) -> str:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return str: [sketch]
         """
-        src = self.filename(hash)
+        src = self.filename(file_hash)
         if not os.path.exists(src):
-            raise Exception(f"Sketch for hash '{hash}' not found in storage")
+            raise Exception(f"Sketch for hash '{file_hash}' not found in storage")
         else:
             with open(src, "r") as fp:
                 sketch = json.load(fp)
         return sketch
 
-    def exists(self, hash) -> bool:
+    def exists(self, file_hash) -> bool:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :return bool: [whether file exists]
         """
-        return os.path.exists(self.filename(hash))
+        return os.path.exists(self.filename(file_hash))
 
-    def put(self, hash, sketch) -> None:
+    def put(self, file_hash, sketch) -> None:
         """
-        :param hash: [file hash]
+        :param file_hash: [file hash]
         :param sketch: [sketch to be stored]
         """
-        dst = self.filename(hash)
+        dst = self.filename(file_hash)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(dst, "w") as fp:
             json.dump(sketch, fp)
@@ -107,11 +107,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to mapping between external and poppunk clusters]
         """
-        return str(
-            PurePath(
-                self.output(p_hash), "external_to_poppunk_clusters.pickle"
-            )
-        )
+        return str(PurePath(self.output(p_hash), "external_to_poppunk_clusters.pickle"))
 
     def output_visualisations(self, p_hash, cluster) -> str:
         """
@@ -148,9 +144,7 @@ class PoppunkFileStore:
         :return str: [The file path to the external]
         previous query clustering CSV file.
         """
-        return str(
-            PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv")
-        )
+        return str(PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv"))
 
     def previous_query_clustering(self, p_hash) -> str:
         """
@@ -174,9 +168,7 @@ class PoppunkFileStore:
         :param p_hash: The hash value representing the previous query.
         :return bool: [True if the file exists, False otherwise.]
         """
-        return os.path.exists(
-            self.external_previous_query_clustering_path(p_hash)
-        )
+        return os.path.exists(self.external_previous_query_clustering_path(p_hash))
 
     def microreact_json(self, p_hash, cluster) -> str:
         """
@@ -191,9 +183,7 @@ class PoppunkFileStore:
             )
         )
 
-    def pruned_network_output_component(
-        self, p_hash, component: str, cluster
-    ) -> str:
+    def pruned_network_output_component(self, p_hash, component: str, cluster) -> str:
         """
         [Generates the path to the pruned network component file
         for the given project hash and component number.]
@@ -258,7 +248,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to metadata file]
         """
-        return str(PurePath(self.tmp(p_hash), f"metadata.csv"))
+        return str(PurePath(self.tmp(p_hash), "metadata.csv"))
 
 
 class DatabaseFileStore:
@@ -278,19 +268,9 @@ class DatabaseFileStore:
         self.db = full_path
         self.path = str(PurePath(full_path).parent)
         self.name = str(PurePath(full_path).stem)
-        self.distances = str(
-            PurePath(self.db, self.name).with_suffix(".dists")
-        )
-        self.previous_clustering = str(
-            PurePath(self.db, f"{self.name}_clusters.csv")
-        )
+        self.distances = str(PurePath(self.db, self.name).with_suffix(".dists"))
+        self.previous_clustering = str(PurePath(self.db, f"{self.name}_clusters.csv"))
         self.external_clustering = (
-            str(PurePath("beebop", "resources", external_clusters_file))
-            if external_clusters_file
-            else None
+            str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
-        self.metadata = (
-            str(PurePath("beebop", "resources", db_metadata_file))
-            if db_metadata_file
-            else None
-        )
+        self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None

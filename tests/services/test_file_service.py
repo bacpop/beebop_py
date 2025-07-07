@@ -66,9 +66,7 @@ def test_get_network_files_for_zip(mock_component_filepath):
     component_filename = "component_filename"
     visualise_folder = "visualise_folder"
     cluster_num = "3"
-    mock_component_filepath.return_value = (
-        f"{visualise_folder}/{component_filename}"
-    )
+    mock_component_filepath.return_value = f"{visualise_folder}/{component_filename}"
 
     files = get_network_files_for_zip(visualise_folder, cluster_num)
 
@@ -87,9 +85,7 @@ def test_get_component_filepath(tmp_path):
 
     # Create matching files
     cluster_num = "1"
-    expected_file = (
-        visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
-    )
+    expected_file = visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
 
     expected_file.touch()
 
@@ -108,9 +104,7 @@ def test_get_component_filepath_not_found(tmp_path):
 
     # Create matching files
     cluster_num = "1"
-    expected_file = (
-        visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
-    )
+    expected_file = visualise_folder / f"visualise_{cluster_num}_component_*.graphml"
 
     expected_file.touch()
 
@@ -181,9 +175,7 @@ def test_setup_db_file_stores_fulldb_missing(mock_exists):
 
 def test_add_amr_to_metadata_no_init_metadata(tmp_path):
     fs = Mock()
-    fs.tmp_output_metadata.return_value = str(
-        tmp_path / "tmp_output_metadata.csv"
-    )
+    fs.tmp_output_metadata.return_value = str(tmp_path / "tmp_output_metadata.csv")
     amr_metadata = [
         {"ID": "sample1", "AMR": "AMR1"},
         {"ID": "sample2", "AMR": "AMR2"},
@@ -201,9 +193,7 @@ def test_add_amr_to_metadata_no_init_metadata(tmp_path):
 
 def test_add_amr_to_metadata_init_metadata(tmp_path):
     fs = Mock()
-    fs.tmp_output_metadata.return_value = str(
-        tmp_path / "tmp_output_metadata.csv"
-    )
+    fs.tmp_output_metadata.return_value = str(tmp_path / "tmp_output_metadata.csv")
     metadata = pd.DataFrame(
         {
             "ID": ["sample1", "sample2"],

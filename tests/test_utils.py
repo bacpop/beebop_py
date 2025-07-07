@@ -5,7 +5,6 @@ import time
 from typing import Callable, Literal
 
 import jsonschema
-import pandas as pd
 from redis import Redis
 from rq import Queue
 
@@ -13,9 +12,7 @@ from beebop.config import Schema
 from tests import hdf5_to_json, setup
 
 
-def wait_until(
-    condition: Callable[[], bool], interval=300, timeout=10000
-) -> Literal[True]:
+def wait_until(condition: Callable[[], bool], interval=300, timeout=10000) -> Literal[True]:
     """
     Wait until a condition is met or timeout occurs.
 
@@ -104,9 +101,7 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
     run_assign_and_validate(client, p_hash)
 
     # check if visualisation files are stored
-    wait_until(
-        lambda: visualise_status_finished(client, p_hash), timeout=300000
-    )
+    wait_until(lambda: visualise_status_finished(client, p_hash), timeout=300000)
 
     for cluster_num in cluster_nums:
         assert os.path.exists(
@@ -117,9 +112,7 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
         )
     for cluster_num in cluster_nums:
         assert os.path.exists(
-            setup.output_folder
-            + p_hash
-            + f"/visualise_{cluster_num}/visualise_{cluster_num}.microreact"
+            setup.output_folder + p_hash + f"/visualise_{cluster_num}/visualise_{cluster_num}.microreact"
         )
 
 
@@ -146,9 +139,10 @@ def run_test_job(p_hash):
 def generate_json_pneumo():
     # generate hdf5 sketch from fasta file using pp-sketchlib
     subprocess.run(
-        "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",  # noqa
+        "sketchlib sketch -l sketchlib_input/rfile.txt -o pneumo_sample -s 9984 --cpus 4 -k 14,29,3",
         shell=True,
         cwd="tests/results",
+        check=True,
     )
 
     # translate hdf5 into json

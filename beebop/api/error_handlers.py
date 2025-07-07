@@ -3,8 +3,6 @@ from typing import Literal
 
 from flask import Response
 
-from beebop.models import ResponseError
-
 from .api_utils import response_failure
 
 logger = logging.getLogger(__name__)
@@ -41,9 +39,7 @@ def register_error_handlers(app) -> None:
         """
         logger.exception(f"Bad Request: {e}")
         return (
-            response_failure(
-                error_message="Bad Request", error_detail=str(e.description)
-            ),
+            response_failure(error_message="Bad Request", error_detail=str(e.description)),
             400,
         )
 

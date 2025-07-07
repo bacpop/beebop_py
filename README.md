@@ -94,7 +94,8 @@ Start the flask app with
 In a second terminal, you can now query the flask endpoints, e.g.:
 
 - /version
-  ```
+
+  ```bash
   curl http://127.0.0.1:5000/version
   ```
 ### Testing
@@ -106,6 +107,23 @@ Testing can be done in a second terminal (make sure to activate 'beebop_py') by 
 ```
 TESTING=True poetry run pytest
 ```
+
+### Linting and Formatting
+
+To run the linter and formatter, you can use the following commands:
+
+- **Linting**:
+  ```
+  poetry run ruff check
+  ```
+- **Linting with Fix**: 
+  ```
+  poetry run ruff check --fix
+  ```
+- **Formatting**: 
+  ```
+  poetry run ruff format
+  ```
 
 ### Diagrams
 

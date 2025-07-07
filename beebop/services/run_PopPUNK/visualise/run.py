@@ -106,17 +106,11 @@ def queue_visualisation_jobs(
     """
     q = Queue(connection=redis)
     redis_manager = RedisManager(redis)
-    queries_clusters = set(
-        [item["cluster"] for item in assign_result.values()]
-    )
+    queries_clusters = {item["cluster"] for item in assign_result.values()}
     previous_job = None
     last_cluster_idx = len(queries_clusters) - 1
     for idx, assign_cluster in enumerate(queries_clusters):
-        dependency = (
-            Dependency([previous_job], allow_failure=True)
-            if previous_job
-            else None
-        )
+        dependency = Dependency([previous_job], allow_failure=True) if previous_job else None
         cluster_visualise_job = q.enqueue(
             visualise_per_cluster,
             args=(
@@ -132,9 +126,7 @@ def queue_visualisation_jobs(
             **queue_kwargs,
         )
 
-        redis_manager.set_visualisation_status(
-            p_hash, assign_cluster, cluster_visualise_job.id
-        )
+        redis_manager.set_visualisation_status(p_hash, assign_cluster, cluster_visualise_job.id)
         previous_job = cluster_visualise_job
 
 
@@ -174,9 +166,7 @@ def visualise_per_cluster(
         p_hash,
         fs,
     )
-    wrapper.create_visualisations(
-        cluster_no, fs.include_file(p_hash, internal_cluster)
-    )
+    wrapper.create_visualisations(cluster_no, fs.include_file(p_hash, internal_cluster))
 
     replace_filehashes(output_folder, name_mapping)
     create_subgraph(output_folder, name_mapping, cluster_no)

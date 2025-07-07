@@ -1,15 +1,13 @@
-from unittest.mock import patch
-from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
+from unittest.mock import Mock, patch
+
 from beebop.config import DatabaseFileStore
-from tests.setup import fs, args, species
-from unittest.mock import Mock
+from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
+from tests.setup import args, fs, species
 
 
 @patch("beebop.services.run_PopPUNK.poppunkWrapper.assign_query_hdf5")
 def test_poppunk_wrapper_assign_cluster(mock_assign):
-    db_fs = DatabaseFileStore(
-        "./storage/GPS_v9_ref", "GPS_v9_external_clusters.csv"
-    )
+    db_fs = DatabaseFileStore("./storage/GPS_v9_ref", "GPS_v9_external_clusters.csv")
     p_hash = "random hash"
     db_funcs = Mock()
     wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)

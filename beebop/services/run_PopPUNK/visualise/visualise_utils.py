@@ -28,20 +28,18 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
         for file in files:
             if not file.endswith(".h5"):
                 file_list.append(os.path.join(root, file))
-    with fileinput.input(files=(file_list), inplace=True) as input:
-        for line in input:
-            line = line.rstrip()
-            if not line:
+    with fileinput.input(files=(file_list), inplace=True) as input_lines:
+        for line in input_lines:
+            processed_line = line.rstrip()
+            if not processed_line:
                 continue
             for f_key, f_value in filename_dict.items():
-                if f_key in line:
-                    line = line.replace(f_key, f_value)
-            print(line)
+                if f_key in processed_line:
+                    processed_line = processed_line.replace(f_key, f_value)
+            print(processed_line)
 
 
-def create_subgraph(
-    visualisations_folder: str, filename_dict: dict, cluster_num: str
-) -> None:
+def create_subgraph(visualisations_folder: str, filename_dict: dict, cluster_num: str) -> None:
     """
     [Create subgraphs for the network visualisation. These are what
     will be sent back to the user to see.
@@ -72,9 +70,7 @@ def create_subgraph(
     )
 
 
-def get_component_filepath(
-    visualisations_folder: str, cluster_num: str
-) -> str:
+def get_component_filepath(visualisations_folder: str, cluster_num: str) -> str:
     """
     Get the filename of the network component
     for a given assigned cluster number.
@@ -95,9 +91,7 @@ def get_component_filepath(
         )
     )
     if not component_files:
-        raise FileNotFoundError(
-            f"No component files found for cluster {cluster_num}"
-        )
+        raise FileNotFoundError(f"No component files found for cluster {cluster_num}")
     return component_files[0]
 
 
@@ -115,9 +109,7 @@ def build_subgraph(path: str, query_names: list) -> gt.Graph:
     if MAX_NODES >= graph.num_vertices():
         return graph
     # get query nodes
-    query_nodes = {
-        v for v in graph.get_vertices() if graph.vp["id"][v] in query_names
-    }
+    query_nodes = {v for v in graph.get_vertices() if graph.vp["id"][v] in query_names}
 
     neighbor_nodes = set()
     for node in query_nodes:
@@ -137,9 +129,7 @@ def build_subgraph(path: str, query_names: list) -> gt.Graph:
     return sub_graph
 
 
-def add_neighbor_nodes(
-    graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int
-) -> None:
+def add_neighbor_nodes(graph_nodes: set, neighbor_nodes: set, max_nodes_to_add: int) -> None:
     """
     [Add neighbor nodes to the set of nodes until the
     maximum number of nodes is reached.
@@ -153,9 +143,7 @@ def add_neighbor_nodes(
     if max_nodes_to_add >= len(neighbor_nodes):
         graph_nodes.update(neighbor_nodes)
     else:
-        graph_nodes.update(
-            random.sample(list(neighbor_nodes), max_nodes_to_add)
-        )
+        graph_nodes.update(random.sample(list(neighbor_nodes), max_nodes_to_add))
 
 
 def add_query_ref_to_graph(graph: gt.Graph, query_names: list) -> None:
@@ -173,10 +161,7 @@ def add_query_ref_to_graph(graph: gt.Graph, query_names: list) -> None:
     """
     vertex_property_ref_query = graph.new_vertex_property(
         "string",
-        vals=[
-            "query" if graph.vp["id"][v] in query_names else "ref"
-            for v in graph.get_vertices()
-        ],
+        vals=["query" if graph.vp["id"][v] in query_names else "ref" for v in graph.get_vertices()],
     )
     graph.vp.ref_query = vertex_property_ref_query
 
@@ -229,13 +214,9 @@ def create_combined_include_file(
     :return: [combined internal cluster]
     """
     combined_internal_cluster = "_".join(internal_clusters)
-    with open(
-        fs.include_file(p_hash, combined_internal_cluster), "w"
-    ) as combined_include_file:
+    with open(fs.include_file(p_hash, combined_internal_cluster), "w") as combined_include_file:
         for internal_cluster in internal_clusters:
-            with open(
-                fs.include_file(p_hash, internal_cluster), "r"
-            ) as include_file:
+            with open(fs.include_file(p_hash, internal_cluster), "r") as include_file:
                 combined_include_file.write(include_file.read() + "\n")
 
     return combined_internal_cluster

@@ -4,8 +4,8 @@ import re
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
-from beebop.models import ClusteringConfig
 from beebop.config import PoppunkFileStore
+from beebop.models import ClusteringConfig
 from beebop.services.cluster_service import get_lowest_cluster
 
 
@@ -25,19 +25,13 @@ def update_external_clusters_csv(
     :param q_names: [List of sample names to match]
     """
     df, samples_mask = get_df_sample_mask(dest_query_clustering_file, q_names)
-    sample_cluster_num_mapping = get_external_cluster_nums(
-        source_query_clustering_file, q_names
-    )
+    sample_cluster_num_mapping = get_external_cluster_nums(source_query_clustering_file, q_names)
 
-    df.loc[samples_mask, "Cluster"] = [
-        sample_cluster_num_mapping[sample_id] for sample_id in q_names
-    ]
+    df.loc[samples_mask, "Cluster"] = [sample_cluster_num_mapping[sample_id] for sample_id in q_names]
     df.to_csv(dest_query_clustering_file, index=False)
 
 
-def get_df_sample_mask(
-    previous_query_clustering_file: str, samples: list[str]
-) -> tuple[pd.DataFrame, pd.Series]:
+def get_df_sample_mask(previous_query_clustering_file: str, samples: list[str]) -> tuple[pd.DataFrame, pd.Series]:
     """
     Read a CSV file and create a boolean mask for matching sample names.
 
@@ -52,9 +46,7 @@ def get_df_sample_mask(
     return df, df["sample"].isin(samples)
 
 
-def get_external_cluster_nums(
-    previous_query_clustering_file: str, hashes_list: list
-) -> dict[str, str]:
+def get_external_cluster_nums(previous_query_clustering_file: str, hashes_list: list) -> dict[str, str]:
     """
     [Get external cluster numbers for samples in the external clusters file.]
 
@@ -63,9 +55,7 @@ def get_external_cluster_nums(
     :param hashes_list: [List of sample hashes to find samples for]
     :return dict: [Dictionary mapping sample names to external cluster names]
     """
-    filtered_df = get_df_filtered_by_samples(
-        previous_query_clustering_file, hashes_list
-    )
+    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
 
     sample_cluster_num_mapping = filtered_df["Cluster"].astype(str)
     sample_cluster_num_mapping.index = filtered_df["sample"]
@@ -73,9 +63,7 @@ def get_external_cluster_nums(
     return sample_cluster_num_mapping.to_dict()
 
 
-def get_df_filtered_by_samples(
-    previous_query_clustering_file: str, hashes_list: list
-) -> pd.DataFrame:
+def get_df_filtered_by_samples(previous_query_clustering_file: str, hashes_list: list) -> pd.DataFrame:
     """
     [Filter a DataFrame by sample names.]
 
@@ -84,9 +72,7 @@ def get_df_filtered_by_samples(
     :param hashes_list: [List of sample hashes to find samples for]
     :return pd.DataFrame: [DataFrame containing sample data]
     """
-    df, samples_mask = get_df_sample_mask(
-        previous_query_clustering_file, hashes_list
-    )
+    df, samples_mask = get_df_sample_mask(previous_query_clustering_file, hashes_list)
     return df[samples_mask]
 
 
@@ -113,9 +99,7 @@ def get_external_clusters_from_file(
     external cluster name & raw external cluster number,
     list of sample hashes not found in the external]
     """
-    filtered_df = get_df_filtered_by_samples(
-        previous_query_clustering_file, hashes_list
-    )
+    filtered_df = get_df_filtered_by_samples(previous_query_clustering_file, hashes_list)
 
     # Split into found and not found based on NaN values
     found_mask = filtered_df["Cluster"].notna()
@@ -125,13 +109,10 @@ def get_external_clusters_from_file(
     valid_clusters = filtered_df[found_mask]
     hash_cluster_info = {
         sample: {
-            "cluster":
-                f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
+            "cluster": f"{external_clusters_prefix}{get_lowest_cluster(cluster)}",
             "raw_cluster_num": cluster,
         }
-        for sample, cluster in zip(
-            valid_clusters["sample"], valid_clusters["Cluster"]
-        )
+        for sample, cluster in zip(valid_clusters["sample"], valid_clusters["Cluster"])
     }
 
     return hash_cluster_info, not_found_hashes
@@ -145,7 +126,7 @@ def create_sketches_dict(hashes_list: list[str], fs: PoppunkFileStore) -> dict:
     :param fs: [PoppunkFileStore with paths to input files]
     :return dict: [dictionary with filehash (key) and sketch (value)]
     """
-    return {hash: fs.input.get(hash) for hash in hashes_list}
+    return {sample_hash: fs.input.get(sample_hash) for sample_hash in hashes_list}
 
 
 def preprocess_sketches(sketches_dict: dict, outdir: str) -> list:
@@ -170,12 +151,8 @@ def hex_to_decimal(sketches_dict) -> None:
     """
     for sample in list(sketches_dict.values()):
         for key, value in sample.items():
-            if (
-                isinstance(value, list)
-                and isinstance(value[0], str)
-                and re.match("0x.*", value[0])
-            ):
-                sample[key] = list(map(lambda x: int(x, 16), value))
+            if isinstance(value, list) and isinstance(value[0], str) and re.match("0x.*", value[0]):
+                sample[key] = [int(x, 16) for x in value]
 
 
 def filter_queries(
@@ -196,11 +173,7 @@ def filter_queries(
             set of clusters assigned to not found samples]
     """
     filtered_names = [name for name in queries_names if name not in not_found]
-    filtered_clusters = [
-        cluster
-        for name, cluster in zip(queries_names, queries_clusters)
-        if name not in not_found
-    ]
+    filtered_clusters = [cluster for name, cluster in zip(queries_names, queries_clusters) if name not in not_found]
 
     return (
         filtered_names,
@@ -240,9 +213,7 @@ def handle_files_manipulation(
     )
 
 
-def delete_include_files(
-    fs: PoppunkFileStore, p_hash: str, clusters: set
-) -> None:
+def delete_include_files(fs: PoppunkFileStore, p_hash: str, clusters: set) -> None:
     """
     [Delete include files for samples that were not found
         in the initial external clusters file.]
@@ -268,9 +239,7 @@ def copy_include_files(output_full_tmp: str, outdir: str) -> None:
     :param output_full_tmp: [path to full assign output directory]
     :param outdir: [path to output directory]
     """
-    include_files = [
-        f for f in os.listdir(output_full_tmp) if f.startswith("include")
-    ]
+    include_files = [f for f in os.listdir(output_full_tmp) if f.startswith("include")]
     for include_file in include_files:
         dest_file = f"{outdir}/{include_file}"
         source_file = f"{output_full_tmp}/{include_file}"
@@ -299,9 +268,7 @@ def merge_txt_files(main_file: str, merge_file: str) -> None:
         f.write("\n".join(combined_lines))
 
 
-def process_unassignable_samples(
-    unassignable_names: list[str], fs: PoppunkFileStore, p_hash: str
-) -> None:
+def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileStore, p_hash: str) -> None:
     """
     [Process samples that are unassignable to external clusters.
     These samples are added to the QC error report file.]
@@ -315,9 +282,7 @@ def process_unassignable_samples(
         return
 
     qc_report_path = fs.output_qc_report(p_hash)
-    strain_assignment_error = (
-        "Unable to assign to an existing strain - potentially novel genotype"
-    )
+    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype"
 
     with open(qc_report_path, "a") as report_file:
         for sample_hash in unassignable_names:

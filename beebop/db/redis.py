@@ -1,6 +1,7 @@
-from werkzeug.exceptions import InternalServerError
 from typing import Literal
+
 from redis import Redis
+from werkzeug.exceptions import InternalServerError
 
 
 class RedisManager:
@@ -68,9 +69,7 @@ class RedisManager:
         """
         return self.redis.hgetall(f"beebop:hash:job:visualise:{p_hash}")
 
-    def set_visualisation_status(
-        self, p_hash: str, assign_cluster: str, job_id: str
-    ) -> None:
+    def set_visualisation_status(self, p_hash: str, assign_cluster: str, job_id: str) -> None:
         """
         [sets a visualisation job for a specific cluster in a project]
 
@@ -92,7 +91,5 @@ class RedisManager:
         """
         try:
             self.redis.ping()
-        except (ConnectionError, ConnectionRefusedError):
-            raise InternalServerError(
-                "Redis connection error. Please check if Redis is running."
-            )
+        except (ConnectionError, ConnectionRefusedError) as exc:
+            raise InternalServerError("Redis connection error. Please check if Redis is running.") from exc
