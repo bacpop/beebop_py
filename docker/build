@@ -6,6 +6,7 @@ HERE=$(dirname $0)
 
 # Build and push the production image
 docker build --pull \
+       --no-cache \
        --tag $TAG_SHA \
        -f docker/Dockerfile.prod \
        $PACKAGE_ROOT
