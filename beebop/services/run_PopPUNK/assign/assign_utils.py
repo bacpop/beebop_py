@@ -282,7 +282,10 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
         return
 
     qc_report_path = fs.output_qc_report(p_hash)
-    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype"
+    strain_assignment_error = (
+        "Unable to assign to an existing strain - potentially novel genotype. "
+        "Contact n.croucher@imperial.ac.uk for assistance."
+    )
 
     with open(qc_report_path, "a") as report_file:
         for sample_hash in unassignable_names:
