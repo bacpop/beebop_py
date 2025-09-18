@@ -257,11 +257,14 @@ def test_get_project_with_failed_samples(client):
     result = client.get(f"/project/{p_hash}")
 
     assert result.status_code == 200
-    print(result)
     samples = read_data(result)["samples"]
-    assert len(samples) == 2
+    assert len(samples) == 3
     assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["hash"] == "3eaf3ff220d15f8b7ce9ee47aaa9b4a9"
     assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][0] == "Failed distance QC (too high)"
     assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failReasons"][1] == "Failed distance QC (too many zeros)"
+    assert samples["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"]["failType"] == "error"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["hash"] == "c448c13f7efd6a5e7e520a7495f3f40f"
     assert samples["c448c13f7efd6a5e7e520a7495f3f40f"]["cluster"] == "GPSC3"
+    assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["hash"] == "6dfg6ff220d15f8b7ce9ee47aaa9b2i8"
+    assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["failReasons"][0] == "Potential novel genotype"
+    assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["failType"] == "warning"
