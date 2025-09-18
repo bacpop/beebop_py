@@ -37,6 +37,7 @@ def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, 
     :return dict[str, dict]: failed samples
     containing hash and reasons for failure.
     """
+    MIN_FAIL_PARTS_WITH_TYPE = 3
     qc_report_file_path = fs.output_qc_report(p_hash)
     failed_samples = {}
     if os.path.exists(qc_report_file_path):
@@ -45,7 +46,7 @@ def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, 
                 failParts = line.strip().split("\t")
                 sample_hash = failParts[0]
                 reasons = failParts[1]
-                fail_type = failParts[2] if len(failParts) > 2 else FailedSampleType.ERROR.value
+                fail_type = failParts[2] if len(failParts) >= MIN_FAIL_PARTS_WITH_TYPE else FailedSampleType.ERROR.value
                 failed_samples[sample_hash] = {
                     "failReasons": reasons.split(","),
                     "failType": fail_type,
