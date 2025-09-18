@@ -276,10 +276,7 @@ def test_merge_partial_query_graphs(tmp_path):
 
 def test_process_unassignable_samples(tmp_path):
     unassignable_samples = ["sample1", "sample2"]
-    strain_assignment_error = (
-        "Unable to assign to an existing strain - potentially novel genotype. "
-        "Contact n.croucher@imperial.ac.uk for assistance."
-    )
+    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype."
     expected_output = [f"{sample}\t{strain_assignment_error}" for sample in unassignable_samples]
     fs = Mock()
     report_path = tmp_path / "qc_report.txt"

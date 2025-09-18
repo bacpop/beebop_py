@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Optional
+from enum import Enum
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 
