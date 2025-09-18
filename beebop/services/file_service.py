@@ -42,12 +42,13 @@ def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, 
     if os.path.exists(qc_report_file_path):
         with open(fs.output_qc_report(p_hash), "r") as f:
             for line in f:
-                sample_hash, reasons, fail_type = line.strip().split("\t")
+                failParts = line.strip().split("\t")
+                sample_hash = failParts[0]
+                reasons = failParts[1]
+                fail_type = failParts[2] if len(failParts) > 2 else FailedSampleType.ERROR.value
                 failed_samples[sample_hash] = {
                     "failReasons": reasons.split(","),
-                    "failType": FailedSampleType.WARNING.value
-                    if fail_type == FailedSampleType.WARNING.value
-                    else FailedSampleType.ERROR.value,
+                    "failType": fail_type,
                     "hash": sample_hash,
                 }
     return failed_samples
