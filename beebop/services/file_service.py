@@ -46,7 +46,11 @@ def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, 
                 failParts = line.strip().split("\t")
                 sample_hash = failParts[0]
                 reasons = failParts[1]
-                fail_type = failParts[2] if len(failParts) >= MIN_FAIL_PARTS_WITH_TYPE else FailedSampleType.ERROR.value
+                fail_type = (
+                    failParts[MIN_FAIL_PARTS_WITH_TYPE - 1]
+                    if len(failParts) >= MIN_FAIL_PARTS_WITH_TYPE
+                    else FailedSampleType.ERROR.value
+                )
                 failed_samples[sample_hash] = {
                     "failReasons": reasons.split(","),
                     "failType": fail_type,
