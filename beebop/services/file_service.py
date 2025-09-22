@@ -9,7 +9,7 @@ from typing import Optional
 import pandas as pd
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
-from beebop.models import SpeciesConfig
+from beebop.models import FailedSampleType, SpeciesConfig
 
 
 def get_cluster_assignments(p_hash: str, fs: PoppunkFileStore) -> dict[int, dict[str, str]]:
@@ -37,14 +37,23 @@ def get_failed_samples_internal(p_hash: str, fs: PoppunkFileStore) -> dict[str, 
     :return dict[str, dict]: failed samples
     containing hash and reasons for failure.
     """
+    MIN_FAIL_PARTS_WITH_TYPE = 3
     qc_report_file_path = fs.output_qc_report(p_hash)
     failed_samples = {}
     if os.path.exists(qc_report_file_path):
         with open(fs.output_qc_report(p_hash), "r") as f:
             for line in f:
-                sample_hash, reasons = line.strip().split("\t")
+                failParts = line.strip().split("\t")
+                sample_hash = failParts[0]
+                reasons = failParts[1]
+                fail_type = (
+                    failParts[MIN_FAIL_PARTS_WITH_TYPE - 1]
+                    if len(failParts) >= MIN_FAIL_PARTS_WITH_TYPE
+                    else FailedSampleType.ERROR.value
+                )
                 failed_samples[sample_hash] = {
                     "failReasons": reasons.split(","),
+                    "failType": fail_type,
                     "hash": sample_hash,
                 }
     return failed_samples

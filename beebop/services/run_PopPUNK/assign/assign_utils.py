@@ -5,7 +5,7 @@ import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
 from beebop.config import PoppunkFileStore
-from beebop.models import ClusteringConfig
+from beebop.models import ClusteringConfig, FailedSampleType
 from beebop.services.cluster_service import get_lowest_cluster
 
 
@@ -282,8 +282,8 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
         return
 
     qc_report_path = fs.output_qc_report(p_hash)
-    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype"
+    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype."
 
     with open(qc_report_path, "a") as report_file:
         for sample_hash in unassignable_names:
-            report_file.write(f"{sample_hash}\t{strain_assignment_error}\n")
+            report_file.write(f"{sample_hash}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}\n")

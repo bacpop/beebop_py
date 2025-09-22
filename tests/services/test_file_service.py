@@ -50,14 +50,18 @@ def test_get_failed_samples_internal_file_exists():
 
     result = get_failed_samples_internal(p_hash, fs)
 
-    assert result == {
-        "3eaf3ff220d15f8b7ce9ee47aaa9b4a9": {
-            "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
-            "failReasons": [
-                "Failed distance QC (too high)",
-                "Failed distance QC (too many zeros)",
-            ],
-        }
+    assert result["3eaf3ff220d15f8b7ce9ee47aaa9b4a9"] == {
+        "hash": "3eaf3ff220d15f8b7ce9ee47aaa9b4a9",
+        "failReasons": [
+            "Failed distance QC (too high)",
+            "Failed distance QC (too many zeros)",
+        ],
+        "failType": "error",
+    }
+    assert result["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"] == {
+        "hash": "6dfg6ff220d15f8b7ce9ee47aaa9b2i8",
+        "failReasons": ["Potential novel genotype"],
+        "failType": "warning",
     }
 
 

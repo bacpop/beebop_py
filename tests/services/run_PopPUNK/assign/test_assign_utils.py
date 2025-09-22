@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 
+from beebop.models.enums import FailedSampleType
 from beebop.services.run_PopPUNK.assign.assign_utils import (
     copy_include_files,
     create_sketches_dict,
@@ -276,8 +277,10 @@ def test_merge_partial_query_graphs(tmp_path):
 
 def test_process_unassignable_samples(tmp_path):
     unassignable_samples = ["sample1", "sample2"]
-    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype"
-    expected_output = [f"{sample}\t{strain_assignment_error}" for sample in unassignable_samples]
+    strain_assignment_error = "Unable to assign to an existing strain - potentially novel genotype."
+    expected_output = [
+        f"{sample}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}" for sample in unassignable_samples
+    ]
     fs = Mock()
     report_path = tmp_path / "qc_report.txt"
 

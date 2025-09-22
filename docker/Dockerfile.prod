@@ -1,5 +1,8 @@
 FROM continuumio/miniconda3
 
+# Needed as per current issue:https://www.anaconda.com/docs/getting-started/tos-plugin#troubleshooting
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes 
+
 RUN conda config --append channels conda-forge
 RUN conda config --append channels bioconda
 
@@ -16,4 +19,4 @@ COPY . /beebop
 WORKDIR /beebop
 EXPOSE 5000
 
-CMD poetry run waitress-serve --port=5000 'beebop.app:app'
+CMD ["poetry", "run", "waitress-serve", "--port=5000", "beebop.app:app"]
