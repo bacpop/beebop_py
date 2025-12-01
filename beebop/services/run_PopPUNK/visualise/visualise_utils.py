@@ -126,6 +126,7 @@ def build_subgraph(path: str, query_names: list) -> gt.Graph:
 
     sub_graph = gt.GraphView(graph, vfilt=lambda v: v in sub_graph_nodes)
     sub_graph.purge_vertices()
+    sub_graph.clear_filters()  # remove filters to not pollute saved graph
     return sub_graph
 
 
