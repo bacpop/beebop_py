@@ -139,10 +139,15 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
         database file stores]
     """
+    sub_lineages_db_path = None
+    if species_args.sub_lineages_db is not None:
+        sub_lineages_db_path = f"{dbs_location}/{species_args.sub_lineages_db}"
+
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
         species_args.db_metadata_file,
+        sub_lineages_db_path,
     )
 
     if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
@@ -150,6 +155,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
             f"{dbs_location}/{species_args.fulldb}",
             species_args.external_clusters_file,
             species_args.db_metadata_file,
+            sub_lineages_db_path,
         )
     else:
         full_db_fs = ref_db_fs

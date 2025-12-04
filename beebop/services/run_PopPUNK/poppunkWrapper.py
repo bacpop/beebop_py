@@ -73,6 +73,47 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network,
         )
 
+    def assign_sub_lineages(
+        self,
+        db_funcs: dict,
+        qNames: list[str],
+        output: str,
+        cluster_rank_folder: str,
+    ) -> None:
+        """
+        :param db_funcs: [database functions, generated with poppunks
+            setupDBFuncs()]
+        :param qNames: [hd5 database with all sketches]
+        :param output: [output folder for assign_clusters]
+        :param cluster_rank_folder: [folder with cluster rank model]
+        """
+        assign_query_hdf5(
+            dbFuncs=db_funcs,
+            ref_db=cluster_rank_folder,
+            qNames=qNames,
+            output=output,
+            qc_dict={"run_qc": False},
+            update_db=self.args.assign.update_db,
+            write_references=self.args.assign.write_references,
+            distances=None,
+            serial=self.args.assign.serial,
+            threads=self.args.assign.threads,
+            overwrite=False,
+            plot_fit=self.args.assign.plot_fit,
+            graph_weights=self.args.assign.graph_weights,
+            model_dir=cluster_rank_folder,
+            strand_preserved=self.args.assign.strand_preserved,
+            previous_clustering=None,
+            external_clustering=None,
+            core=self.args.assign.core_only,
+            accessory=self.args.assign.accessory_only,
+            gpu_dist=self.args.assign.gpu_dist,
+            gpu_graph=self.args.assign.gpu_graph,
+            save_partial_query_graph=False,
+            stable=self.args.assign.stable,
+            use_full_network=self.args.assign.use_full_network,
+        )
+
     def create_visualisations(self, cluster: str, include_file: str) -> None:
         """
         [Generates visualisation outputs (microreact + network)
@@ -87,7 +128,7 @@ class PoppunkWrapper:
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.db_fs.distances,
+            distances=None,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_visualisations(self.p_hash, cluster),
@@ -116,7 +157,7 @@ class PoppunkWrapper:
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
             display_cluster=self.args.visualise.display_cluster,
-            recalculate_distances=self.args.visualise.recalculate_distances,
+            read_distances=False,
             use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash),
             extend_query_graph=self.args.visualise.extend_query_graph,

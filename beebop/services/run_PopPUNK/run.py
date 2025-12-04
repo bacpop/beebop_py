@@ -6,6 +6,7 @@ from typing import Optional
 from flask import current_app
 from redis import Redis
 from rq import Queue
+from rq.job import Job
 from werkzeug.exceptions import BadRequest
 
 from beebop.config import PoppunkFileStore
@@ -16,7 +17,7 @@ from beebop.services.file_service import (
     setup_db_file_stores,
 )
 
-from .assign import assign_clusters
+from .assign import assign_clusters, assign_sub_lineages
 from .visualise import visualise
 
 
@@ -45,6 +46,7 @@ class PopPUNKJobRunner:
             raise BadRequest(f"No database found for species: {self.species}")
 
         # Setup file stores and services
+        self.sub_lineages_db = self.species_args.sub_lineages_db
         self.ref_db_fs, self.full_db_fs = setup_db_file_stores(self.species_args, self.dbs_location)
         self.queue = Queue(connection=self.redis)
         self.fs = PoppunkFileStore(self.storage_location)
@@ -77,12 +79,18 @@ class PopPUNKJobRunner:
         # Submit cluster assignment job
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
 
-        # Submit visualization job
+        # Submit cluster lineage assignment jobs - only if species supports it
+        job_sub_lineage_assign: Optional[Job] = None
+        # if getattr(self.species_args, "sub_lineages_db", None) is not None:
+        #     job_sub_lineage_assign = self._submit_sub_lineage_assign_jobs(p_hash, job_assign, queue_kwargs)
+
+        # Submit visualization job - only for valid species
         job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
 
         return {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
+            "sub_lineage_assign": job_sub_lineage_assign.id if job_sub_lineage_assign else None,
         }
 
     def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
@@ -127,12 +135,24 @@ class PopPUNKJobRunner:
         self.redis_manager.set_job_status("assign", p_hash, job_assign.id)
         return job_assign
 
+    def _submit_sub_lineage_assign_jobs(self, p_hash: str, job_assign: Job, queue_kwargs: dict):
+        """Submit lineage cluster assignment jobs to Redis queue"""
+        job_lineage_assign = self.queue.enqueue(
+            assign_sub_lineages,
+            args=(p_hash, self.fs, self.ref_db_fs, self.args, self.redis_host, self.species),
+            depends_on=job_assign,
+            **queue_kwargs,
+        )
+
+        self.redis_manager.set_job_status("sub_lineage_assign", p_hash, job_lineage_assign.id)
+        return job_lineage_assign
+
     def _submit_visualization_job(
         self,
         p_hash: str,
         name_mapping: dict,
         amr_metadata: list[dict],
-        job_assign,
+        job_assign: Job,
         queue_kwargs: dict,
     ):
         """Submit visualization job to Redis queue"""

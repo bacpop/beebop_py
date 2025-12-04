@@ -2,14 +2,18 @@ import pickle
 import shutil
 from collections import defaultdict
 from collections.abc import ItemsView
+from pathlib import PurePath
 from types import SimpleNamespace
 from typing import Union
 
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
+from redis import Redis
+from rq import get_current_job
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.models import ClusteringConfig
+from beebop.services.cluster_service import get_cluster_num
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .assign_utils import (
@@ -21,6 +25,46 @@ from .assign_utils import (
     process_unassignable_samples,
     update_external_clusters_csv,
 )
+
+
+def assign_sub_lineages(
+    p_hash: str,
+    fs: PoppunkFileStore,
+    ref_db_fs: DatabaseFileStore,
+    args: SimpleNamespace,
+    redis_host: str,
+    species: str
+) -> dict:
+    if ref_db_fs.sub_lineages_db_path is None:
+        raise ValueError("Sub-lineages database path is not provided.")
+
+    db_funcs = setupDBFuncs(args=args.assign)
+    redis = Redis(host=redis_host)
+    # get cluster from assign job
+    current_job = get_current_job(connection=redis)
+    if not current_job or not current_job.dependency:
+        raise ValueError("Current job or its dependencies are not set.")
+    assign_result: dict = current_job.dependency.result
+    cluster_to_hashes = defaultdict(list)
+    for item in assign_result.values():
+        cluster_to_hashes[item["cluster"].lower()].append(item["hash"])
+
+    ranks = [5, 10, 25, 50]
+    sub_lineages_result = defaultdict(dict)  # {hash: {rank5: xx, rank10: xx, rank25: xx, rank50: 33}}
+    for cluster, hashes in cluster_to_hashes.items():
+        for rank in ranks:
+            cluster_rank_folder = str(PurePath(ref_db_fs.sub_lineages_db_path, cluster, f"rank_{rank}"))
+            output_sub_lineages = fs.output_sub_lineages(p_hash, cluster, str(rank))
+
+            wrapper = PoppunkWrapper(fs, ref_db_fs, args, p_hash, species)
+            wrapper.assign_sub_lineages(
+                db_funcs,
+                qNames=hashes,
+                output=output_sub_lineages,
+                cluster_rank_folder=cluster_rank_folder,
+            )
+
+    return sub_lineages_result
 
 
 def assign_clusters(
@@ -66,6 +110,7 @@ def assign_clusters(
     qNames = preprocess_sketches(sketches_dict, config.out_dir)
 
     assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
+
     queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
         config.out_dir, species, config.ref_db_fs.db, qNames
     )

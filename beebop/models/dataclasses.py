@@ -38,9 +38,10 @@ class Qc:
 class SpeciesConfig:
     refdb: str
     fulldb: str
-    external_cluster_prefix: str
-    external_clusters_file: str
-    db_metadata_file: str
+    external_cluster_prefix: Optional[str]
+    external_clusters_file: Optional[str]
+    db_metadata_file: Optional[str]
+    sub_lineages_db: Optional[str]
     qc_dict: Qc
 
 
