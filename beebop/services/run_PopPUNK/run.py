@@ -81,8 +81,8 @@ class PopPUNKJobRunner:
 
         # Submit cluster lineage assignment jobs - only if species supports it
         job_sub_lineage_assign: Optional[Job] = None
-        # if getattr(self.species_args, "sub_lineages_db", None) is not None:
-        #     job_sub_lineage_assign = self._submit_sub_lineage_assign_jobs(p_hash, job_assign, queue_kwargs)
+        if getattr(self.species_args, "sub_lineages_db", None) is not None:
+            job_sub_lineage_assign = self._submit_sub_lineage_assign_jobs(p_hash, job_assign, queue_kwargs)
 
         # Submit visualization job - only for valid species
         job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
@@ -139,7 +139,7 @@ class PopPUNKJobRunner:
         """Submit lineage cluster assignment jobs to Redis queue"""
         job_lineage_assign = self.queue.enqueue(
             assign_sub_lineages,
-            args=(p_hash, self.fs, self.ref_db_fs, self.args, self.redis_host, self.species),
+            args=(p_hash, self.fs, self.full_db_fs, self.args, self.redis_host, self.species),
             depends_on=job_assign,
             **queue_kwargs,
         )

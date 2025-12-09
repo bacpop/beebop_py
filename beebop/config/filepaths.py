@@ -83,7 +83,7 @@ class PoppunkFileStore:
         :param rank: [rank number]
         :return str: [path to sub-lineages output folder]
         """
-        return str(PurePath(self.output(p_hash), f"sub_lineages_{cluster}_rank_{rank}"))
+        return str(PurePath(self.output(p_hash), f"sub_lineages_{cluster}", f"rank_{rank}"))
 
     def setup_output_directory(self, p_hash: str) -> None:
         """
@@ -110,6 +110,13 @@ class PoppunkFileStore:
         :return str: [path to cluster results file]
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
+
+    def output_cluster_csv(self, p_hash)-> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to cluster results csv file]
+        """
+        return str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
 
     def external_to_poppunk_clusters(self, p_hash) -> str:
         """

@@ -22,20 +22,16 @@ from .assign_utils import (
     get_external_clusters_from_file,
     handle_files_manipulation,
     preprocess_sketches,
+    process_assign_clusters_csv,
     process_unassignable_samples,
     update_external_clusters_csv,
 )
 
 
 def assign_sub_lineages(
-    p_hash: str,
-    fs: PoppunkFileStore,
-    ref_db_fs: DatabaseFileStore,
-    args: SimpleNamespace,
-    redis_host: str,
-    species: str
+    p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
 ) -> dict:
-    if ref_db_fs.sub_lineages_db_path is None:
+    if db_fs.sub_lineages_db_path is None:
         raise ValueError("Sub-lineages database path is not provided.")
 
     db_funcs = setupDBFuncs(args=args.assign)
@@ -53,15 +49,21 @@ def assign_sub_lineages(
     sub_lineages_result = defaultdict(dict)  # {hash: {rank5: xx, rank10: xx, rank25: xx, rank50: 33}}
     for cluster, hashes in cluster_to_hashes.items():
         for rank in ranks:
-            cluster_rank_folder = str(PurePath(ref_db_fs.sub_lineages_db_path, cluster, f"rank_{rank}"))
+            cluster_rank_folder = str(PurePath(db_fs.sub_lineages_db_path, cluster, f"rank_{rank}"))
+            cluster_folder = str(PurePath(db_fs.sub_lineages_db_path, cluster))
+            distances = str(PurePath(db_fs.sub_lineages_db_path, cluster, f"{cluster}.dists"))
             output_sub_lineages = fs.output_sub_lineages(p_hash, cluster, str(rank))
 
-            wrapper = PoppunkWrapper(fs, ref_db_fs, args, p_hash, species)
+            wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
             wrapper.assign_sub_lineages(
                 db_funcs,
                 qNames=hashes,
-                output=output_sub_lineages,
+                output=fs.output(
+                    p_hash
+                ),  # TODO: need to point to new folder. but will still need the .h5 file containing query sketches
                 cluster_rank_folder=cluster_rank_folder,
+                cluster_folder=cluster_folder,
+                distances=distances,
             )
 
     return sub_lineages_result
@@ -111,9 +113,10 @@ def assign_clusters(
 
     assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
 
-    queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
-        config.out_dir, species, config.ref_db_fs.db, qNames
-    )
+    # queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
+    #     config.out_dir, species, config.ref_db_fs.db, qNames
+    # )
+    queries_names, queries_clusters = process_assign_clusters_csv(qNames, p_hash, config.fs, config.full_db_fs)
 
     if config.external_clusters_prefix:
         result = handle_external_clusters(

@@ -4,7 +4,7 @@ import re
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
-from beebop.config import PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.models import ClusteringConfig, FailedSampleType
 from beebop.services.cluster_service import get_lowest_cluster
 
@@ -287,3 +287,27 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
     with open(qc_report_path, "a") as report_file:
         for sample_hash in unassignable_names:
             report_file.write(f"{sample_hash}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}\n")
+
+
+def process_assign_clusters_csv(qNames: list[str], p_hash, fs: PoppunkFileStore, db: DatabaseFileStore):
+    """
+    [Retrieve query names along with their assigned internal clusters.
+    Write a include.txt for each cluster which includes queries and all references from database]
+    """
+    assign_clusters_df = pd.read_csv(fs.output_cluster_csv(p_hash))
+    query_df = assign_clusters_df[assign_clusters_df["Taxon"].isin(qNames)]
+    query_names, query_clusters = list(query_df["Taxon"]), list(query_df["Cluster"])
+
+    # write include files for each cluster
+    db_prev_clustering = pd.read_csv(db.previous_clustering)
+    for cluster in set(query_clusters):
+        # add from database
+        db_cluster_df = db_prev_clustering[db_prev_clustering["Cluster"] == cluster]
+        to_include = set(db_cluster_df["Taxon"])
+        # add from assignment results
+        query_clusters_df = assign_clusters_df[assign_clusters_df["Cluster"] == cluster]
+        to_include.update(query_clusters_df["Taxon"])
+        with open(fs.include_file(p_hash, cluster), "w") as include_file:
+            include_file.write("\n".join(to_include))
+
+    return query_names, query_clusters
