@@ -87,11 +87,14 @@ class PopPUNKJobRunner:
         # Submit visualization job - only for valid species
         job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
 
-        return {
+
+        result =  {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
-            "sub_lineage_assign": job_sub_lineage_assign.id if job_sub_lineage_assign else None,
         }
+        if job_sub_lineage_assign is not None:
+            result["sub_lineage_assign"] = job_sub_lineage_assign.id
+        return result
 
     def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
         """Store sketches and setup initial output directory"""

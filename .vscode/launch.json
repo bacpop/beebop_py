@@ -13,7 +13,7 @@
         "FLASK_APP": "beebop/app.py",
         "FLASK_DEBUG": "1",
         "STORAGE_LOCATION": "./storage",
-        "DBS_LOCATION": "./storage/dbs",
+        "DBS_LOCATION": "./storage/dbs"
       },
       "args": ["run", "--no-debugger", "--no-reload"],
       "jinja": true,
@@ -25,6 +25,25 @@
       "type": "debugpy",
       "program": "/home/athapar/miniconda3/envs/beebop_py/bin/rq",
       "args": ["worker"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false
+    },
+    {
+      "name": "poppunk_assign - GPSC8 Rank 5",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/home/athapar/miniconda3/envs/beebop_py/bin/poppunk_assign",
+      "args": [
+        "--model-dir",
+        "${workspaceFolder}/storage/dbs/GPS_sub_lineages/gpsc8/rank_5",
+        "--db",
+        "${workspaceFolder}/storage/dbs/GPS_sub_lineages/gpsc8",
+        "--query",
+        "${workspaceFolder}/qfile.txt",
+        "--output",
+        "${workspaceFolder}/storage/poppunk_output/test1/gpsc8_query/rank_5"
+      ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "justMyCode": false
