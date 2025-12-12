@@ -78,27 +78,24 @@ class PopPUNKJobRunner:
 
         # Submit cluster assignment job
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
-        visualise_dependencies = [Dependency(jobs=[job_assign])]
+        viz_dependencies = [Dependency(jobs=[job_assign])]
 
         # Submit cluster lineage assignment jobs - only if species supports it
         job_sub_lineage_assign: Optional[Job] = None
         if getattr(self.species_args, "sub_lineages_db", None) is not None:
             job_sub_lineage_assign = self._submit_sub_lineage_assign_jobs(p_hash, job_assign, queue_kwargs)
-            lineage_dependency = Dependency(jobs=[job_sub_lineage_assign], allow_failure=True)
-            visualise_dependencies.append(lineage_dependency)
+            viz_dependencies.append(Dependency(jobs=[job_sub_lineage_assign], allow_failure=True))
 
         # Submit visualization job - only for valid species
         job_visualise = self._submit_visualization_job(
-            p_hash, name_mapping, amr_metadata, visualise_dependencies, queue_kwargs
+            p_hash, name_mapping, amr_metadata, viz_dependencies, queue_kwargs
         )
 
-        result = {
+        return {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
+            **({} if job_sub_lineage_assign is None else {"sub_lineage_assign": job_sub_lineage_assign.id}),
         }
-        if job_sub_lineage_assign is not None:
-            result["sub_lineage_assign"] = job_sub_lineage_assign.id
-        return result
 
     def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
         """Store sketches and setup initial output directory"""

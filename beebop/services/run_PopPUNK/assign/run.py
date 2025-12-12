@@ -1,4 +1,7 @@
+import glob
 import os
+import re
+import pandas as pd
 import pickle
 import shutil
 from collections import defaultdict
@@ -82,6 +85,36 @@ def assign_sub_lineages(
             model_folder=model_folder,
             distances=distances,
         )
+
+
+    # after all assigned, combine all lineages into 1 and then also save result. can be added to metadata.csv + used to get results
+    base_output_path = fs.output(p_hash)
+    sublineage_dirs = glob.glob(os.path.join(base_output_path, "sublineage_*"))
+    dfs = []
+    for d in sublineage_dirs:
+        folder_name = os.path.basename(d)
+        csv_path = os.path.join(d, f"{folder_name}_lineages.csv")
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            dfs.append(df)
+    if dfs:
+        combined_df = pd.concat(dfs, ignore_index=True)
+        combined_df = combined_df.drop_duplicates(subset=["id"])
+
+        combined_df = combined_df.rename(columns={"id": "ID"})
+        output_file = os.path.join(base_output_path, "all_sublineages.csv")
+        combined_df.to_csv(output_file, index=False)
+
+        # TODO:save query as json (do we need to do this? or just read from csv when needed?)
+        sublineage_results = os.path.join(base_output_path, "sublineage_results.json")
+        df = pd.read_csv(output_file)
+        query_df = df[df["Status"] == "Query"].set_index("ID")\
+            .drop(columns=["Status", "Status:colour", "overall_Lineage"])\
+            .rename(columns={"ID": "hash"})\
+            .rename(columns=lambda x: re.sub(r"Rank_(\d+)_Lineage", r"rank\1", x))
+
+        query_df.to_json(sublineage_results, orient="index")
+
 
     return sub_lineages_result
 
