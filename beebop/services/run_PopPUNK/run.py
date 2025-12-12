@@ -6,7 +6,7 @@ from typing import Optional
 from flask import current_app
 from redis import Redis
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, Dependency
 from werkzeug.exceptions import BadRequest
 
 from beebop.config import PoppunkFileStore
@@ -78,17 +78,21 @@ class PopPUNKJobRunner:
 
         # Submit cluster assignment job
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
+        visualise_dependencies = [Dependency(jobs=[job_assign])]
 
         # Submit cluster lineage assignment jobs - only if species supports it
         job_sub_lineage_assign: Optional[Job] = None
         if getattr(self.species_args, "sub_lineages_db", None) is not None:
             job_sub_lineage_assign = self._submit_sub_lineage_assign_jobs(p_hash, job_assign, queue_kwargs)
+            lineage_dependency = Dependency(jobs=[job_sub_lineage_assign], allow_failure=True)
+            visualise_dependencies.append(lineage_dependency)
 
         # Submit visualization job - only for valid species
-        job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
+        job_visualise = self._submit_visualization_job(
+            p_hash, name_mapping, amr_metadata, visualise_dependencies, queue_kwargs
+        )
 
-
-        result =  {
+        result = {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
         }
@@ -155,7 +159,7 @@ class PopPUNKJobRunner:
         p_hash: str,
         name_mapping: dict,
         amr_metadata: list[dict],
-        job_assign: Job,
+        jobs_dependencies: list[Dependency],
         queue_kwargs: dict,
     ):
         """Submit visualization job to Redis queue"""
@@ -177,7 +181,7 @@ class PopPUNKJobRunner:
                 self.redis_host,
                 queue_kwargs,
             ),
-            depends_on=job_assign,
+            depends_on=jobs_dependencies,
             **queue_kwargs,
         )
         self.redis_manager.set_job_status("visualise", p_hash, job_visualise.id)

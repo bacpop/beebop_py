@@ -47,7 +47,7 @@ def visualise(
     :param redis_host: [host of redis server]
     :param queue_kwargs: [kwargs for the queue]
     """
-
+    # TODO: depend on sublinage as well... add to metadata csv the sublinage info. move initial one here to do in 1hit
     redis = Redis(host=redis_host)
     # get results from previous job
     current_job = get_current_job(connection=redis)

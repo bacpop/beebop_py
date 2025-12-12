@@ -1,3 +1,4 @@
+import os
 import pickle
 import shutil
 from collections import defaultdict
@@ -5,7 +6,6 @@ from collections.abc import ItemsView
 from pathlib import PurePath
 from types import SimpleNamespace
 from typing import Optional, Union
-import os
 
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
@@ -29,6 +29,7 @@ from .assign_utils import (
 )
 
 
+# TODO: move to new folder sub_lineages folder
 def assign_sub_lineages(
     p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
 ) -> dict:
@@ -52,7 +53,7 @@ def assign_sub_lineages(
         model_folder = str(PurePath(db_fs.sub_lineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
         # TODO: handle better so user can see details why it cant assign sub_lineages
         if not os.path.exists(model_folder):
-            print(f"Model folder for cluster {cluster} not found at {model_folder}, skipping sub-lineage assignment.")
+            print(f"WARN: Model folder for cluster {cluster} not found, skipping sub-lineage assignment.")
             continue
 
         # just model folder + basename without extension .dists
