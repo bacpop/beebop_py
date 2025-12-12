@@ -78,9 +78,8 @@ class PoppunkWrapper:
         db_funcs: dict,
         qNames: list[str],
         output: str,
-        cluster_rank_folder: str,
-        cluster_folder: str,
-        distances: str
+        model_folder: str,
+        distances: str,
     ) -> None:
         """
         :param db_funcs: [database functions, generated with poppunks
@@ -91,7 +90,7 @@ class PoppunkWrapper:
         """
         assign_query_hdf5(
             dbFuncs=db_funcs,
-            ref_db=cluster_folder,
+            ref_db=self.db_fs.db,
             qNames=qNames,
             output=output,
             qc_dict={"run_qc": False},
@@ -103,7 +102,7 @@ class PoppunkWrapper:
             overwrite=False,
             plot_fit=self.args.assign.plot_fit,
             graph_weights=self.args.assign.graph_weights,
-            model_dir=cluster_rank_folder,
+            model_dir=model_folder,
             strand_preserved=self.args.assign.strand_preserved,
             previous_clustering=None,
             external_clustering=None,

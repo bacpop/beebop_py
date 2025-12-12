@@ -4,7 +4,8 @@ from collections import defaultdict
 from collections.abc import ItemsView
 from pathlib import PurePath
 from types import SimpleNamespace
-from typing import Union
+from typing import Optional, Union
+import os
 
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
@@ -42,29 +43,44 @@ def assign_sub_lineages(
         raise ValueError("Current job or its dependencies are not set.")
     assign_result: dict = current_job.dependency.result
     cluster_to_hashes = defaultdict(list)
-    for item in assign_result.values():
-        cluster_to_hashes[item["cluster"].lower()].append(item["hash"])
 
-    ranks = [5, 10, 25, 50]
+    for item in assign_result.values():
+        cluster_to_hashes[item["cluster"]].append(item["hash"])
+
     sub_lineages_result = defaultdict(dict)  # {hash: {rank5: xx, rank10: xx, rank25: xx, rank50: 33}}
     for cluster, hashes in cluster_to_hashes.items():
-        for rank in ranks:
-            cluster_rank_folder = str(PurePath(db_fs.sub_lineages_db_path, cluster, f"rank_{rank}"))
-            cluster_folder = str(PurePath(db_fs.sub_lineages_db_path, cluster))
-            distances = str(PurePath(db_fs.sub_lineages_db_path, cluster, f"{cluster}.dists"))
-            output_sub_lineages = fs.output_sub_lineages(p_hash, cluster, str(rank))
+        model_folder = str(PurePath(db_fs.sub_lineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
+        # TODO: handle better so user can see details why it cant assign sub_lineages
+        if not os.path.exists(model_folder):
+            print(f"Model folder for cluster {cluster} not found at {model_folder}, skipping sub-lineage assignment.")
+            continue
 
-            wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-            wrapper.assign_sub_lineages(
-                db_funcs,
-                qNames=hashes,
-                output=fs.output(
-                    p_hash
-                ),  # TODO: need to point to new folder. but will still need the .h5 file containing query sketches
-                cluster_rank_folder=cluster_rank_folder,
-                cluster_folder=cluster_folder,
-                distances=distances,
+        # just model folder + basename without extension .dists
+        distances = str(
+            PurePath(
+                db_fs.sub_lineages_db_path,
+                f"GPS_v9_{cluster}_lineage_db",
+                f"GPS_v9_{cluster}_lineage_db.dists",
             )
+        )
+
+        # sort output folder. need to link in the .h5 file with query sketches
+        output_sublineage_folder = str(PurePath(fs.output(p_hash), f"sublineage_{get_cluster_num(cluster)}"))
+        os.makedirs(output_sublineage_folder, exist_ok=True)
+        # hardlink the query .h5 file in output folder
+        queries_hdf5_path = fs.query_sketches_hdf5(p_hash)
+        hardlink_path = str(PurePath(output_sublineage_folder, os.path.basename(output_sublineage_folder) + ".h5"))
+        if not os.path.exists(hardlink_path):
+            os.link(queries_hdf5_path, hardlink_path)
+
+        wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
+        wrapper.assign_sub_lineages(
+            db_funcs,
+            qNames=hashes,
+            output=output_sublineage_folder,
+            model_folder=model_folder,
+            distances=distances,
+        )
 
     return sub_lineages_result
 

@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from flask import (
     Blueprint,
@@ -153,7 +154,7 @@ class ProjectRoutes:
                 raise NotFound("GraphML files not found for the given project hash") from e
 
         @self.project_bp.route("/results/<string:result_type>", methods=["POST"])
-        def get_results(result_type: str) -> Response:
+        def get_results(result_type: Literal["assign", "zip", "microreact", "sub_lineage_assign"]) -> Response:
             """
             [Route to get results for the specified type of analysis.
             Request object includes:

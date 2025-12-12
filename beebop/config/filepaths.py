@@ -140,6 +140,13 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
 
+    def query_sketches_hdf5(self, p_hash) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to query sketches hdf5 file]
+        """
+        return str(PurePath(self.output(p_hash), f"{p_hash}.h5"))
+
     def include_file(self, p_hash: str, cluster: str) -> str:
         """
         :param p_hash: [project hash]
