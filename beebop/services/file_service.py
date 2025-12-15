@@ -163,7 +163,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     return ref_db_fs, full_db_fs
 
 
-def add_amr_to_metadata(
+def create_viz_metadata(
     fs: PoppunkFileStore,
     p_hash: str,
     amr_metadata: list[dict],
@@ -178,10 +178,22 @@ def add_amr_to_metadata(
     :param amr_metadata: [AMR metadata]
     :param metadata_file: [db metadata csv file]
     """
-    if metadata_file is None:
-        metadata = None
-    else:
-        metadata = pd.read_csv(metadata_file)
+    # Load metadata if provided
+    metadata = pd.read_csv(metadata_file) if metadata_file else None
+
+    # Convert AMR metadata to DataFrame
     amr_df = pd.DataFrame(amr_metadata)
 
-    pd.concat([metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)
+    # Load sublineages data if available
+    sublineages_path = fs.output_all_sublineages_csv(p_hash)
+    all_sublineages = pd.read_csv(sublineages_path) if os.path.exists(sublineages_path) else None
+    results_df = metadata if metadata is not None else pd.DataFrame()
+
+    if all_sublineages is not None:
+        all_sublineages.drop(columns=["Status", "Status:colour"], inplace=True, errors="ignore")
+        results_df = results_df.merge(all_sublineages, how="outer", on="ID")
+
+    if not amr_df.empty:
+        results_df = results_df.merge(amr_df, how="outer", on="ID")
+
+    results_df.to_csv(fs.tmp_output_metadata(p_hash), index=False)

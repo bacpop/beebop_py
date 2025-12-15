@@ -85,6 +85,13 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), f"sub_lineages_{cluster}", f"rank_{rank}"))
 
+    def output_all_sublineages_csv(self, p_hash: str) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to all sub-lineages output folder]
+        """
+        return str(PurePath(self.output(p_hash), "all_sub_lineages.csv"))
+
     def setup_output_directory(self, p_hash: str) -> None:
         """
         [Create output directory that stores all files from PopPUNK assign job.
@@ -111,7 +118,7 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
 
-    def output_cluster_csv(self, p_hash)-> str:
+    def output_cluster_csv(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to cluster results csv file]

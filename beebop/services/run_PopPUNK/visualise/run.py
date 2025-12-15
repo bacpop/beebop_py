@@ -10,6 +10,7 @@ from rq.job import Dependency
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.db import RedisManager
 from beebop.services.cluster_service import get_cluster_num
+from beebop.services.file_service import create_viz_metadata
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .visualise_utils import (
@@ -28,6 +29,7 @@ def visualise(
     species: str,
     redis_host: str,
     queue_kwargs: dict,
+    amr_metadata: list[dict],
 ) -> None:
     """
     [generate files to use on microreact.org
@@ -56,6 +58,8 @@ def visualise(
     # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters: Optional[dict[str, set[str]]] = None
+
+    create_viz_metadata(fs, p_hash, amr_metadata, db_fs.metadata)
 
     try:
         with open(fs.external_to_poppunk_clusters(p_hash), "rb") as pkl_file:
