@@ -73,7 +73,7 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network,
         )
 
-    def assign_sub_lineages(
+    def assign_sublineages(
         self,
         db_funcs: dict,
         qNames: list[str],

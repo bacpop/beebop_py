@@ -139,15 +139,15 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
         database file stores]
     """
-    sub_lineages_db_path = None
-    if species_args.sub_lineages_db is not None:
-        sub_lineages_db_path = f"{dbs_location}/{species_args.sub_lineages_db}"
+    sublineages_db_path = None
+    if species_args.sublineages_db is not None:
+        sublineages_db_path = f"{dbs_location}/{species_args.sublineages_db}"
 
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
         species_args.db_metadata_file,
-        sub_lineages_db_path,
+        sublineages_db_path,
     )
 
     if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
@@ -155,7 +155,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
             f"{dbs_location}/{species_args.fulldb}",
             species_args.external_clusters_file,
             species_args.db_metadata_file,
-            sub_lineages_db_path,
+            sublineages_db_path,
         )
     else:
         full_db_fs = ref_db_fs
@@ -163,6 +163,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     return ref_db_fs, full_db_fs
 
 
+#  TODO: probs should do amr with metadata. Then add cluster specific sublineage later
 def create_viz_metadata(
     fs: PoppunkFileStore,
     p_hash: str,
@@ -187,6 +188,7 @@ def create_viz_metadata(
     # Load sublineages data if available
     sublineages_path = fs.output_all_sublineages_csv(p_hash)
     all_sublineages = pd.read_csv(sublineages_path) if os.path.exists(sublineages_path) else None
+
     results_df = metadata if metadata is not None else pd.DataFrame()
 
     if all_sublineages is not None:

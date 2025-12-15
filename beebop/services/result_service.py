@@ -1,6 +1,7 @@
 import datetime
 import json
 from io import BytesIO
+import os
 
 import requests
 from werkzeug.exceptions import InternalServerError, NotFound
@@ -40,13 +41,10 @@ def get_sublineage_results(p_hash: str, fs: PoppunkFileStore) -> dict:
     :return dict: [dictionary with sub-lineage results]
     """
     sublineage_results_path = fs.sublineage_results(p_hash)
-    try:
-        with open(sublineage_results_path, "r") as f:
-            sublineage_results = json.load(f)
-    except FileNotFoundError as e:
-        raise NotFound("Sub-lineage results not found for the given project hash.") from e
-
-    return sublineage_results
+    if not os.path.exists(sublineage_results_path):
+        return {}
+    with open(sublineage_results_path, "r") as f:
+        return json.load(f)
 
 
 def generate_zip(fs: PoppunkFileStore, p_hash: str, result_type: str, cluster: str) -> BytesIO:

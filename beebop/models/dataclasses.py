@@ -41,7 +41,7 @@ class SpeciesConfig:
     external_cluster_prefix: Optional[str]
     external_clusters_file: Optional[str]
     db_metadata_file: Optional[str]
-    sub_lineages_db: Optional[str]
+    sublineages_db: Optional[str]
     qc_dict: Qc
 
 

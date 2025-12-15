@@ -21,7 +21,7 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
 
     try:
         status_assign = get_status_job("assign", p_hash, redis_manager)
-        sub_lineage_assign_status = get_sub_lineage_assign_status(p_hash, redis_manager)
+        sublineage_assign_status = get_sublineage_assign_status(p_hash, redis_manager)
         if status_assign == "finished":
             visualise = get_status_job("visualise", p_hash, redis_manager)
             visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
@@ -34,14 +34,14 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
             "visualise": visualise,
             "visualiseClusters": visualise_cluster_statuses,
         }
-        if sub_lineage_assign_status is not None:
-            result["sub_lineage_assign"] = sub_lineage_assign_status
+        if sublineage_assign_status is not None:
+            result["sublineage_assign"] = sublineage_assign_status
         return result
     except AttributeError as exc:
         raise NotFound("Unknown project hash") from exc
 
 
-def get_sub_lineage_assign_status(p_hash: str, redis_manager: RedisManager) -> Optional[JobStatus]:
+def get_sublineage_assign_status(p_hash: str, redis_manager: RedisManager) -> Optional[JobStatus]:
     """
     [Get status of sub-lineage assign job.
     This job is optional and may not exist for all projects.]
@@ -51,13 +51,13 @@ def get_sub_lineage_assign_status(p_hash: str, redis_manager: RedisManager) -> O
     :return: [JobStatus: [status of the job]
     """
     try:
-        return get_status_job("sub_lineage_assign", p_hash, redis_manager)
+        return get_status_job("sublineage_assign", p_hash, redis_manager)
     except AttributeError:
         return None
 
 
 def get_status_job(
-    job_type: Literal["assign", "visualise", "sub_lineage_assign"],
+    job_type: Literal["assign", "visualise", "sublineage_assign"],
     p_hash: str,
     redis_manager: RedisManager,
 ) -> JobStatus:

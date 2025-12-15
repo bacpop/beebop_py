@@ -76,21 +76,12 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
-    def output_sub_lineages(self, p_hash: str, cluster: str, rank: str) -> str:
-        """
-        :param p_hash: [project hash]
-        :param cluster: [cluster string full. e.g GPSC2]
-        :param rank: [rank number]
-        :return str: [path to sub-lineages output folder]
-        """
-        return str(PurePath(self.output(p_hash), f"sub_lineages_{cluster}", f"rank_{rank}"))
-
     def output_all_sublineages_csv(self, p_hash: str) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to all sub-lineages output folder]
         """
-        return str(PurePath(self.output(p_hash), "all_sub_lineages.csv"))
+        return str(PurePath(self.output(p_hash), "all_sublineages.csv"))
 
     def sublineage_results(self, p_hash: str) -> str:
         """
@@ -298,7 +289,7 @@ class DatabaseFileStore:
         full_path: str,
         external_clusters_file: Optional[str] = None,
         db_metadata_file: Optional[str] = None,
-        sub_lineages_db_path: Optional[str] = None,
+        sublineages_db_path: Optional[str] = None,
     ):
         """
         :param full_path: [path to database]
@@ -312,4 +303,4 @@ class DatabaseFileStore:
             str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
         self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None
-        self.sub_lineages_db_path = sub_lineages_db_path
+        self.sublineages_db_path = sublineages_db_path

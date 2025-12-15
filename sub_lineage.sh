@@ -11,7 +11,7 @@ for RANK in 5 10 25 50;
 
 do
 
-poppunk_assign --model-dir ${WORK_DIR}/storage/dbs/GPS_sub_lineages/gpsc${EXTERNAL_CLUSTER}/rank_${RANK} --db ${WORK_DIR}/storage/dbs/GPS_sub_lineages/gpsc${EXTERNAL_CLUSTER} --query ${WORK_DIR}/qfile.txt --output ${OUT_DIR}/test1/gpsc${EXTERNAL_CLUSTER}_query/rank_${RANK}
-# poppunk_visualise --model-dir ${WORK_DIR}/storage/dbs/GPS_sub_lineages/gpsc${EXTERNAL_CLUSTER}/rank_${RANK} --ref-db ${WORK_DIR}/storage/dbs/GPS_sub_lineages/gpsc${EXTERNAL_CLUSTER} --output ${OUT_DIR}/test1/gpsc${EXTERNAL_CLUSTER}_query/rank_${RANK}/visualisation --microreact
+poppunk_assign --model-dir ${WORK_DIR}/storage/dbs/GPS_sublineages/gpsc${EXTERNAL_CLUSTER}/rank_${RANK} --db ${WORK_DIR}/storage/dbs/GPS_sublineages/gpsc${EXTERNAL_CLUSTER} --query ${WORK_DIR}/qfile.txt --output ${OUT_DIR}/test1/gpsc${EXTERNAL_CLUSTER}_query/rank_${RANK}
+# poppunk_visualise --model-dir ${WORK_DIR}/storage/dbs/GPS_sublineages/gpsc${EXTERNAL_CLUSTER}/rank_${RANK} --ref-db ${WORK_DIR}/storage/dbs/GPS_sublineages/gpsc${EXTERNAL_CLUSTER} --output ${OUT_DIR}/test1/gpsc${EXTERNAL_CLUSTER}_query/rank_${RANK}/visualisation --microreact
 
 done

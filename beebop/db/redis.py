@@ -22,7 +22,7 @@ class RedisManager:
 
     def get_job_status(
         self,
-        job_type: Literal["assign", "visualise", "sub_lineage_assign"],
+        job_type: Literal["assign", "visualise", "sublineage_assign"],
         p_hash: str,
     ) -> bytes:
         """
@@ -36,7 +36,7 @@ class RedisManager:
 
     def set_job_status(
         self,
-        job_type: Literal["assign", "visualise", "sub_lineage_assign"],
+        job_type: Literal["assign", "visualise", "sublineage_assign"],
         p_hash: str,
         job_id: str,
     ) -> None:

@@ -1,7 +1,6 @@
 import glob
 import os
 import pickle
-import re
 import shutil
 from collections import defaultdict
 from collections.abc import ItemsView
@@ -32,11 +31,11 @@ from .assign_utils import (
 )
 
 
-# TODO: move to new folder sub_lineages folder
-def assign_sub_lineages(
+# TODO: move to new folder sublineages folder
+def assign_sublineages(
     p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
 ) -> None:
-    if db_fs.sub_lineages_db_path is None:
+    if db_fs.sublineages_db_path is None:
         raise ValueError("Sub-lineages database path is not provided.")
 
     db_funcs = setupDBFuncs(args=args.assign)
@@ -52,8 +51,8 @@ def assign_sub_lineages(
         cluster_to_hashes[item["cluster"]].append(item["hash"])
 
     for cluster, hashes in cluster_to_hashes.items():
-        model_folder = str(PurePath(db_fs.sub_lineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
-        # TODO: handle better so user can see details why it cant assign sub_lineages
+        model_folder = str(PurePath(db_fs.sublineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
+        # TODO: handle better so user can see details why it cant assign sublineages
         if not os.path.exists(model_folder):
             print(f"WARN: Model folder for cluster {cluster} not found, skipping sub-lineage assignment.")
             continue
@@ -61,7 +60,7 @@ def assign_sub_lineages(
         # just model folder + basename without extension .dists
         distances = str(
             PurePath(
-                db_fs.sub_lineages_db_path,
+                db_fs.sublineages_db_path,
                 f"GPS_v9_{cluster}_lineage_db",
                 f"GPS_v9_{cluster}_lineage_db.dists",
             )
@@ -77,7 +76,7 @@ def assign_sub_lineages(
             os.link(queries_hdf5_path, hardlink_path)
 
         wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-        wrapper.assign_sub_lineages(
+        wrapper.assign_sublineages(
             db_funcs,
             qNames=hashes,
             output=output_sublineage_folder,
@@ -86,6 +85,7 @@ def assign_sub_lineages(
         )
 
     # after all assigned, combine all lineages into 1 and then also save result. can be added to metadata.csv + used to get results
+    # TODO: later viz only needs file that is for that specific cluster.
     base_output_path = fs.output(p_hash)
     sublineage_dirs = glob.glob(os.path.join(base_output_path, "sublineage_*"))
     dfs = []
@@ -105,7 +105,6 @@ def assign_sub_lineages(
         output_file = fs.output_all_sublineages_csv(p_hash)
         combined_df.to_csv(output_file, index=False)
 
-        # TODO:save query as json (do we need to do this? or just read from csv when needed?)
         sublineage_results = fs.sublineage_results(p_hash)
         query_df = (
             combined_df[combined_df["Status"] == "Query"]

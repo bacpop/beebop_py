@@ -49,7 +49,6 @@ def visualise(
     :param redis_host: [host of redis server]
     :param queue_kwargs: [kwargs for the queue]
     """
-    # TODO: depend on sublinage as well... add to metadata csv the sublinage info. move initial one here to do in 1hit
     redis = Redis(host=redis_host)
     # get results from previous job
     current_job = get_current_job(connection=redis)
@@ -59,6 +58,7 @@ def visualise(
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters: Optional[dict[str, set[str]]] = None
 
+    # TODO: probs revert to do just metadata before and then add sublineage csv later
     create_viz_metadata(fs, p_hash, amr_metadata, db_fs.metadata)
 
     try:

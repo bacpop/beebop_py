@@ -159,7 +159,7 @@ class ProjectRoutes:
                 raise NotFound("GraphML files not found for the given project hash") from e
 
         @self.project_bp.route("/results/<string:result_type>", methods=["POST"])
-        def get_results(result_type: Literal["assign", "zip", "microreact", "sub_lineage_assign"]) -> Response:
+        def get_results(result_type: Literal["assign", "zip", "microreact", "sublineage_assign"]) -> Response:
             """
             [Route to get results for the specified type of analysis.
             Request object includes:
@@ -209,7 +209,7 @@ class ProjectRoutes:
                     )
                     return response_success({"cluster": cluster, "url": url})
 
-                case "sub_lineage_assign":
+                case "sublineage_assign":
                     p_hash = request.json["projectHash"]
                     sublineage_results = get_sublineage_results(p_hash, self.fs)
                     return response_success(sublineage_results)
