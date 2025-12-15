@@ -7,7 +7,7 @@ from collections import defaultdict
 from collections.abc import ItemsView
 from pathlib import PurePath
 from types import SimpleNamespace
-from typing import Optional, Union
+from typing import Union
 
 import pandas as pd
 from PopPUNK.utils import setupDBFuncs
@@ -35,7 +35,7 @@ from .assign_utils import (
 # TODO: move to new folder sub_lineages folder
 def assign_sub_lineages(
     p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
-) -> dict:
+) -> None:
     if db_fs.sub_lineages_db_path is None:
         raise ValueError("Sub-lineages database path is not provided.")
 
@@ -51,7 +51,6 @@ def assign_sub_lineages(
     for item in assign_result.values():
         cluster_to_hashes[item["cluster"]].append(item["hash"])
 
-    sub_lineages_result = defaultdict(dict)  # {hash: {rank5: xx, rank10: xx, rank25: xx, rank50: 33}}
     for cluster, hashes in cluster_to_hashes.items():
         model_folder = str(PurePath(db_fs.sub_lineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
         # TODO: handle better so user can see details why it cant assign sub_lineages
@@ -115,8 +114,6 @@ def assign_sub_lineages(
         )
 
         query_df.to_json(sublineage_results, orient="index")
-
-    return sub_lineages_result
 
 
 def assign_clusters(
