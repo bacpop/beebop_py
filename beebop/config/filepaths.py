@@ -92,6 +92,13 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "all_sub_lineages.csv"))
 
+    def sublineage_results(self, p_hash: str) -> str:
+        """
+        :param p_hash: [project hash]
+        :return str: [path to sub-lineage results file]
+        """
+        return str(PurePath(self.output(p_hash), "sublineage_results.json"))
+
     def setup_output_directory(self, p_hash: str) -> None:
         """
         [Create output directory that stores all files from PopPUNK assign job.

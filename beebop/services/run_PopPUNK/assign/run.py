@@ -99,18 +99,18 @@ def assign_sub_lineages(
         combined_df = pd.concat(dfs, ignore_index=True)
         combined_df = combined_df.drop_duplicates(subset=["id"])
 
-        combined_df = combined_df.rename(columns={"id": "ID"})
+        combined_df = combined_df.rename(
+            columns={"id": "ID"}
+        )  # TODO: may be better to just set when reading. also just drop cols here that i dont need
         output_file = fs.output_all_sublineages_csv(p_hash)
         combined_df.to_csv(output_file, index=False)
 
         # TODO:save query as json (do we need to do this? or just read from csv when needed?)
-        sublineage_results = os.path.join(base_output_path, "sublineage_results.json")
+        sublineage_results = fs.sublineage_results(p_hash)
         query_df = (
             combined_df[combined_df["Status"] == "Query"]
             .set_index("ID")
             .drop(columns=["Status", "Status:colour", "overall_Lineage"])
-            .rename(columns={"ID": "hash"})
-            .rename(columns=lambda x: re.sub(r"Rank_(\d+)_Lineage", r"rank\1", x))
         )
 
         query_df.to_json(sublineage_results, orient="index")

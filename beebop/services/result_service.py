@@ -31,6 +31,24 @@ def get_clusters_results(p_hash: str, fs: PoppunkFileStore) -> dict:
     return {**cluster_dict, **failed_samples}
 
 
+def get_sublineage_results(p_hash: str, fs: PoppunkFileStore) -> dict:
+    """
+    [returns sub-lineage assignment results]
+
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore instance]
+    :return dict: [dictionary with sub-lineage results]
+    """
+    sublineage_results_path = fs.sublineage_results(p_hash)
+    try:
+        with open(sublineage_results_path, "r") as f:
+            sublineage_results = json.load(f)
+    except FileNotFoundError as e:
+        raise NotFound("Sub-lineage results not found for the given project hash.") from e
+
+    return sublineage_results
+
+
 def generate_zip(fs: PoppunkFileStore, p_hash: str, result_type: str, cluster: str) -> BytesIO:
     """
     [This generates a .zip folder with results data.]

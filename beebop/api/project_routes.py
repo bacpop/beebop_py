@@ -24,6 +24,7 @@ from beebop.services.result_service import (
     generate_microreact_url_internal,
     generate_zip,
     get_clusters_results,
+    get_sublineage_results,
 )
 from beebop.services.run_PopPUNK import run_PopPUNK_jobs
 
@@ -102,6 +103,7 @@ class ProjectRoutes:
 
             clusters_result = get_cluster_assignments(p_hash, self.fs)
             failed_samples = get_failed_samples_internal(p_hash, self.fs)
+            sublineage_results = get_sublineage_results(p_hash, self.fs)
 
             passed_samples = {}
             for value in clusters_result.values():
@@ -113,6 +115,9 @@ class ProjectRoutes:
                 }
                 # Cluster may not have been assigned yet
                 passed_samples[sample_hash]["cluster"] = value.get("cluster")
+                # Add sublineage info if available
+                if sample_hash in sublineage_results:
+                    passed_samples[sample_hash]["sublineage"] = sublineage_results[sample_hash]
 
             return response_success(
                 {
@@ -203,6 +208,11 @@ class ProjectRoutes:
                         self.fs,
                     )
                     return response_success({"cluster": cluster, "url": url})
+
+                case "sub_lineage_assign":
+                    p_hash = request.json["projectHash"]
+                    sublineage_results = get_sublineage_results(p_hash, self.fs)
+                    return response_success(sublineage_results)
 
                 case _:
                     raise BadRequest("Invalid result type specified.")
