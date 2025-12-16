@@ -28,25 +28,6 @@
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "justMyCode": false
-    },
-    {
-      "name": "poppunk_assign sub lineage test",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "/home/athapar/miniconda3/envs/beebop_py/bin/poppunk_assign",
-      "args": [
-        "--model-dir",
-        "${workspaceFolder}/storage/dbs/GPS_v9_lineages/GPS_v9_lineages_10_lineage_db",
-        "--db",
-        "${workspaceFolder}/storage/dbs/GPS_v9",
-        "--query",
-        "${workspaceFolder}/qfile.txt",
-        "--output",
-        "${workspaceFolder}/storage/poppunk_output/test1/gpsc8"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "justMyCode": false
     }
   ]
 }

@@ -1,1 +1,0 @@
-MS1	GPSC8_reference.fasta

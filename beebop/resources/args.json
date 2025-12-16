@@ -37,7 +37,7 @@
         "overwrite":true,
         "display_cluster":null,
         "gpu_graph":false,
-        "recalculate_distances": true,
+        "read_distances": false,
         "extend_query_graph": true
     },
     "species": {
