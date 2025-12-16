@@ -16,7 +16,8 @@ from beebop.services.file_service import (
     setup_db_file_stores,
 )
 
-from .assign import assign_clusters, assign_sublineages
+from .assign import assign_clusters
+from .sublineage import assign_sublineages
 from .visualise import visualise
 
 

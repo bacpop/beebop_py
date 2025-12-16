@@ -1,22 +1,15 @@
-import glob
-import os
 import pickle
 import shutil
 from collections import defaultdict
 from collections.abc import ItemsView
-from pathlib import PurePath
 from types import SimpleNamespace
 from typing import Union
 
-import pandas as pd
 from PopPUNK.utils import setupDBFuncs
 from PopPUNK.web import sketch_to_hdf5, summarise_clusters
-from redis import Redis
-from rq import get_current_job
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.models import ClusteringConfig
-from beebop.services.cluster_service import get_cluster_num
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .assign_utils import (
@@ -29,90 +22,6 @@ from .assign_utils import (
     process_unassignable_samples,
     update_external_clusters_csv,
 )
-
-
-# TODO: move to new folder sublineages folder
-def assign_sublineages(
-    p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
-) -> None:
-    if db_fs.sublineages_db_path is None:
-        raise ValueError("Sub-lineages database path is not provided.")
-
-    db_funcs = setupDBFuncs(args=args.assign)
-    redis = Redis(host=redis_host)
-    # get cluster from assign job
-    current_job = get_current_job(connection=redis)
-    if not current_job or not current_job.dependency:
-        raise ValueError("Current job or its dependencies are not set.")
-    assign_result: dict = current_job.dependency.result
-    cluster_to_hashes = defaultdict(list)
-
-    for item in assign_result.values():
-        cluster_to_hashes[item["cluster"]].append(item["hash"])
-
-    for cluster, hashes in cluster_to_hashes.items():
-        model_folder = str(PurePath(db_fs.sublineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
-        # TODO: handle better so user can see details why it cant assign sublineages
-        if not os.path.exists(model_folder):
-            print(f"WARN: Model folder for cluster {cluster} not found, skipping sub-lineage assignment.")
-            continue
-
-        # just model folder + basename without extension .dists
-        distances = str(
-            PurePath(
-                db_fs.sublineages_db_path,
-                f"GPS_v9_{cluster}_lineage_db",
-                f"GPS_v9_{cluster}_lineage_db.dists",
-            )
-        )
-
-        # sort output folder. need to link in the .h5 file with query sketches
-        output_sublineage_folder = str(PurePath(fs.output(p_hash), f"sublineage_{get_cluster_num(cluster)}"))
-        os.makedirs(output_sublineage_folder, exist_ok=True)
-        # hardlink the query .h5 file in output folder
-        queries_hdf5_path = fs.query_sketches_hdf5(p_hash)
-        hardlink_path = str(PurePath(output_sublineage_folder, os.path.basename(output_sublineage_folder) + ".h5"))
-        if not os.path.exists(hardlink_path):
-            os.link(queries_hdf5_path, hardlink_path)
-
-        wrapper = PoppunkWrapper(fs, db_fs, args, p_hash, species)
-        wrapper.assign_sublineages(
-            db_funcs,
-            qNames=hashes,
-            output=output_sublineage_folder,
-            model_folder=model_folder,
-            distances=distances,
-        )
-
-    # after all assigned, combine all lineages into 1 and then also save result. can be added to metadata.csv + used to get results
-    # TODO: later viz only needs file that is for that specific cluster.
-    base_output_path = fs.output(p_hash)
-    sublineage_dirs = glob.glob(os.path.join(base_output_path, "sublineage_*"))
-    dfs = []
-    for d in sublineage_dirs:
-        folder_name = os.path.basename(d)
-        csv_path = os.path.join(d, f"{folder_name}_lineages.csv")
-        if os.path.exists(csv_path):
-            df = pd.read_csv(csv_path)
-            dfs.append(df)
-    if dfs:
-        combined_df = pd.concat(dfs, ignore_index=True)
-        combined_df = combined_df.drop_duplicates(subset=["id"])
-
-        combined_df = combined_df.rename(
-            columns={"id": "ID"}
-        )  # TODO: may be better to just set when reading. also just drop cols here that i dont need
-        output_file = fs.output_all_sublineages_csv(p_hash)
-        combined_df.to_csv(output_file, index=False)
-
-        sublineage_results = fs.sublineage_results(p_hash)
-        query_df = (
-            combined_df[combined_df["Status"] == "Query"]
-            .set_index("ID")
-            .drop(columns=["Status", "Status:colour", "overall_Lineage"])
-        )
-
-        query_df.to_json(sublineage_results, orient="index")
 
 
 def assign_clusters(

@@ -155,7 +155,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
             f"{dbs_location}/{species_args.fulldb}",
             species_args.external_clusters_file,
             species_args.db_metadata_file,
-            sublineages_db_path,
+            species_args.sublineages_db,
         )
     else:
         full_db_fs = ref_db_fs

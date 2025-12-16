@@ -76,6 +76,27 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output_base, p_hash))
 
+    def output_sublineages_folder(self, p_hash: str, cluster_num: str) -> str:
+        """
+        [Returns the path to the sub-lineages output folder for a given project hash and cluster number.]
+
+        :param p_hash: [project hash]
+        :param cluster_num: [cluster number]
+        :return str: [path to sub-lineages output folder]
+        """
+        path = PurePath(self.output(p_hash), f"sublineage_{cluster_num}")
+        os.makedirs(path, exist_ok=True)
+        return str(path)
+
+    def output_sublineages_hdf5(self, p_hash: str, cluster_num: str) -> str:
+        """
+        :param p_hash: [project hash]
+        :param cluster_num: [cluster number]
+        :return str: [path to sub-lineages hdf5 file]
+        """
+        folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
+        return str(PurePath(folder, f"{PurePath(folder).name}.h5"))
+
     def output_all_sublineages_csv(self, p_hash: str) -> str:
         """
         :param p_hash: [project hash]
@@ -289,7 +310,7 @@ class DatabaseFileStore:
         full_path: str,
         external_clusters_file: Optional[str] = None,
         db_metadata_file: Optional[str] = None,
-        sublineages_db_path: Optional[str] = None,
+        sublineages_db: Optional[str] = None,
     ):
         """
         :param full_path: [path to database]
@@ -303,4 +324,38 @@ class DatabaseFileStore:
             str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
         self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None
-        self.sublineages_db_path = sublineages_db_path
+
+        if sublineages_db is not None:
+            self.sublineages_db_path = str(PurePath(self.path, sublineages_db))
+
+    def get_sublineages_model_path(self, cluster: str) -> str:
+        """
+        [Generates the path to the sub-lineages model folder
+        for the given cluster.]
+
+        :param cluster: [cluster string full. e.g GPSC2]
+        :return str: [path to sub-lineages model folder]
+        """
+        if self.sublineages_db_path is None:
+            raise ValueError("Sub-lineages database path is not provided.")
+
+        return str(PurePath(self.sublineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
+
+    def get_sublineages_distances_path(self, cluster: str) -> str:
+        """
+        [Generates the path to the sub-lineages distances file
+        for the given cluster.]
+
+        :param cluster: [cluster string full. e.g GPSC2]
+        :return str: [path to sub-lineages distances file]
+        """
+        if self.sublineages_db_path is None:
+            raise ValueError("Sub-lineages database path is not provided.")
+
+        model_path = self.get_sublineages_model_path(cluster)
+        return str(
+            PurePath(
+                model_path,
+                f"{PurePath(model_path).stem}.dists",
+            )
+        )

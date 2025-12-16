@@ -1,3 +1,3 @@
-from .run import assign_clusters, assign_sublineages
+from .run import assign_clusters
 
-__all__ = ["assign_clusters", "assign_sublineages"]
+__all__ = ["assign_clusters"]
