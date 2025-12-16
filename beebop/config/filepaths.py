@@ -143,15 +143,6 @@ class PoppunkFileStore:
         """
         return str(PurePath(self.output(p_hash), "cluster_results.pickle"))
 
-    def output_cluster_csv(self, p_hash) -> str:
-        """
-        [Returns the path to the cluster results CSV file for a given project hash.]
-
-        :param p_hash: [project hash]
-        :return str: [path to cluster results csv file]
-        """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
-
     def external_to_poppunk_clusters(self, p_hash) -> str:
         """
         :param p_hash: [project hash]

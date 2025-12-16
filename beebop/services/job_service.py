@@ -21,13 +21,12 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
 
     try:
         status_assign = get_status_job("assign", p_hash, redis_manager)
-        sublineage_assign_status = get_sublineage_assign_status(p_hash, redis_manager)
-        if status_assign == "finished":
-            visualise = get_status_job("visualise", p_hash, redis_manager)
-            visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
-        else:
-            visualise = "waiting"
-            visualise_cluster_statuses = {}
+        visualise = get_status_job("visualise", p_hash, redis_manager)
+        visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
+        try:
+            sublineage_assign_status = get_status_job("sublineage_assign", p_hash, redis_manager)
+        except AttributeError:
+            sublineage_assign_status = None
 
         return {
             "assign": status_assign,
@@ -37,21 +36,6 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
         }
     except AttributeError as exc:
         raise NotFound("Unknown project hash") from exc
-
-
-def get_sublineage_assign_status(p_hash: str, redis_manager: RedisManager) -> Optional[JobStatus]:
-    """
-    [Get status of sub-lineage assign job.
-    This job is optional and may not exist for all projects.]
-
-    :param p_hash: [hash of project]
-    :param redis_manager: [RedisManager instance]
-    :return: [JobStatus: [status of the job]
-    """
-    try:
-        return get_status_job("sublineage_assign", p_hash, redis_manager)
-    except AttributeError:
-        return None
 
 
 def get_status_job(

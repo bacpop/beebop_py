@@ -139,15 +139,12 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
         database file stores]
     """
-    sublineages_db_path = None
-    if species_args.sublineages_db is not None:
-        sublineages_db_path = f"{dbs_location}/{species_args.sublineages_db}"
 
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
         species_args.db_metadata_file,
-        sublineages_db_path,
+        species_args.sublineages_db,
     )
 
     if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
@@ -171,7 +168,7 @@ def add_amr_to_metadata(
 ) -> None:
     """
     [Create new metadata file with AMR metadata
-    and existing metadata csv file]
+    and existing metadata csv file. This can then be passed to visualisation function.]
 
     :param fs: [PoppunkFileStore with paths to in-/outputs]
     :param p_hash: [project hash]
@@ -186,7 +183,8 @@ def add_amr_to_metadata(
 
 def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no: str) -> str:
     """
-    [Merge sublineage data with metadata for a given cluster.]
+    [Merge sublineage data with metadata for a given cluster. This will create
+    a new metadata file per cluster that can be passed to visualisation function.]
 
     :param fs: PoppunkFileStore with paths to in-/outputs
     :param p_hash: project hash
