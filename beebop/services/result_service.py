@@ -1,7 +1,7 @@
 import datetime
 import json
-from io import BytesIO
 import os
+from io import BytesIO
 
 import requests
 from werkzeug.exceptions import InternalServerError, NotFound

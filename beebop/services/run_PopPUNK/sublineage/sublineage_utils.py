@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from pathlib import PurePath
 
 import pandas as pd
 from redis import Redis
