@@ -8,7 +8,7 @@ import pytest
 
 from beebop.config import PoppunkFileStore
 from beebop.services.file_service import (
-    create_viz_metadata,
+    add_amr_to_metadata,
     add_files,
     get_cluster_assignments,
     get_component_filepath,
@@ -186,7 +186,7 @@ def test_add_amr_to_metadata_no_init_metadata(tmp_path):
     ]
     p_hash = "hash"
 
-    create_viz_metadata(fs, p_hash, amr_metadata)
+    add_amr_to_metadata(fs, p_hash, amr_metadata)
 
     res = pd.read_csv(tmp_path / "tmp_output_metadata.csv")
     fs.tmp_output_metadata.assert_called_once_with(p_hash)
@@ -212,7 +212,7 @@ def test_add_amr_to_metadata_init_metadata(tmp_path):
     metadata_file = tmp_path / "metadata.csv"
     p_hash = "hash"
 
-    create_viz_metadata(fs, p_hash, amr_metadata, metadata_file)
+    add_amr_to_metadata(fs, p_hash, amr_metadata, metadata_file)
 
     res = pd.read_csv(tmp_path / "tmp_output_metadata.csv")
     fs.tmp_output_metadata.assert_called_once_with(p_hash)

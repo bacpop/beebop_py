@@ -4,6 +4,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.services.file_service import get_metadata_with_sublineages
 
 
 class PoppunkWrapper:
@@ -151,7 +152,7 @@ class PoppunkWrapper:
             previous_distances=None,
             network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
-            info_csv=self.fs.tmp_output_metadata(self.p_hash),
+            info_csv=get_metadata_with_sublineages(self.fs, self.p_hash, cluster),
             rapidnj=shutil.which("rapidnj"),
             api_key=None,
             tree=self.args.visualise.tree,

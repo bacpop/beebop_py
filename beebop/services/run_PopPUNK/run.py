@@ -12,9 +12,7 @@ from werkzeug.exceptions import BadRequest
 from beebop.config import PoppunkFileStore
 from beebop.db import RedisManager
 from beebop.models import SpeciesConfig
-from beebop.services.file_service import (
-    setup_db_file_stores,
-)
+from beebop.services.file_service import add_amr_to_metadata, setup_db_file_stores
 
 from .assign import assign_clusters
 from .sublineage import assign_sublineages
@@ -160,6 +158,9 @@ class PopPUNKJobRunner:
         queue_kwargs: dict,
     ):
         """Submit visualization job to Redis queue"""
+        # Prepare metadata
+        add_amr_to_metadata(self.fs, p_hash, amr_metadata, self.ref_db_fs.metadata)
+
         # Clean up previous visualize cluster job results
         self.redis_manager.delete_visualisation_statuses(p_hash)
 
@@ -174,7 +175,6 @@ class PopPUNKJobRunner:
                 self.species,
                 self.redis_host,
                 queue_kwargs,
-                amr_metadata,
             ),
             depends_on=jobs_dependencies,
             **queue_kwargs,

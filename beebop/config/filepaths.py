@@ -97,6 +97,15 @@ class PoppunkFileStore:
         folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
         return str(PurePath(folder, f"{PurePath(folder).name}.h5"))
 
+    def output_sublineages_csv(self, p_hash: str, cluster_num: str) -> str:
+        """
+        :param p_hash: [project hash]
+        :param cluster_num: [cluster number]
+        :return str: [path to sub-lineages csv file]
+        """
+        folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
+        return str(PurePath(folder, f"{PurePath(folder).name}_lineages.csv"))
+
     def output_all_sublineages_csv(self, p_hash: str) -> str:
         """
         :param p_hash: [project hash]
@@ -298,6 +307,17 @@ class PoppunkFileStore:
         :return str: [path to metadata file]
         """
         return str(PurePath(self.tmp(p_hash), "metadata.csv"))
+
+    def tmp_output_cluster_metadata(self, p_hash: str, cluster_num: str) -> str:
+        """
+        [Generates the path to the cluster metadata csv file
+        for the given project hash and cluster number.]
+
+        :param p_hash: [project hash]
+        :param cluster_num: [cluster number]
+        :return str: [path to cluster metadata file]
+        """
+        return str(PurePath(self.tmp(p_hash), f"metadata_cluster_{cluster_num}.csv"))
 
 
 class DatabaseFileStore:

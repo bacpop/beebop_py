@@ -1,5 +1,5 @@
-import os
 import pickle
+import shutil
 from types import SimpleNamespace
 from typing import Optional
 
@@ -10,7 +10,6 @@ from rq.job import Dependency
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.db import RedisManager
 from beebop.services.cluster_service import get_cluster_num
-from beebop.services.file_service import create_viz_metadata
 from beebop.services.run_PopPUNK.poppunkWrapper import PoppunkWrapper
 
 from .visualise_utils import (
@@ -29,7 +28,6 @@ def visualise(
     species: str,
     redis_host: str,
     queue_kwargs: dict,
-    amr_metadata: list[dict],
 ) -> None:
     """
     [generate files to use on microreact.org
@@ -57,9 +55,6 @@ def visualise(
     # gets first dependency result (i.e assign_clusters)
     assign_result = current_job.dependency.result
     external_to_poppunk_clusters: Optional[dict[str, set[str]]] = None
-
-    # TODO: probs revert to do just metadata before and then add sublineage csv later
-    create_viz_metadata(fs, p_hash, amr_metadata, db_fs.metadata)
 
     try:
         with open(fs.external_to_poppunk_clusters(p_hash), "rb") as pkl_file:
@@ -170,9 +165,13 @@ def visualise_per_cluster(
         p_hash,
         fs,
     )
-    wrapper.create_visualisations(cluster_no, fs.include_file(p_hash, internal_cluster))
+
+    wrapper.create_visualisations(
+        cluster_no,
+        fs.include_file(p_hash, internal_cluster),
+    )
 
     replace_filehashes(output_folder, name_mapping)
     create_subgraph(output_folder, name_mapping, cluster_no)
     if is_last_cluster_to_process:
-        os.remove(fs.tmp_output_metadata(p_hash))
+        shutil.rmtree(fs.tmp(p_hash))

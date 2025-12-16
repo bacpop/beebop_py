@@ -22,4 +22,5 @@ TAG_LATEST="${REGISTRY}/${PACKAGE_ORG}/${PACKAGE_NAME}:latest"
 TAG_DEV_SHA="${REGISTRY}/${TAG_SHA}-${PACKAGE_DEV}"
 TAG_DEV_BRANCH="${REGISTRY}/${TAG_BRANCH}-${PACKAGE_DEV}"
 
-POPPUNK_VERSION=v2.7.6 # can be version, branch or commit
+# TODO: update before merge to main
+POPPUNK_VERSION=lineage_fixes # can be version, branch or commit

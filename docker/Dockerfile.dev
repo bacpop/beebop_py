@@ -3,7 +3,7 @@ FROM continuumio/miniconda3
 # ensure conda does not install packages for the wrong architecture
 ENV CONDA_OVERRIDE_ARCHSPEC=skylake
 
-ARG POPPUNK_VERSION="v2.7.5"
+ARG POPPUNK_VERSION="v2.7.6"
 
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
@@ -18,7 +18,7 @@ RUN conda install -c conda-forge mamba
 RUN conda config --set channel_priority flexible
 
 #Install PopPUNK conda dependencies
-RUN mamba install -y -c conda-forge -y graph-tool mandrake 
+RUN mamba install -y -c conda-forge -y graph-tool mandrake
 RUN mamba install -y \
     # Core data packages
     pandas \
@@ -36,7 +36,7 @@ RUN mamba install -y \
     tqdm \
     && mamba clean -afy
 
-# System dependencies 
+# System dependencies
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
@@ -46,7 +46,7 @@ RUN apt-get update && \
     libopenblas-dev
 
 
-RUN pip install git+https://github.com/bacpop/PopPUNK@${POPPUNK_VERSION}#egg=PopPUNK 
+RUN pip install git+https://github.com/bacpop/PopPUNK@${POPPUNK_VERSION}#egg=PopPUNK
 
 # Poetry setup
 RUN pip install poetry==1.8.3

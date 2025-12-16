@@ -163,8 +163,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     return ref_db_fs, full_db_fs
 
 
-#  TODO: probs should do amr with metadata. Then add cluster specific sublineage later
-def create_viz_metadata(
+def add_amr_to_metadata(
     fs: PoppunkFileStore,
     p_hash: str,
     amr_metadata: list[dict],
@@ -179,23 +178,36 @@ def create_viz_metadata(
     :param amr_metadata: [AMR metadata]
     :param metadata_file: [db metadata csv file]
     """
-    # Load metadata if provided
-    metadata = pd.read_csv(metadata_file) if metadata_file else None
-
-    # Convert AMR metadata to DataFrame
+    db_metadata = pd.read_csv(metadata_file) if metadata_file else pd.DataFrame()
     amr_df = pd.DataFrame(amr_metadata)
 
-    # Load sublineages data if available
-    sublineages_path = fs.output_all_sublineages_csv(p_hash)
-    all_sublineages = pd.read_csv(sublineages_path) if os.path.exists(sublineages_path) else None
+    pd.concat([db_metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)
 
-    results_df = metadata if metadata is not None else pd.DataFrame()
 
-    if all_sublineages is not None:
-        all_sublineages.drop(columns=["Status", "Status:colour"], inplace=True, errors="ignore")
-        results_df = results_df.merge(all_sublineages, how="outer", on="ID")
+def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no: str) -> str:
+    """
+    [Merge sublineage data with metadata for a given cluster.]
 
-    if not amr_df.empty:
-        results_df = results_df.merge(amr_df, how="outer", on="ID")
+    :param fs: PoppunkFileStore with paths to in-/outputs
+    :param p_hash: project hash
+    :param cluster_no: cluster number
+    :return: path to merged metadata file
+    """
+    metadata_file = fs.tmp_output_metadata(p_hash)
+    sublineage_csv = fs.output_sublineages_csv(p_hash, cluster_no)
 
-    results_df.to_csv(fs.tmp_output_metadata(p_hash), index=False)
+    if not os.path.exists(sublineage_csv):
+        return metadata_file
+
+    sublineages_df = (
+        pd.read_csv(sublineage_csv)
+        .rename(columns={"id": "ID"})
+        .drop(columns=["Status", "Status:colour", "overall_Lineage"])
+    )
+
+    merged_df = sublineages_df.merge(pd.read_csv(metadata_file), how="outer", on="ID")
+
+    cluster_metadata_file = fs.tmp_output_cluster_metadata(p_hash, cluster_no)
+    merged_df.to_csv(cluster_metadata_file, index=False)
+
+    return cluster_metadata_file
