@@ -292,22 +292,71 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
 def process_assign_clusters_csv(qNames: list[str], p_hash, fs: PoppunkFileStore, db: DatabaseFileStore):
     """
     [Retrieve query names along with their assigned internal clusters.
-    Write a include.txt for each cluster which includes queries and all references from database]
-    """
-    assign_clusters_df = pd.read_csv(fs.output_cluster_csv(p_hash))
-    query_df = assign_clusters_df[assign_clusters_df["Taxon"].isin(qNames)]
-    query_names, query_clusters = list(query_df["Taxon"]), list(query_df["Cluster"])
+    Write a include.txt for each cluster which includes queries and all references from database.]
 
-    # write include files for each cluster
-    db_prev_clustering = pd.read_csv(db.previous_clustering)
+    :param qNames: [list of sample hashes]
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore instance]
+    :param db: [DatabaseFileStore instance]
+    :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
+    """
+    output_clusters_df = pd.read_csv(fs.output_cluster_csv(p_hash))
+    query_df = output_clusters_df[output_clusters_df["Taxon"].isin(qNames)]
+
+    query_names, query_clusters = query_df["Taxon"].tolist(), query_df["Cluster"].tolist()
+
+    write_include_files(db, query_clusters, output_clusters_df, fs, p_hash)
+
+    return query_names, query_clusters
+
+
+def write_include_files(
+    db: DatabaseFileStore,
+    query_clusters: list[str],
+    output_clusters_df: pd.DataFrame,
+    fs: PoppunkFileStore,
+    p_hash: str,
+) -> None:
+    """
+    [Write include files for each cluster which includes queries and references from assign result
+    and all references from database.]
+
+    :param db: [DatabaseFileStore instance]
+    :param query_clusters: [list of sample PopPUNK clusters]
+    :param output_clusters_df: [DataFrame containing assignment results]
+    :param fs: [PoppunkFileStore instance]
+    :param p_hash: [project hash]
+    """
+    db_clusters_df = pd.read_csv(db.previous_clustering)
+
     for cluster in set(query_clusters):
-        # add from database
-        db_cluster_df = db_prev_clustering[db_prev_clustering["Cluster"] == cluster]
-        to_include = set(db_cluster_df["Taxon"])
-        # add from assignment results
-        query_clusters_df = assign_clusters_df[assign_clusters_df["Cluster"] == cluster]
-        to_include.update(query_clusters_df["Taxon"])
+        to_include = get_include_refs(db_clusters_df, output_clusters_df, cluster)
         with open(fs.include_file(p_hash, cluster), "w") as include_file:
             include_file.write("\n".join(to_include))
 
-    return query_names, query_clusters
+
+def get_include_refs(db_clusters_df: pd.DataFrame, output_clusters_df: pd.DataFrame, cluster: str) -> set[str]:
+    """
+    [Get all reference sample names from the database for a specific cluster
+    from both previous clustering and current output clustering dataframes.]
+
+    :param db_clusters_df: [DataFrame containing previous database clustering information]
+    :param output_clusters_df: [DataFrame containing current output clustering information]
+    :param cluster: [cluster identifier]
+    :return set[str]: [set of reference sample names]
+    """
+    return get_references_from_db_for_cluster(db_clusters_df, cluster) | get_references_from_db_for_cluster(
+        output_clusters_df, cluster
+    )
+
+
+def get_references_from_db_for_cluster(dataframe: pd.DataFrame, cluster: str) -> set[str]:
+    """
+    [Get reference sample names from the database for a specific cluster.]
+
+    :param dataframe: [DataFrame containing database clustering information]
+    :param cluster: [cluster identifier]
+    :return set[str]: [set of reference sample names]
+    """
+    cluster_df = dataframe[dataframe["Cluster"] == cluster]
+    return set(cluster_df["Taxon"])

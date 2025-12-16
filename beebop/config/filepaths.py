@@ -90,6 +90,8 @@ class PoppunkFileStore:
 
     def output_sublineages_hdf5(self, p_hash: str, cluster_num: str) -> str:
         """
+        [Returns the path to the sub-lineages HDF5 file for a given project hash and cluster number.]
+
         :param p_hash: [project hash]
         :param cluster_num: [cluster number]
         :return str: [path to sub-lineages hdf5 file]
@@ -99,19 +101,14 @@ class PoppunkFileStore:
 
     def output_sublineages_csv(self, p_hash: str, cluster_num: str) -> str:
         """
+        [Returns the path to the sub-lineages CSV file for a given project hash and cluster number.]
+
         :param p_hash: [project hash]
         :param cluster_num: [cluster number]
         :return str: [path to sub-lineages csv file]
         """
         folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
         return str(PurePath(folder, f"{PurePath(folder).name}_lineages.csv"))
-
-    def output_all_sublineages_csv(self, p_hash: str) -> str:
-        """
-        :param p_hash: [project hash]
-        :return str: [path to all sub-lineages output folder]
-        """
-        return str(PurePath(self.output(p_hash), "all_sublineages.csv"))
 
     def sublineage_results(self, p_hash: str) -> str:
         """
@@ -148,6 +145,8 @@ class PoppunkFileStore:
 
     def output_cluster_csv(self, p_hash) -> str:
         """
+        [Returns the path to the cluster results CSV file for a given project hash.]
+
         :param p_hash: [project hash]
         :return str: [path to cluster results csv file]
         """
@@ -177,6 +176,8 @@ class PoppunkFileStore:
 
     def query_sketches_hdf5(self, p_hash) -> str:
         """
+        [Returns the path to the query sketches HDF5 file for a given project hash.]
+
         :param p_hash: [project hash]
         :return str: [path to query sketches hdf5 file]
         """
@@ -287,7 +288,9 @@ class PoppunkFileStore:
         return str(PurePath(self.output_tmp(p_hash), f"{p_hash}_query.subset"))
 
     def external_previous_query_clustering_tmp(self, p_hash) -> str:
-        """>
+        """
+        [Generates the file path for the external]
+
         :param p_hash (str): The hash value representing the query.
         :return str: [The file path to the external]
         """
@@ -369,9 +372,6 @@ class DatabaseFileStore:
         :param cluster: [cluster string full. e.g GPSC2]
         :return str: [path to sub-lineages distances file]
         """
-        if self.sublineages_db_path is None:
-            raise ValueError("Sub-lineages database path is not provided.")
-
         model_path = self.get_sublineages_model_path(cluster)
         return str(
             PurePath(

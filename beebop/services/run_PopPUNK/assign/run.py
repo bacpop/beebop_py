@@ -68,10 +68,12 @@ def assign_clusters(
 
     assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
 
-    # queries_names, queries_clusters, _, _, _, _, _ = summarise_clusters(
-    #     config.out_dir, species, config.ref_db_fs.db, qNames
-    # )
-    queries_names, queries_clusters = process_assign_clusters_csv(qNames, p_hash, config.fs, config.full_db_fs)
+    queries_names, queries_clusters = process_assign_clusters_csv(
+        qNames,
+        p_hash,
+        config.fs,
+        config.full_db_fs,
+    )
 
     if config.external_clusters_prefix:
         result = handle_external_clusters(
@@ -212,6 +214,10 @@ def handle_not_found_queries(
     sketch_to_hdf5(not_found_sketches_dict, output_full_tmp)
 
     assign_query_clusters(config, config.full_db_fs, not_found_query_names, output_full_tmp)
+
+    query_names, query_clusters = process_assign_clusters_csv(
+        not_found_query_names, config.p_hash, config.fs, config.full_db_fs, config.fs.output_cluster_csv(config.p_hash)
+    )
     query_names, query_clusters, _, _, _, _, _ = summarise_clusters(
         output_full_tmp,
         config.species,
