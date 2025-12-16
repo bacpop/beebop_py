@@ -289,7 +289,7 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
             report_file.write(f"{sample_hash}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}\n")
 
 
-def process_assign_clusters_csv(qNames: list[str], p_hash, fs: PoppunkFileStore, db: DatabaseFileStore):
+def process_assign_clusters_csv(qNames: list[str], p_hash, db: DatabaseFileStore, output_dir: str):
     """
     [Retrieve query names along with their assigned internal clusters.
     Write a include.txt for each cluster which includes queries and all references from database.]
@@ -300,12 +300,17 @@ def process_assign_clusters_csv(qNames: list[str], p_hash, fs: PoppunkFileStore,
     :param db: [DatabaseFileStore instance]
     :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
     """
-    output_clusters_df = pd.read_csv(fs.output_cluster_csv(p_hash))
+    output_clusters_df = pd.read_csv(os.path.join(output_dir, f"{p_hash}_clusters.csv"))
     query_df = output_clusters_df[output_clusters_df["Taxon"].isin(qNames)]
 
     query_names, query_clusters = query_df["Taxon"].tolist(), query_df["Cluster"].tolist()
 
-    write_include_files(db, query_clusters, output_clusters_df, fs, p_hash)
+    write_include_files(
+        db,
+        query_clusters,
+        output_clusters_df,
+        output_dir,
+    )
 
     return query_names, query_clusters
 
@@ -314,8 +319,7 @@ def write_include_files(
     db: DatabaseFileStore,
     query_clusters: list[str],
     output_clusters_df: pd.DataFrame,
-    fs: PoppunkFileStore,
-    p_hash: str,
+    output_dir: str,
 ) -> None:
     """
     [Write include files for each cluster which includes queries and references from assign result
@@ -330,12 +334,13 @@ def write_include_files(
     db_clusters_df = pd.read_csv(db.previous_clustering)
 
     for cluster in set(query_clusters):
-        to_include = get_include_refs(db_clusters_df, output_clusters_df, cluster)
-        with open(fs.include_file(p_hash, cluster), "w") as include_file:
+        to_include = get_refs(db_clusters_df, output_clusters_df, cluster)
+
+        with open(os.path.join(output_dir, f"include{cluster}.txt"), "w") as include_file:
             include_file.write("\n".join(to_include))
 
 
-def get_include_refs(db_clusters_df: pd.DataFrame, output_clusters_df: pd.DataFrame, cluster: str) -> set[str]:
+def get_refs(db_clusters_df: pd.DataFrame, output_clusters_df: pd.DataFrame, cluster: str) -> set[str]:
     """
     [Get all reference sample names from the database for a specific cluster
     from both previous clustering and current output clustering dataframes.]

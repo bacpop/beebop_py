@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import Union
 
 from PopPUNK.utils import setupDBFuncs
-from PopPUNK.web import sketch_to_hdf5, summarise_clusters
+from PopPUNK.web import sketch_to_hdf5
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.models import ClusteringConfig
@@ -69,10 +69,7 @@ def assign_clusters(
     assign_query_clusters(config, config.ref_db_fs, qNames, config.out_dir)
 
     queries_names, queries_clusters = process_assign_clusters_csv(
-        qNames,
-        p_hash,
-        config.fs,
-        config.full_db_fs,
+        qNames, p_hash, config.full_db_fs, config.fs.output(p_hash)
     )
 
     if config.external_clusters_prefix:
@@ -216,13 +213,7 @@ def handle_not_found_queries(
     assign_query_clusters(config, config.full_db_fs, not_found_query_names, output_full_tmp)
 
     query_names, query_clusters = process_assign_clusters_csv(
-        not_found_query_names, config.p_hash, config.fs, config.full_db_fs, config.fs.output_cluster_csv(config.p_hash)
-    )
-    query_names, query_clusters, _, _, _, _, _ = summarise_clusters(
-        output_full_tmp,
-        config.species,
-        config.full_db_fs.db,
-        not_found_query_names,
+        not_found_query_names, config.p_hash, config.full_db_fs, config.fs.output_tmp(config.p_hash)
     )
 
     handle_files_manipulation(
