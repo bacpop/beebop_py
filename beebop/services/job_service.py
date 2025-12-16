@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Union
 
 from rq.job import Job, JobStatus
 from werkzeug.exceptions import NotFound
