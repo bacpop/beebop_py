@@ -9,6 +9,7 @@ ARG POPPUNK_VERSION="v2.7.6"
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 
 # Set up conda environment
+RUN conda tos accept --override-channels
 RUN conda install python=3.10
 RUN conda config --append channels conda-forge && \
     conda config --append channels bioconda
