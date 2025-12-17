@@ -83,11 +83,14 @@ class PoppunkWrapper:
         distances: str,
     ) -> None:
         """
+        [Assign sub-lineages for query samples.]
+
         :param db_funcs: [database functions, generated with poppunks
             setupDBFuncs()]
         :param qNames: [hd5 database with all sketches]
-        :param output: [output folder for assign_clusters]
-        :param cluster_rank_folder: [folder with cluster rank model]
+        :param output: [output folder for assign_sublineages]
+        :param model_folder: [folder containing sublineage model files]
+        :param distances: [path to distances file]
         """
         assign_query_hdf5(
             dbFuncs=db_funcs,

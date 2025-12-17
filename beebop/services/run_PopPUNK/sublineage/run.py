@@ -23,6 +23,16 @@ logger = logging.getLogger(__name__)
 def assign_sublineages(
     p_hash: str, fs: PoppunkFileStore, db_fs: DatabaseFileStore, args: SimpleNamespace, redis_host: str, species: str
 ) -> None:
+    """
+    [Assign sub-lineages for all clusters based on cluster assignment results.]
+
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore instance]
+    :param db_fs: [DatabaseFileStore instance]
+    :param args: [SimpleNamespace containing arguments for PopPUNK functions]
+    :param redis_host: [host of redis server]
+    :param species: [Type of species]
+    """
     if db_fs.sublineages_db_path is None:
         raise ValueError("Sub-lineages database path is not provided.")
 
