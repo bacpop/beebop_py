@@ -4,14 +4,14 @@ set -ex
 HERE=$(dirname $0)
 . $HERE/common
 
-# # Build and push the production image
-# docker build --pull \
-#        --tag $TAG_SHA \
-#        -f docker/Dockerfile.prod \
-#        $PACKAGE_ROOT
-# # We always push the SHA tagged versions, for debugging if the tests
-# # after this step fail
-# docker push $TAG_SHA
+# Build and push the production image
+docker build --pull \
+       --tag $TAG_SHA \
+       -f docker/Dockerfile.prod \
+       $PACKAGE_ROOT
+# We always push the SHA tagged versions, for debugging if the tests
+# after this step fail
+docker push $TAG_SHA
 
 # Build and push dev image only if --with-dev flag is set
 if [ "$1" == "--with-dev" ]; then

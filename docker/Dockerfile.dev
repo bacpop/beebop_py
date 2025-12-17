@@ -2,15 +2,13 @@ FROM continuumio/miniconda3
 
 # ensure conda does not install packages for the wrong architecture
 ENV CONDA_OVERRIDE_ARCHSPEC=skylake
-ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+# auto accept conda plugin TOS
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
+
 ARG POPPUNK_VERSION="v2.7.6"
 
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
-
-# Set up conda environment
-# RUN conda config --set channel_priority flexible && \
-#     conda config --set safety_checks disabled
 
 RUN conda install python=3.10
 RUN conda config --append channels conda-forge && \
