@@ -298,8 +298,8 @@ def process_assign_clusters_csv(
 
     :param qNames list[str]: [list of sample hashes]
     :param p_hash str: [project hash]
-    :param fs str: [PoppunkFileStore instance]
     :param db: [DatabaseFileStore instance]
+    :param output_dir: [path to output directory]
     :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
     """
     output_clusters_df = pd.read_csv(os.path.join(output_dir, f"{p_hash}_clusters.csv"))
