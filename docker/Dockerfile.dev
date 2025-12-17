@@ -2,7 +2,7 @@ FROM continuumio/miniconda3
 
 # ensure conda does not install packages for the wrong architecture
 ENV CONDA_OVERRIDE_ARCHSPEC=skylake
-
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
 ARG POPPUNK_VERSION="v2.7.6"
 
 # Make RUN commands use the new environment:
@@ -12,11 +12,10 @@ SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 # RUN conda config --set channel_priority flexible && \
 #     conda config --set safety_checks disabled
 
-RUN conda config --set channel_priority flexible
-
 RUN conda install python=3.10
 RUN conda config --append channels conda-forge && \
     conda config --append channels bioconda
+RUN conda config --set channel_priority flexible
 
 # Install mamba: which is a faster package manager than conda
 RUN conda install -c conda-forge mamba
