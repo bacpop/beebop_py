@@ -11,7 +11,8 @@ SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 # Set up conda environment
 # RUN conda config --set channel_priority flexible && \
 #     conda config --set safety_checks disabled
-RUN conda tos accept
+
+RUN conda config --set channel_priority flexible
 
 RUN conda install python=3.10
 RUN conda config --append channels conda-forge && \
@@ -19,7 +20,6 @@ RUN conda config --append channels conda-forge && \
 
 # Install mamba: which is a faster package manager than conda
 RUN conda install -c conda-forge mamba
-RUN conda config --set channel_priority flexible
 
 #Install PopPUNK conda dependencies
 RUN mamba install -y -c conda-forge -y graph-tool mandrake
