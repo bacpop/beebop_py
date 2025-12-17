@@ -78,9 +78,9 @@ class PopPUNKJobRunner:
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
         viz_dependencies = [Dependency(jobs=[job_assign])]
 
-        # Submit cluster lineage assignment jobs - only if species supports it
+        # Submit sublineage assignment job - only if species supports it
         job_sublineage_assign: Optional[Job] = None
-        if getattr(self.species_args, "sublineages_db", None) is not None:
+        if self.sublineages_db is not None:
             job_sublineage_assign = self._submit_sublineage_assign_jobs(p_hash, job_assign, queue_kwargs)
             viz_dependencies.append(Dependency(jobs=[job_sublineage_assign], allow_failure=True))
 
@@ -138,16 +138,16 @@ class PopPUNKJobRunner:
         return job_assign
 
     def _submit_sublineage_assign_jobs(self, p_hash: str, job_assign: Job, queue_kwargs: dict):
-        """Submit lineage cluster assignment jobs to Redis queue"""
-        job_lineage_assign = self.queue.enqueue(
+        """Submit sublineage assignment job to Redis queue"""
+        sublineage_assign_job = self.queue.enqueue(
             assign_sublineages,
             args=(p_hash, self.fs, self.full_db_fs, self.args, self.redis_host, self.species),
             depends_on=job_assign,
             **queue_kwargs,
         )
 
-        self.redis_manager.set_job_status("sublineage_assign", p_hash, job_lineage_assign.id)
-        return job_lineage_assign
+        self.redis_manager.set_job_status("sublineage_assign", p_hash, sublineage_assign_job.id)
+        return sublineage_assign_job
 
     def _submit_visualization_job(
         self,

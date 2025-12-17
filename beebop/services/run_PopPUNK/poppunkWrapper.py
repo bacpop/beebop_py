@@ -87,7 +87,7 @@ class PoppunkWrapper:
 
         :param db_funcs: [database functions, generated with poppunks
             setupDBFuncs()]
-        :param qNames: [hd5 database with all sketches]
+        :param qNames: [list of sample hashes]
         :param output: [output folder for assign_sublineages]
         :param model_folder: [folder containing sublineage model files]
         :param distances: [path to distances file]

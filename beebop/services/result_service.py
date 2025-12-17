@@ -38,7 +38,7 @@ def get_sublineage_results(p_hash: str, fs: PoppunkFileStore) -> dict:
 
     :param p_hash: [project hash]
     :param fs: [PoppunkFileStore instance]
-    :return dict: [dictionary with sub-lineage results]
+    :return dict: [dictionary mapping sample hash to their sub-lineage assignment results]
     """
     sublineage_results_path = fs.sublineage_results(p_hash)
     if not os.path.exists(sublineage_results_path):

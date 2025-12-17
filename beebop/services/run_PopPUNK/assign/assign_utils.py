@@ -293,8 +293,9 @@ def process_assign_clusters_csv(
     qNames: list[str], p_hash: str, db: DatabaseFileStore, output_dir: str
 ) -> tuple[list[str], list[str]]:
     """
-    [Retrieve query names along with their assigned internal clusters.
-    Write a include.txt for each cluster which includes queries and all references from database.]
+    [Retrieve query names along with their assigned internal clusters and
+    write an ``include.txt`` for each cluster, including queries and all
+    references from the database.]
 
     :param qNames list[str]: [list of sample hashes]
     :param p_hash str: [project hash]
