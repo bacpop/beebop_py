@@ -200,7 +200,7 @@ def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no:
     sublineages_df = (
         pd.read_csv(sublineage_csv)
         .rename(columns={"id": "ID"})
-        .drop(columns=["Status", "Status:colour", "overall_Lineage"])
+        .drop(columns=["Status", "Status:colour", "overall_Lineage"], errors="ignore")
     )
 
     merged_df = sublineages_df.merge(pd.read_csv(metadata_file), how="outer", on="ID")

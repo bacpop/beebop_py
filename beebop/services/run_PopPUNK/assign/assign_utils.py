@@ -289,14 +289,16 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
             report_file.write(f"{sample_hash}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}\n")
 
 
-def process_assign_clusters_csv(qNames: list[str], p_hash, db: DatabaseFileStore, output_dir: str):
+def process_assign_clusters_csv(
+    qNames: list[str], p_hash: str, db: DatabaseFileStore, output_dir: str
+) -> tuple[list[str], list[str]]:
     """
     [Retrieve query names along with their assigned internal clusters.
     Write a include.txt for each cluster which includes queries and all references from database.]
 
-    :param qNames: [list of sample hashes]
-    :param p_hash: [project hash]
-    :param fs: [PoppunkFileStore instance]
+    :param qNames list[str]: [list of sample hashes]
+    :param p_hash str: [project hash]
+    :param fs str: [PoppunkFileStore instance]
     :param db: [DatabaseFileStore instance]
     :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
     """
@@ -328,8 +330,7 @@ def write_include_files(
     :param db: [DatabaseFileStore instance]
     :param query_clusters: [list of sample PopPUNK clusters]
     :param output_clusters_df: [DataFrame containing assignment results]
-    :param fs: [PoppunkFileStore instance]
-    :param p_hash: [project hash]
+    :param output_dir: [path to output directory]
     """
     db_clusters_df = pd.read_csv(db.previous_clustering)
 

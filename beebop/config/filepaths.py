@@ -280,10 +280,11 @@ class PoppunkFileStore:
 
     def external_previous_query_clustering_tmp(self, p_hash) -> str:
         """
-        [Generates the file path for the external]
+        [Generates the file path for the external clusters
+        temporary previous query clustering results.]
 
         :param p_hash (str): The hash value representing the query.
-        :return str: [The file path to the external]
+        :return str: [The file path to the external clusters temporary previous query clustering results.]
         """
         return str(
             PurePath(
@@ -338,9 +339,8 @@ class DatabaseFileStore:
             str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
         self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None
-
-        if sublineages_db is not None:
-            self.sublineages_db_path = str(PurePath(self.path, sublineages_db))
+        self.sublineages_db_path = str(PurePath(self.path, sublineages_db)) if sublineages_db else None
+        self.sublineages_prefix = sublineages_db.removesuffix("_sub_lineages") if sublineages_db else None
 
     def get_sublineages_model_path(self, cluster: str) -> str:
         """
@@ -353,7 +353,7 @@ class DatabaseFileStore:
         if self.sublineages_db_path is None:
             raise ValueError("Sub-lineages database path is not provided.")
 
-        return str(PurePath(self.sublineages_db_path, f"GPS_v9_{cluster}_lineage_db"))
+        return str(PurePath(self.sublineages_db_path, f"{self.sublineages_prefix}_{cluster}_lineage_db"))
 
     def get_sublineages_distances_path(self, cluster: str) -> str:
         """

@@ -56,6 +56,7 @@ def get_query_sublineage_result(fs: PoppunkFileStore, p_hash: str, cluster_num: 
     :param fs: [PoppunkFileStore instance]
     :param p_hash: [project hash]
     :param cluster_num: [cluster number as string]
+    :return pd.DataFrame: [DataFrame containing sub-lineage assignment results for query samples]
     """
     sublineage_df = pd.read_csv(fs.output_sublineages_csv(p_hash, cluster_num))
 
@@ -74,7 +75,10 @@ def save_sublineage_results(
     :param fs: [PoppunkFileStore instance]
     :param sublineage_results: [DataFrame containing sub-lineage assignment results]
     """
+    if sublineage_results.empty:
+        return
+
     sublineage_results_cleaned = sublineage_results.set_index("id").drop(
-        columns=["Status", "Status:colour", "overall_Lineage"]
+        columns=["Status", "Status:colour", "overall_Lineage"], errors="ignore"
     )
     sublineage_results_cleaned.to_json(fs.sublineage_results(p_hash), orient="index")

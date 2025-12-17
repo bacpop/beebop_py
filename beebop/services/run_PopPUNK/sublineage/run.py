@@ -28,11 +28,14 @@ def assign_sublineages(
 
     cluster_to_hashes = get_cluster_to_hashes(redis_host)
 
-    sublineage_results = pd.DataFrame()
+    sublineage_results_list = []
     for cluster, hashes in cluster_to_hashes.items():
         sublineage_query_df = assign_cluster_sublineages(p_hash, fs, db_fs, args, cluster, hashes, species)
-        sublineage_results = pd.concat([sublineage_results, sublineage_query_df])
+        sublineage_results_list.append(sublineage_query_df)
 
+    sublineage_results = (
+        pd.concat(sublineage_results_list, ignore_index=True) if sublineage_results_list else pd.DataFrame()
+    )
     save_sublineage_results(p_hash, fs, sublineage_results)
 
 
@@ -52,9 +55,10 @@ def assign_cluster_sublineages(
     :param fs: [PoppunkFileStore instance]
     :param db_fs: [DatabaseFileStore instance]
     :param args: [SimpleNamespace containing arguments for PopPUNK functions]
-    :param cluster_to_hashes: [dictionary mapping cluster identifiers to lists of sample hashes]
+    :param cluster: [cluster identifier with prefix. eg. GPSC1]
+    :param hashes: [list of sample hashes belonging to the cluster]
     :param species: [Type of species]
-    :return: [DataFrame containing sub-lineage assignment results for query samples]
+    :return pd.DataFrame: [DataFrame containing sub-lineage assignment results for query samples]
     """
     logger.info(f"Assigning sub-lineages for cluster {cluster} with {len(hashes)} samples.")
 
