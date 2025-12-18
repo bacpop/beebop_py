@@ -51,14 +51,18 @@ class ConfigRoutes:
             and constructs a configuration dictionary
             containing the k-mers for each species.The result is then
             returned as a JSON response.
+            Also indicates whether sub-lineages are supported for each species.
 
             :return Response: [JSON response containing a dictionary
                 where each key is a species and the value is another
-                dictionary with a list of k-mers for that species.]
+                dictionary with a list of k-mers for that species and a flag indicating sub-lineage support.]
             """
             all_species_args = vars(self.args.species)
             species_config = {
-                species: self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}")
+                species: {
+                    **self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}"),
+                    "hasSublineages": species_args.sublineages_db is not None,
+                }
                 for species, species_args in all_species_args.items()
             }
             return response_success(species_config)
