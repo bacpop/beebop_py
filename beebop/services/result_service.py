@@ -133,6 +133,14 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
         f"Cluster {cluster_num} - {datetime.datetime.now(tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')}"
     )
 
+    # add sublineage ranks to tree blocks
+    json_microreact["trees"]["tree-1"]["blocks"] = [
+        "Rank_5_Lineage",
+        "Rank_10_Lineage",
+        "Rank_25_Lineage",
+        "Rank_50_Lineage",
+    ]
+
     # default columns to show with widths sorted by queries first
     default_cols_to_add = [
         {"field": "Status", "width": 103, "sort": "asc"},
