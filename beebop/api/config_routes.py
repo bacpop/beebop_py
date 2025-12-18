@@ -60,7 +60,7 @@ class ConfigRoutes:
             all_species_args = vars(self.args.species)
             species_config = {
                 species: {
-                    **self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}"),
+                    "kmerInfo": self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}"),
                     "hasSublineages": species_args.sublineages_db is not None,
                 }
                 for species, species_args in all_species_args.items()
