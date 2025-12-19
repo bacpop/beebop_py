@@ -149,5 +149,9 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
         {"field": "Erythromycin Resistance", "width": 209},
         {"field": "Tetracycline Resistance", "width": 202},
         {"field": "Cotrim Resistance", "width": 169},
+        {"field": "Rank_5_Lineage", "width": 160},
+        {"field": "Rank_10_Lineage", "width": 160},
+        {"field": "Rank_25_Lineage", "width": 160},
+        {"field": "Rank_50_Lineage", "width": 160},
     ]
     json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add
