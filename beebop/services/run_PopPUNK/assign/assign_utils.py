@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import PurePath
 
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
@@ -303,7 +304,7 @@ def process_assign_clusters_csv(
     :param output_dir: [path to output directory]
     :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
     """
-    output_clusters_df = pd.read_csv(os.path.join(output_dir, f"{p_hash}_clusters.csv"))
+    output_clusters_df = pd.read_csv(PurePath(output_dir, f"{p_hash}_clusters.csv"))
     query_df = output_clusters_df[output_clusters_df["Taxon"].isin(qNames)]
 
     query_names, query_clusters = query_df["Taxon"].tolist(), query_df["Cluster"].tolist()
@@ -338,7 +339,7 @@ def write_include_files(
     for cluster in set(query_clusters):
         to_include = get_refs(db_clusters_df, output_clusters_df, cluster)
 
-        with open(os.path.join(output_dir, f"include{cluster}.txt"), "w") as include_file:
+        with open(PurePath(output_dir, f"include{cluster}.txt"), "w") as include_file:
             include_file.write("\n".join(to_include))
 
 

@@ -69,12 +69,20 @@ class PoppunkFileStore:
         self.output_base = PurePath(storage_location, "poppunk_output")
         os.makedirs(self.output_base, exist_ok=True)
 
+    def path_str(self, folder, path_component) -> str:
+        """
+        :param folder: [folder name]
+        :param path_component: [file or folder name]
+        :return str: [full path]
+        """
+        return str(PurePath(folder, path_component))
+
     def output(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to output folder]
         """
-        return str(PurePath(self.output_base, p_hash))
+        return self.path_str(self.output_base, p_hash)
 
     def output_sublineages_folder(self, p_hash: str, cluster_num: str) -> str:
         """
@@ -97,7 +105,7 @@ class PoppunkFileStore:
         :return str: [path to sub-lineages hdf5 file]
         """
         folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
-        return str(PurePath(folder, f"{PurePath(folder).name}.h5"))
+        return self.path_str(folder, f"{PurePath(folder).name}.h5")
 
     def output_sublineages_csv(self, p_hash: str, cluster_num: str) -> str:
         """
@@ -108,14 +116,14 @@ class PoppunkFileStore:
         :return str: [path to sub-lineages csv file]
         """
         folder = PurePath(self.output_sublineages_folder(p_hash, cluster_num))
-        return str(PurePath(folder, f"{PurePath(folder).name}_lineages.csv"))
+        return self.path_str(folder, f"{PurePath(folder).name}_lineages.csv")
 
     def sublineage_results(self, p_hash: str) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to sub-lineage results file]
         """
-        return str(PurePath(self.output(p_hash), "sublineage_results.json"))
+        return self.path_str(self.output(p_hash), "sublineage_results.json")
 
     def setup_output_directory(self, p_hash: str) -> None:
         """
@@ -134,7 +142,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to qcreport containing failed samples]
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_qcreport.txt"))
+        return self.path_str(self.output(p_hash), f"{p_hash}_qcreport.txt")
 
     def output_cluster(self, p_hash) -> str:
         """
@@ -148,7 +156,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to mapping between external and poppunk clusters]
         """
-        return str(PurePath(self.output(p_hash), "external_to_poppunk_clusters.pickle"))
+        return self.path_str(self.output(p_hash), "external_to_poppunk_clusters.pickle")
 
     def output_visualisations(self, p_hash, cluster) -> str:
         """
@@ -156,14 +164,14 @@ class PoppunkFileStore:
         :param cluster: [cluster number]
         :return str: [path to visualisations results folder]
         """
-        return str(PurePath(self.output(p_hash), f"visualise_{cluster}"))
+        return self.path_str(self.output(p_hash), f"visualise_{cluster}")
 
     def partial_query_graph(self, p_hash) -> str:
         """
         :param p_hash: [project hash]
         :return str: [path to partial query graph]
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_query.subset"))
+        return self.path_str(self.output(p_hash), f"{p_hash}_query.subset")
 
     def query_sketches_hdf5(self, p_hash) -> str:
         """
@@ -172,7 +180,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to query sketches hdf5 file]
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}.h5"))
+        return self.path_str(self.output(p_hash), f"{p_hash}.h5")
 
     def include_file(self, p_hash: str, cluster: str) -> str:
         """
@@ -182,7 +190,7 @@ class PoppunkFileStore:
         :return str: [path to include file]
 
         """
-        return str(PurePath(self.output(p_hash), f"include{cluster}.txt"))
+        return self.path_str(self.output(p_hash), f"include{cluster}.txt")
 
     def external_previous_query_clustering_path(self, p_hash) -> str:
         """
@@ -194,7 +202,7 @@ class PoppunkFileStore:
         :return str: [The file path to the external]
         previous query clustering CSV file.
         """
-        return str(PurePath(self.output(p_hash), f"{p_hash}_external_clusters.csv"))
+        return self.path_str(self.output(p_hash), f"{p_hash}_external_clusters.csv")
 
     def previous_query_clustering(self, p_hash) -> str:
         """
@@ -207,7 +215,7 @@ class PoppunkFileStore:
         return (
             self.external_previous_query_clustering_path(p_hash)
             if self.has_external_previous_query_clustering(p_hash)
-            else str(PurePath(self.output(p_hash), f"{p_hash}_clusters.csv"))
+            else self.path_str(self.output(p_hash), f"{p_hash}_clusters.csv")
         )
 
     def has_external_previous_query_clustering(self, p_hash) -> bool:
@@ -226,11 +234,9 @@ class PoppunkFileStore:
         :param cluster: [cluster number]
         :return str: [path to microreact json file]
         """
-        return str(
-            PurePath(
-                self.output_visualisations(p_hash, cluster),
-                f"visualise_{cluster}.microreact",
-            )
+        return self.path_str(
+            self.output_visualisations(p_hash, cluster),
+            f"visualise_{cluster}.microreact",
         )
 
     def pruned_network_output_component(self, p_hash, component: str, cluster) -> str:
@@ -244,11 +250,9 @@ class PoppunkFileStore:
         :param cluster: [assigned cluster number]
         :return str: [path to pruned network component file]
         """
-        return str(
-            PurePath(
-                self.output_visualisations(p_hash, cluster),
-                f"pruned_visualise_{cluster}_component_{component}.graphml",
-            )
+        return self.path_str(
+            self.output_visualisations(p_hash, cluster),
+            f"pruned_visualise_{cluster}_component_{component}.graphml",
         )
 
     def tmp(self, p_hash) -> str:
@@ -276,7 +280,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to partial query graph]
         """
-        return str(PurePath(self.output_tmp(p_hash), f"{p_hash}_query.subset"))
+        return self.path_str(self.output_tmp(p_hash), f"{p_hash}_query.subset")
 
     def external_previous_query_clustering_tmp(self, p_hash) -> str:
         """
@@ -286,11 +290,9 @@ class PoppunkFileStore:
         :param p_hash (str): The hash value representing the query.
         :return str: [The file path to the external clusters temporary previous query clustering results.]
         """
-        return str(
-            PurePath(
-                self.output_tmp(p_hash),
-                f"{p_hash}_external_clusters.csv",
-            )
+        return self.path_str(
+            self.output_tmp(p_hash),
+            f"{p_hash}_external_clusters.csv",
         )
 
     def tmp_output_metadata(self, p_hash: str) -> str:
@@ -301,7 +303,7 @@ class PoppunkFileStore:
         :param p_hash: [project hash]
         :return str: [path to metadata file]
         """
-        return str(PurePath(self.tmp(p_hash), "metadata.csv"))
+        return self.path_str(self.tmp(p_hash), "metadata.csv")
 
     def tmp_output_cluster_metadata(self, p_hash: str, cluster_num: str) -> str:
         """
@@ -312,7 +314,7 @@ class PoppunkFileStore:
         :param cluster_num: [cluster number]
         :return str: [path to cluster metadata file]
         """
-        return str(PurePath(self.tmp(p_hash), f"metadata_cluster_{cluster_num}.csv"))
+        return self.path_str(self.tmp(p_hash), f"metadata_cluster_{cluster_num}.csv")
 
 
 class DatabaseFileStore:
@@ -339,8 +341,9 @@ class DatabaseFileStore:
             str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
         self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None
-        self.sublineages_db_path = str(PurePath(self.path, sublineages_db)) if sublineages_db else None
-        self.sublineages_prefix = sublineages_db.removesuffix("_sub_lineages") if sublineages_db else None
+        if sublineages_db:
+            self.sublineages_db_path = str(PurePath(self.path, sublineages_db))
+            self.sublineages_prefix = sublineages_db.removesuffix("_sub_lineages")
 
     def get_sublineages_model_path(self, cluster: str) -> str:
         """

@@ -6,6 +6,7 @@ from redis import Redis
 from rq import get_current_job
 
 from beebop.config import PoppunkFileStore
+from beebop.services.file_service import SUBLINEAGE_COLUMNS_EXCLUDED
 
 
 def get_cluster_to_hashes(redis_host: str) -> dict[str, list[str]]:
@@ -79,6 +80,6 @@ def save_sublineage_results(
         return
 
     sublineage_results_cleaned = sublineage_results.set_index("id").drop(
-        columns=["Status", "Status:colour", "overall_Lineage"], errors="ignore"
+        columns=SUBLINEAGE_COLUMNS_EXCLUDED, errors="ignore"
     )
     sublineage_results_cleaned.to_json(fs.sublineage_results(p_hash), orient="index")

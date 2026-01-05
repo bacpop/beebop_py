@@ -181,6 +181,9 @@ def add_amr_to_metadata(
     pd.concat([db_metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)
 
 
+SUBLINEAGE_COLUMNS_EXCLUDED = ["Status", "Status:colour", "overall_Lineage"]
+
+
 def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no: str) -> str:
     """
     [Merge sublineage data with metadata for a given cluster. This will create
@@ -200,7 +203,7 @@ def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no:
     sublineages_df = (
         pd.read_csv(sublineage_csv)
         .rename(columns={"id": "ID"})
-        .drop(columns=["Status", "Status:colour", "overall_Lineage"], errors="ignore")
+        .drop(columns=SUBLINEAGE_COLUMNS_EXCLUDED, errors="ignore")
     )
 
     merged_df = sublineages_df.merge(pd.read_csv(metadata_file), how="outer", on="ID")

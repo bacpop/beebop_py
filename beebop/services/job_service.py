@@ -1,10 +1,10 @@
-from typing import Literal, Union
+from typing import Union
 
 from rq.job import Job, JobStatus
 from werkzeug.exceptions import NotFound
 
 from beebop.db import RedisManager
-from beebop.models import ResponseError
+from beebop.models import Job_Types, ResponseError
 
 
 def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, ResponseError]:
@@ -39,7 +39,7 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
 
 
 def get_status_job(
-    job_type: Literal["assign", "visualise", "sublineage_assign"],
+    job_type: Job_Types,
     p_hash: str,
     redis_manager: RedisManager,
 ) -> JobStatus:
