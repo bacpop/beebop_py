@@ -1,3 +1,4 @@
+import os
 import pickle
 from io import BytesIO
 from types import SimpleNamespace
@@ -5,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+import numpy as np
 
 from beebop.config import PoppunkFileStore
 from beebop.services.file_service import (
@@ -13,6 +15,7 @@ from beebop.services.file_service import (
     get_cluster_assignments,
     get_component_filepath,
     get_failed_samples_internal,
+    get_metadata_with_sublineages,
     get_network_files_for_zip,
     setup_db_file_stores,
 )
@@ -150,6 +153,7 @@ def test_setup_db_file_stores_both_dbs_exist(mock_exists):
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
     species_args.db_metadata_file = "metadata.csv"
+    species_args.sublineages_db = "sublineages.db"
     dbs_location = "tests/dbs"
 
     ref_db_fs, full_db_fs = setup_db_file_stores(species_args, dbs_location)
@@ -169,6 +173,7 @@ def test_setup_db_file_stores_fulldb_missing(mock_exists):
     species_args.fulldb = "full_database"
     species_args.external_clusters_file = "clusters.csv"
     species_args.db_metadata_file = "metadata.csv"
+    species_args.sublineages_db = "sublineages.db"
     dbs_location = "tests/dbs"
     ref_db_fs, full_db_fs = setup_db_file_stores(species_args, dbs_location)
 
@@ -219,3 +224,68 @@ def test_add_amr_to_metadata_init_metadata(tmp_path):
     assert len(res) == 4
     assert res["ID"].tolist() == ["sample1", "sample2", "sample3", "sample4"]
     assert res["AMR"].tolist() == ["AMR1", "AMR2", "AMR3", "AMR4"]
+
+
+def test_get_metadata_with_sublineages_returns_metadata_file_if_no_sublineages(tmp_path):
+    fs = Mock(spec=PoppunkFileStore)
+    p_hash = "test_hash"
+    cluster_no = "1"
+    metadata_file_path = tmp_path / "metadata.csv"
+    metadata_file_path.touch()
+    fs.tmp_output_metadata.return_value = str(metadata_file_path)
+    fs.output_sublineages_csv.return_value = "/not/exist/sublineages.csv"
+
+    result = get_metadata_with_sublineages(fs, p_hash, cluster_no)
+
+    assert result == str(metadata_file_path)
+    fs.tmp_output_metadata.assert_called_once_with(p_hash)
+    fs.output_sublineages_csv.assert_called_once_with(p_hash, cluster_no)
+
+
+def test_get_metadata_with_sublineages_merges_metadata_and_sublineages(tmp_path):
+    fs = Mock(spec=PoppunkFileStore)
+    p_hash = "test_hash"
+    cluster_no = "1"
+
+    # Setup metadata file
+    metadata_file_path = tmp_path / "metadata.csv"
+    metadata_df = pd.DataFrame({"ID": ["sample1", "sample2"], "metadata_column": ["val1", "val2"]})
+    metadata_df.to_csv(metadata_file_path, index=False)
+
+    # Setup sublineages file
+    sublineage_file_path = tmp_path / "sublineages.csv"
+    sublineage_df = pd.DataFrame(
+        {
+            "id": ["sample1", "sample3"],
+            "sublineage": ["A", "B"],
+            "Status": ["pass", "pass"],
+            "Status:colour": ["green", "green"],
+            "overall_Lineage": ["lineage1", "lineage2"],
+        }
+    )
+    sublineage_df.to_csv(sublineage_file_path, index=False)
+
+    # Setup output file path
+    cluster_metadata_path = tmp_path / "cluster_metadata.csv"
+
+    fs.tmp_output_metadata.return_value = str(metadata_file_path)
+    fs.output_sublineages_csv.return_value = str(sublineage_file_path)
+    fs.tmp_output_cluster_metadata.return_value = str(cluster_metadata_path)
+
+    result = get_metadata_with_sublineages(fs, p_hash, cluster_no)
+
+    # check correct output path and file existence
+    assert result == str(cluster_metadata_path)
+    assert os.path.exists(cluster_metadata_path)
+
+    # check merged content
+    result_df = pd.read_csv(cluster_metadata_path)
+    assert len(result_df) == 3  # sample1, sample2, sample3
+    assert "ID" in result_df.columns
+    assert "sublineage" in result_df.columns
+    assert "metadata_column" in result_df.columns
+    # check excluded columns are not present
+    assert "id" not in result_df.columns
+    assert "Status" not in result_df.columns
+    assert "Status:colour" not in result_df.columns
+    assert "overall_Lineage" not in result_df.columns

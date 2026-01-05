@@ -341,9 +341,8 @@ class DatabaseFileStore:
             str(PurePath("beebop", "resources", external_clusters_file)) if external_clusters_file else None
         )
         self.metadata = str(PurePath("beebop", "resources", db_metadata_file)) if db_metadata_file else None
-        if sublineages_db:
-            self.sublineages_db_path = str(PurePath(self.path, sublineages_db))
-            self.sublineages_prefix = sublineages_db.removesuffix("_sub_lineages")
+        self.sublineages_db_path = str(PurePath(self.path, sublineages_db)) if sublineages_db else None
+        self.sublineages_prefix = sublineages_db.removesuffix("_sub_lineages") if sublineages_db else None
 
     def get_sublineages_model_path(self, cluster: str) -> str:
         """
