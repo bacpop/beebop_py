@@ -1,13 +1,15 @@
+import json
 import os
 from unittest.mock import Mock, patch
-import json
-import pytest
+
 import pandas as pd
+import pytest
+
 from beebop.config import PoppunkFileStore
 from beebop.services.run_PopPUNK.sublineage.sublineage_utils import (
     get_cluster_to_hashes,
-    link_sketches_hdf5,
     get_query_sublineage_result,
+    link_sketches_hdf5,
     save_sublineage_results,
 )
 

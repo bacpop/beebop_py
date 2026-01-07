@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
-from beebop.services.run_PopPUNK.sublineage.run import assign_sublineages, assign_cluster_sublineages
+from beebop.services.run_PopPUNK.sublineage.run import assign_cluster_sublineages, assign_sublineages
 
 
 @patch("beebop.services.run_PopPUNK.sublineage.run.get_cluster_to_hashes")

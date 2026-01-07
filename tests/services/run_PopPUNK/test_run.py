@@ -11,14 +11,14 @@ from beebop.config.filepaths import FileStore
 from beebop.db import RedisManager
 from beebop.services.run_PopPUNK.run import PopPUNKJobRunner, run_PopPUNK_jobs
 from tests import setup
-from tests.test_utils import read_redis, wait_until
+from tests.test_utils import read_redis
 
 """
 Run tests with application context, via client fixture from conftest.py
 """
 
 
-def test_sets_up_PopPUNKJobRunner(client):
+def test_sets_up_PopPUNKJobRunner():
     runner = PopPUNKJobRunner(setup.species)
 
     assert runner.storage_location is not None
@@ -44,7 +44,7 @@ def test_sets_up_PopPUNKJobRunner_no_species(client):
             PopPUNKJobRunner("non_existent_species")
 
 
-def test_run_PopPUNK_jobs(client):
+def test_run_PopPUNK_jobs():
     fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get("e868c76fec83ee1f69a95bd27b8d5e76"),

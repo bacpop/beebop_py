@@ -6,7 +6,6 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-import numpy as np
 
 from beebop.config import PoppunkFileStore
 from beebop.services.file_service import (
