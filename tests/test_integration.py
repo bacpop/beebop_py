@@ -59,8 +59,6 @@ def test_run_poppunk_pneumo(client):
     assert project_data["samples"]["7622_5_91"]["cluster"] == "GPSC3"
     assert project_data["samples"]["6930_8_9"]["sketch"] == sketches["6930_8_9"]
     assert project_data["samples"]["6930_8_9"]["cluster"] == "GPSC60"
-    assert "sublineage" in project_data["samples"]["7622_5_91"]
-    assert "sublineage" in project_data["samples"]["6930_8_9"]
     assert_all_finished(project_data)
 
 

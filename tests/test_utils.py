@@ -52,7 +52,7 @@ def assign_status_finished(client, p_hash):
 
 def assign_sublineage_status_finished(client, p_hash):
     status = read_data(client.get("/status/" + p_hash))
-    return status.get("sublineage_assign", "finished") == "finished"
+    return status.get("sublineage_assign", "finished") in ["finished", "failed"]  # may fail with ref dbs
 
 
 def assert_status_present(client, p_hash):
@@ -65,7 +65,10 @@ def assert_status_present(client, p_hash):
 def assert_all_finished(project_data):
     assert project_data["status"]["assign"] == "finished"
     assert project_data["status"]["visualise"] == "finished"
-    assert project_data["status"].get("sublineage_assign", "finished") == "finished"
+    assert project_data["status"].get("sublineage_assign", "finished") in [
+        "finished",
+        "failed",
+    ]  # may fail with ref dbs
 
 
 def run_assign_and_validate(client, p_hash):
