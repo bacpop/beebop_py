@@ -50,11 +50,6 @@ def assign_status_finished(client, p_hash):
     return read_data(status)["assign"] == "finished"
 
 
-def assign_sublineage_status_finished(client, p_hash):
-    status = read_data(client.get("/status/" + p_hash))
-    return status.get("sublineageAssign", "finished") in ["finished", "failed"]  # may fail with ref dbs
-
-
 def assert_status_present(client, p_hash):
     status = client.get("/status/" + p_hash)
     status_options = ["queued", "started", "finished", "waiting", "deferred"]
@@ -65,10 +60,6 @@ def assert_status_present(client, p_hash):
 def assert_all_finished(project_data):
     assert project_data["status"]["assign"] == "finished"
     assert project_data["status"]["visualise"] == "finished"
-    assert project_data["status"].get("sublineageAssign", "finished") in [
-        "finished",
-        "failed",
-    ]  # may fail with ref dbs
 
 
 def run_assign_and_validate(client, p_hash):
@@ -108,10 +99,8 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
     # retrieve cluster result when finished
     wait_until(lambda: assign_status_finished(client, p_hash), timeout=30000)
     run_assign_and_validate(client, p_hash)
-    # retrieve sublineage result if/when finished
-    wait_until(lambda: assign_sublineage_status_finished(client, p_hash), timeout=30000)
     # check if visualisation files are stored
-    wait_until(lambda: visualise_status_finished(client, p_hash), timeout=600000)
+    wait_until(lambda: visualise_status_finished(client, p_hash), timeout=300000)
 
     for cluster_num in cluster_nums:
         assert os.path.exists(

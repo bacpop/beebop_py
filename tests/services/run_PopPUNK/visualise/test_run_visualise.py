@@ -45,7 +45,7 @@ def test_visualise(mocker):
         {},
     )
 
-    time.sleep(100)  # wait for jobs to finish
+    time.sleep(60)  # wait for jobs to finish
 
     for cluster in external_to_poppunk_clusters.keys():
         cluster_num = get_cluster_num(cluster)
