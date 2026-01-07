@@ -23,4 +23,4 @@ TAG_DEV_SHA="${REGISTRY}/${TAG_SHA}-${PACKAGE_DEV}"
 TAG_DEV_BRANCH="${REGISTRY}/${TAG_BRANCH}-${PACKAGE_DEV}"
 
 # TODO: update before merge to main (v2.7.8)
-POPPUNK_VERSION=main # can be version, branch or commit
+POPPUNK_VERSION=master # can be version, branch or commit
