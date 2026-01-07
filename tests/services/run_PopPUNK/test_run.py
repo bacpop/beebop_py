@@ -80,9 +80,9 @@ def test_run_PopPUNK_jobs():
         assert initial_output[1]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
 
     # submits sublienage job to queue
-    job_sublineage = Job.fetch(job_ids["sublineage_assign"], connection=redis)
+    job_sublineage = Job.fetch(job_ids["sublineageAssign"], connection=redis)
     assert job_sublineage.get_status() in status_options
-    assert read_redis("beebop:hash:job:sublineage_assign", project_hash, redis) == job_ids["sublineage_assign"]
+    assert read_redis("beebop:hash:job:sublineageAssign", project_hash, redis) == job_ids["sublineageAssign"]
     # submits visualisation jobs to queue
     job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
     assert job_visualise.get_status() in status_options

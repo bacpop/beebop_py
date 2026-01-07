@@ -92,7 +92,7 @@ class PopPUNKJobRunner:
         return {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
-            **({} if job_sublineage_assign is None else {"sublineage_assign": job_sublineage_assign.id}),
+            **({} if job_sublineage_assign is None else {"sublineageAssign": job_sublineage_assign.id}),
         }
 
     def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
@@ -146,7 +146,7 @@ class PopPUNKJobRunner:
             **queue_kwargs,
         )
 
-        self.redis_manager.set_job_status("sublineage_assign", p_hash, sublineage_assign_job.id)
+        self.redis_manager.set_job_status("sublineageAssign", p_hash, sublineage_assign_job.id)
         return sublineage_assign_job
 
     def _submit_visualization_job(

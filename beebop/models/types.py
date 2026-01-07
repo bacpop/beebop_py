@@ -1,3 +1,3 @@
 from typing import Literal
 
-Job_Types = Literal["assign", "visualise", "sublineage_assign"]
+Job_Types = Literal["assign", "visualise", "sublineageAssign"]

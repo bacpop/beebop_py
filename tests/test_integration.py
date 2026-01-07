@@ -224,7 +224,7 @@ def test_get_status_response(client):
     assert data["assign"] in "finished"
     assert data["visualise"] in "finished"
     assert data["visualiseClusters"] == {}
-    assert data["sublineage_assign"] == "finished"
+    assert data["sublineageAssign"] == "finished"
 
 
 def test_get_status_response_not_found(client):
@@ -275,7 +275,7 @@ def test_get_project_with_failed_samples(client):
 def test_get_sublineage_results(client):
     p_hash = "unit_test_sublineage_results"
 
-    res = client.post("/results/sublineage_assign", json={"projectHash": p_hash})
+    res = client.post("/results/sublineageAssign", json={"projectHash": p_hash})
 
     with open("tests/files/poppunk_output/unit_test_sublineage_results/sublineage_results.json") as f:
         expected_data = json.load(f)

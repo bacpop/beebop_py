@@ -29,27 +29,27 @@ def test_get_project_status_assign_finished(mocker):
         "assign": "finished",
         "visualise": "finished",
         "visualiseClusters": {"GPSC1": "finished", "GPSC2": "finished"},
-        "sublineage_assign": "finished",
+        "sublineageAssign": "finished",
     }
     assert mock_redis_manager.get_job_status.call_args_list == [
         call("assign", "test_project_hash"),
         call("visualise", "test_project_hash"),
-        call("sublineage_assign", "test_project_hash"),
+        call("sublineageAssign", "test_project_hash"),
     ]
 
 
 def test_get_project_status_no_sublineage(mocker):
     """
-    Test the get_project_status function when there is no sublineage_assign job.
+    Test the get_project_status function when there is no sublineageAssign job.
     """
     mock_redis_manager.reset_mock(side_effect=True)
 
     mock_job = Mock()
     mock_job.get_status.return_value = "finished"
 
-    # Simulate AttributeError for sublineage_assign job
+    # Simulate AttributeError for sublineageAssign job
     def side_effect(job_type, _):
-        if job_type == "sublineage_assign":
+        if job_type == "sublineageAssign":
             raise AttributeError
         return b"job_id"
 

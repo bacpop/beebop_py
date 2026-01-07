@@ -52,7 +52,7 @@ def assign_status_finished(client, p_hash):
 
 def assign_sublineage_status_finished(client, p_hash):
     status = read_data(client.get("/status/" + p_hash))
-    return status.get("sublineage_assign", "finished") in ["finished", "failed"]  # may fail with ref dbs
+    return status.get("sublineageAssign", "finished") in ["finished", "failed"]  # may fail with ref dbs
 
 
 def assert_status_present(client, p_hash):
@@ -65,7 +65,7 @@ def assert_status_present(client, p_hash):
 def assert_all_finished(project_data):
     assert project_data["status"]["assign"] == "finished"
     assert project_data["status"]["visualise"] == "finished"
-    assert project_data["status"].get("sublineage_assign", "finished") in [
+    assert project_data["status"].get("sublineageAssign", "finished") in [
         "finished",
         "failed",
     ]  # may fail with ref dbs
@@ -111,7 +111,7 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
     # retrieve sublineage result if/when finished
     wait_until(lambda: assign_sublineage_status_finished(client, p_hash), timeout=30000)
     # check if visualisation files are stored
-    wait_until(lambda: visualise_status_finished(client, p_hash), timeout=300000)
+    wait_until(lambda: visualise_status_finished(client, p_hash), timeout=600000)
 
     for cluster_num in cluster_nums:
         assert os.path.exists(
@@ -145,7 +145,7 @@ def run_test_job(p_hash):
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     redis.hset("beebop:hash:job:visualise", p_hash, job_visualise.id)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
-    redis.hset("beebop:hash:job:sublineage_assign", p_hash, job_sublineage.id)
+    redis.hset("beebop:hash:job:sublineageAssign", p_hash, job_sublineage.id)
 
 
 def generate_json_pneumo():

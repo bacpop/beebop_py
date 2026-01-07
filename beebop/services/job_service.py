@@ -24,7 +24,7 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
         visualise = get_status_job("visualise", p_hash, redis_manager)
         visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
         try:
-            sublineage_assign_status = get_status_job("sublineage_assign", p_hash, redis_manager)
+            sublineage_assign_status = get_status_job("sublineageAssign", p_hash, redis_manager)
         except AttributeError:
             sublineage_assign_status = None
 
@@ -32,7 +32,7 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
             "assign": status_assign,
             "visualise": visualise,
             "visualiseClusters": visualise_cluster_statuses,
-            **({} if sublineage_assign_status is None else {"sublineage_assign": sublineage_assign_status}),
+            **({} if sublineage_assign_status is None else {"sublineageAssign": sublineage_assign_status}),
         }
     except AttributeError as exc:
         raise NotFound("Unknown project hash") from exc
