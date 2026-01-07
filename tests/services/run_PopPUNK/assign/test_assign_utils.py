@@ -1,3 +1,4 @@
+from pathlib import PurePath
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -12,12 +13,15 @@ from beebop.services.run_PopPUNK.assign.assign_utils import (
     get_df_sample_mask,
     get_external_cluster_nums,
     get_external_clusters_from_file,
+    get_refs,
     handle_files_manipulation,
     hex_to_decimal,
     merge_txt_files,
     preprocess_sketches,
+    process_assign_clusters_csv,
     process_unassignable_samples,
     update_external_clusters_csv,
+    write_include_files,
 )
 from tests.setup import fs
 
@@ -300,3 +304,85 @@ def test_process_unassignable_samples_no_samples():
     process_unassignable_samples([], fs, "")
 
     fs.output_qc_report.assert_not_called()
+
+
+@patch("beebop.services.run_PopPUNK.assign.assign_utils.write_include_files")
+@patch("beebop.services.run_PopPUNK.assign.assign_utils.pd.read_csv")
+def test_process_assign_clusters_csv(mock_read_csv, mock_write_include_files):
+    clusters_data = pd.DataFrame(
+        {"Taxon": ["sample1", "sample2", "ref1", "ref2", "ref3"], "Cluster": ["10", "20", "30", "40", "50"]}
+    )
+    qNames = ["sample1", "sample2"]
+    qClusters = ["10", "20"]
+    p_hash = "test_hash"
+    db = Mock()
+    output_dir = "output_dir"
+    mock_read_csv.return_value = clusters_data
+    mock_write_include_files.return_value = None
+
+    result_queries, result_clusters = process_assign_clusters_csv(qNames, p_hash, db, output_dir)
+
+    mock_read_csv.assert_called_once_with(PurePath(output_dir, f"{p_hash}_clusters.csv"))
+    mock_write_include_files.assert_called_once_with(
+        db,
+        result_clusters,
+        clusters_data,
+        output_dir,
+    )
+    assert result_queries == qNames
+    assert result_clusters == qClusters
+
+
+@patch("beebop.services.run_PopPUNK.assign.assign_utils.get_refs")
+@patch("beebop.services.run_PopPUNK.assign.assign_utils.pd.read_csv")
+def test_write_include_files(mock_read_csv, mock_get_refs, tmp_path):
+    # Arrange
+    db = Mock()
+    db_clusters_df = Mock(spec=pd.DataFrame)
+    mock_read_csv.return_value = db_clusters_df
+
+    query_clusters = ["10", "20", "10"]  # notice 10 is duplicated
+    output_clusters_df = Mock(spec=pd.DataFrame)
+    mock_get_refs.side_effect = lambda _df1, _df2, cluster: [f"ref_{cluster}", f"sample_{cluster}"]
+
+    # Act
+    write_include_files(db, query_clusters, output_clusters_df, str(tmp_path))
+
+    # Assert
+    mock_read_csv.assert_called_once_with(db.previous_clustering)
+
+    # verify get_refs called on unique clusters
+    assert mock_get_refs.call_count == 2
+    mock_get_refs.assert_any_call(db_clusters_df, output_clusters_df, "10")
+    mock_get_refs.assert_any_call(db_clusters_df, output_clusters_df, "20")
+
+    # verify include files created
+    include10_path = tmp_path / "include10.txt"
+    include20_path = tmp_path / "include20.txt"
+    assert include10_path.exists()
+    assert include20_path.exists()
+
+    # verify contents of include files
+    include_10_contents = set(include10_path.read_text().splitlines())
+    include_20_contents = set(include20_path.read_text().splitlines())
+    assert include_10_contents == {"ref_10", "sample_10"}
+    assert include_20_contents == {"ref_20", "sample_20"}
+
+
+def test_get_refs():
+    db_clusters_df = pd.DataFrame(
+        {
+            "Taxon": ["ref_10", "sample_10", "ref_20", "other_sample"],
+            "Cluster": ["10", "10", "20", "30"],
+        }
+    )
+    output_clusters_df = pd.DataFrame(
+        {
+            "Taxon": ["sample1", "sample2", "ref_10x"],
+            "Cluster": ["10", "20", "10"],
+        }
+    )
+
+    refs = get_refs(db_clusters_df, output_clusters_df, "10")
+
+    assert refs == {"ref_10", "sample_10", "sample1", "ref_10x"}

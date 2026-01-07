@@ -38,7 +38,7 @@ def assign_sublineages(
 
     cluster_to_hashes = get_cluster_to_hashes(redis_host)
 
-    sublineage_results_list = []
+    sublineage_results_list: list[pd.DataFrame] = []
     for cluster, hashes in cluster_to_hashes.items():
         sublineage_query_df = assign_cluster_sublineages(p_hash, fs, db_fs, args, cluster, hashes, species)
         sublineage_results_list.append(sublineage_query_df)

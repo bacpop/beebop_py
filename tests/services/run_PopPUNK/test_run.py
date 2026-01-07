@@ -18,7 +18,7 @@ Run tests with application context, via client fixture from conftest.py
 """
 
 
-def test_sets_up_PopPUNKJobRunner():
+def test_sets_up_PopPUNKJobRunner(client):
     runner = PopPUNKJobRunner(setup.species)
 
     assert runner.storage_location is not None
@@ -44,7 +44,7 @@ def test_sets_up_PopPUNKJobRunner_no_species(client):
             PopPUNKJobRunner("non_existent_species")
 
 
-def test_run_PopPUNK_jobs():
+def test_run_PopPUNK_jobs(client):
     fs_json = FileStore("./tests/files/json")
     sketches = {
         "e868c76fec83ee1f69a95bd27b8d5e76": fs_json.get("e868c76fec83ee1f69a95bd27b8d5e76"),
@@ -79,12 +79,10 @@ def test_run_PopPUNK_jobs():
         assert initial_output[0]["hash"] == "e868c76fec83ee1f69a95bd27b8d5e76"
         assert initial_output[1]["hash"] == "f3d9b387e311d5ab59a8c08eb3545dbb"
 
-    # wait for assign job to be finished
-    def assign_status_finished():
-        job = Job.fetch(job_ids["assign"], connection=redis)
-        return job.get_status() == "finished"
-
-    wait_until(assign_status_finished, timeout=20000)
+    # submits sublienage job to queue
+    job_sublineage = Job.fetch(job_ids["sublineage_assign"], connection=redis)
+    assert job_sublineage.get_status() in status_options
+    assert read_redis("beebop:hash:job:sublineage_assign", project_hash, redis) == job_ids["sublineage_assign"]
     # submits visualisation jobs to queue
     job_visualise = Job.fetch(job_ids["visualise"], connection=redis)
     assert job_visualise.get_status() in status_options
