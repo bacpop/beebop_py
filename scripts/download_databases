@@ -10,6 +10,12 @@ GREEN='\e[32m'
 YELLOW='\e[33m'
 NC='\e[0m' # No Color
 
+# Check if the user wants to download only the references
+REFS_ONLY=false
+if [ "$1" == "--refs" ]; then
+    REFS_ONLY=true
+fi
+
 # We'll download tar.gz files named in the directory listing page at BASE_URL
 
 # Fetch the HTML content of the URL
@@ -18,7 +24,12 @@ wget -q -O - "$BASE_URL" | \
 grep -oP '(?<=href=")[^"]*' | \
 # Filter out only the files (assuming they have extensions)
 grep -E '\.tar\.gz$' | \
-cat | \
+# If --refs flag is set, filter files containing 'ref' in their name
+if $REFS_ONLY; then
+    grep -E '(ref|sub_lineages)'
+else
+    cat
+fi | \
 # Loop over each file URL and download it
 while read -r FILE; do
     DEST_DIR=$DBS_DEST/$(basename $FILE .tar.gz)
