@@ -56,3 +56,10 @@ class ResponseBody:
     status: str
     errors: list[ResponseError]
     data: Any
+
+
+@dataclass
+class LocationMetadata:
+    SampleCounts: int
+    Latitude: float
+    Longitude: float

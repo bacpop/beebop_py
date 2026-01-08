@@ -10,6 +10,7 @@ from PopPUNK import __version__ as poppunk_version
 from PopPUNK.sketchlib import getKmersFromReferenceDatabase
 
 from beebop import __version__ as beebop_version
+from beebop.models import LocationMetadata
 
 from .api_utils import response_success
 
@@ -86,7 +87,7 @@ class ConfigRoutes:
             "kmerStep": int(kmers[1] - kmers[0]),
         }
 
-    def _get_location_metadata_info(self, location_metadata_file: str) -> Optional[dict]:
+    def _get_location_metadata_info(self, location_metadata_file: str) -> Optional[list[LocationMetadata]]:
         """
         Retrieve location metadata information from a JSON file.
 

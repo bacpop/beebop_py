@@ -26,6 +26,17 @@
           },
           "required": ["kmerMax", "kmerMin", "kmerStep"],
           "additionalProperties": false
+        },
+        "locationMetadata": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "properties": {
+              "SampleCounts": { "type": "integer" },
+              "Latitude": { "type": "number" },
+              "Longitude": { "type": "number" }
+            }
+          }
         }
       },
       "required": ["hasSublineages", "kmerInfo"],

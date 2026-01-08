@@ -247,7 +247,7 @@ def test_get_species_config(client):
     data = read_data(response)
 
     assert response.status_code == 200
-    assert jsonschema.validate(data, schemas.db_kmers) is None
+    assert jsonschema.validate(data, schemas.species_config) is None
     for species in setup.all_species:
         assert species in data
 
