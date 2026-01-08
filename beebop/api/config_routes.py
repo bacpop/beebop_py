@@ -1,5 +1,8 @@
+import json
 import logging
+from pathlib import PurePath
 from types import SimpleNamespace
+from typing import Optional
 
 from flask import Blueprint, Flask, current_app
 from flask.wrappers import Response
@@ -62,6 +65,7 @@ class ConfigRoutes:
                 species: {
                     "kmerInfo": self._get_kmer_info(f"{self.dbs_location}/{species_args.refdb}"),
                     "hasSublineages": species_args.sublineages_db is not None,
+                    "locationMetadata": self._get_location_metadata_info(species_args.location_metadata_file),
                 }
                 for species, species_args in all_species_args.items()
             }
@@ -81,6 +85,24 @@ class ConfigRoutes:
             "kmerMin": int(kmers[0]),
             "kmerStep": int(kmers[1] - kmers[0]),
         }
+
+    def _get_location_metadata_info(self, location_metadata_file: str) -> Optional[dict]:
+        """
+        Retrieve location metadata information from a JSON file.
+
+        :param location_metadata_file: [Path to the location metadata JSON file.]
+        :return dict: [A dictionary containing location metadata information.
+            Returns None if no file is provided or if an error occurs.]
+        """
+        if location_metadata_file is None:
+            return
+
+        try:
+            with open(PurePath("beebop", "resources", location_metadata_file), "r") as f:
+                location_metadata = json.load(f)
+            return location_metadata
+        except Exception as e:
+            self.logger.error(f"Error reading location metadata file: {e}")
 
     def get_blueprint(self) -> Blueprint:
         """

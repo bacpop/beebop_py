@@ -46,6 +46,7 @@
             "fulldb": "GPS_v9",
             "external_cluster_prefix": "GPSC",
             "external_clusters_file": "GPS_v9_external_clusters.csv",
+            "location_metadata_file": "GPS_v9_location_metadata.json",
             "db_metadata_file": "GPS_metadata.csv",
             "sublineages_db": "GPS_v9_sub_lineages",
             "qc_dict": { 
@@ -70,6 +71,7 @@
             "external_clusters_file": null,
             "db_metadata_file": null,
             "sublineages_db": null,
+            "location_metadata_file": null,
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,
@@ -92,6 +94,7 @@
             "external_clusters_file": null,
             "db_metadata_file": null,
             "sublineages_db": null,
+            "location_metadata_file": null,
             "qc_dict": { 
                 "run_qc": true,
                 "type_isolate": null,
