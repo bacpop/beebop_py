@@ -60,6 +60,6 @@ class ResponseBody:
 
 @dataclass
 class LocationMetadata:
-    SampleCounts: int
-    Latitude: float
-    Longitude: float
+    sampleCount: int
+    latitude: float
+    longitude: float
