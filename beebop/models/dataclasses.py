@@ -63,3 +63,4 @@ class LocationMetadata:
     sampleCount: int
     latitude: float
     longitude: float
+    country: str
