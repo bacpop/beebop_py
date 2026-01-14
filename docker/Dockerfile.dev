@@ -5,7 +5,7 @@ ENV CONDA_OVERRIDE_ARCHSPEC=skylake
 # auto accept conda plugin TOS
 ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=true
 
-ARG POPPUNK_VERSION="v2.7.6"
+ARG POPPUNK_VERSION="v2.7.8"
 
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
