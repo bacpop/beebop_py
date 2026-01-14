@@ -1,5 +1,5 @@
-import os
 import pickle
+import shutil
 from types import SimpleNamespace
 from typing import Optional
 
@@ -47,7 +47,6 @@ def visualise(
     :param redis_host: [host of redis server]
     :param queue_kwargs: [kwargs for the queue]
     """
-
     redis = Redis(host=redis_host)
     # get results from previous job
     current_job = get_current_job(connection=redis)
@@ -166,9 +165,13 @@ def visualise_per_cluster(
         p_hash,
         fs,
     )
-    wrapper.create_visualisations(cluster_no, fs.include_file(p_hash, internal_cluster))
+
+    wrapper.create_visualisations(
+        cluster_no,
+        fs.include_file(p_hash, internal_cluster),
+    )
 
     replace_filehashes(output_folder, name_mapping)
     create_subgraph(output_folder, name_mapping, cluster_no)
     if is_last_cluster_to_process:
-        os.remove(fs.tmp_output_metadata(p_hash))
+        shutil.rmtree(fs.tmp(p_hash))

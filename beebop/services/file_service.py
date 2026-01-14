@@ -139,10 +139,12 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
     :return tuple[DatabaseFileStore, DatabaseFileStore]: [reference and full
         database file stores]
     """
+
     ref_db_fs = DatabaseFileStore(
         f"{dbs_location}/{species_args.refdb}",
         species_args.external_clusters_file,
         species_args.db_metadata_file,
+        species_args.sublineages_db,
     )
 
     if os.path.exists(f"{dbs_location}/{species_args.fulldb}"):
@@ -150,6 +152,7 @@ def setup_db_file_stores(species_args: SpeciesConfig, dbs_location: str) -> tupl
             f"{dbs_location}/{species_args.fulldb}",
             species_args.external_clusters_file,
             species_args.db_metadata_file,
+            species_args.sublineages_db,
         )
     else:
         full_db_fs = ref_db_fs
@@ -165,17 +168,47 @@ def add_amr_to_metadata(
 ) -> None:
     """
     [Create new metadata file with AMR metadata
-    and existing metadata csv file]
+    and existing metadata csv file. This can then be passed to visualisation function.]
 
     :param fs: [PoppunkFileStore with paths to in-/outputs]
     :param p_hash: [project hash]
     :param amr_metadata: [AMR metadata]
     :param metadata_file: [db metadata csv file]
     """
-    if metadata_file is None:
-        metadata = None
-    else:
-        metadata = pd.read_csv(metadata_file)
+    db_metadata = pd.read_csv(metadata_file) if metadata_file else pd.DataFrame()
     amr_df = pd.DataFrame(amr_metadata)
 
-    pd.concat([metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)
+    pd.concat([db_metadata, amr_df], ignore_index=True).to_csv(fs.tmp_output_metadata(p_hash), index=False)
+
+
+SUBLINEAGE_COLUMNS_EXCLUDED = ["Status", "Status:colour", "overall_Lineage"]
+
+
+def get_metadata_with_sublineages(fs: PoppunkFileStore, p_hash: str, cluster_no: str) -> str:
+    """
+    [Merge sublineage data with metadata for a given cluster. This will create
+    a new metadata file per cluster that can be passed to visualisation function.]
+
+    :param fs: PoppunkFileStore with paths to in-/outputs
+    :param p_hash: project hash
+    :param cluster_no: cluster number
+    :return: path to merged metadata file
+    """
+    metadata_file = fs.tmp_output_metadata(p_hash)
+    sublineage_csv = fs.output_sublineages_csv(p_hash, cluster_no)
+
+    if not os.path.exists(sublineage_csv):
+        return metadata_file
+
+    sublineages_df = (
+        pd.read_csv(sublineage_csv)
+        .rename(columns={"id": "ID"})
+        .drop(columns=SUBLINEAGE_COLUMNS_EXCLUDED, errors="ignore")
+    )
+
+    merged_df = sublineages_df.merge(pd.read_csv(metadata_file), how="outer", on="ID")
+
+    cluster_metadata_file = fs.tmp_output_cluster_metadata(p_hash, cluster_no)
+    merged_df.to_csv(cluster_metadata_file, index=False)
+
+    return cluster_metadata_file

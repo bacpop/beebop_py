@@ -101,11 +101,11 @@ def test_visualise_per_cluster(mock_get_internal_cluster, mock_create_subgraph, 
 
 
 @patch("beebop.services.run_PopPUNK.visualise.run.replace_filehashes")
-@patch("os.remove")
+@patch("shutil.rmtree")
 @patch("beebop.services.run_PopPUNK.visualise.run.create_subgraph")
 @patch("beebop.services.run_PopPUNK.visualise.run.get_internal_cluster")
 def test_visualise_per_cluster_last_cluster(
-    mock_get_internal_cluster, mock_create_subgraph, mock_remove, mock_replace_filehashes
+    mock_get_internal_cluster, mock_create_subgraph, mock_rmtree, mock_replace_filehashes
 ):
     p_hash = "unit_test_visualise_internal"
     cluster = "GPSC16"
@@ -126,7 +126,7 @@ def test_visualise_per_cluster_last_cluster(
 
     wrapper.create_visualisations.assert_called_with("16", setup.fs.include_file(p_hash, internal_cluster))
     mock_create_subgraph.assert_called_with(output_folder, name_mapping, "16")
-    mock_remove.assert_called_with(setup.fs.tmp_output_metadata(p_hash))
+    mock_rmtree.assert_called_with(setup.fs.tmp(p_hash))
     mock_replace_filehashes.assert_called_with(output_folder, name_mapping)
 
 

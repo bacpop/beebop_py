@@ -1,10 +1,10 @@
-from typing import Literal, Union
+from typing import Union
 
 from rq.job import Job, JobStatus
 from werkzeug.exceptions import NotFound
 
 from beebop.db import RedisManager
-from beebop.models import ResponseError
+from beebop.models import Job_Types, ResponseError
 
 
 def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, ResponseError]:
@@ -21,24 +21,25 @@ def get_project_status(p_hash: str, redis_manager: RedisManager) -> Union[dict, 
 
     try:
         status_assign = get_status_job("assign", p_hash, redis_manager)
-        if status_assign == "finished":
-            visualise = get_status_job("visualise", p_hash, redis_manager)
-            visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
-        else:
-            visualise = "waiting"
-            visualise_cluster_statuses = {}
+        visualise = get_status_job("visualise", p_hash, redis_manager)
+        visualise_cluster_statuses = get_visualisation_statuses(p_hash, redis_manager)
+        try:
+            sublineage_assign_status = get_status_job("sublineageAssign", p_hash, redis_manager)
+        except AttributeError:
+            sublineage_assign_status = None
 
         return {
             "assign": status_assign,
-            "visualise": visualise,  # visualise for all
+            "visualise": visualise,
             "visualiseClusters": visualise_cluster_statuses,
+            **({} if sublineage_assign_status is None else {"sublineageAssign": sublineage_assign_status}),
         }
     except AttributeError as exc:
         raise NotFound("Unknown project hash") from exc
 
 
 def get_status_job(
-    job_type: Literal["assign", "visualise"],
+    job_type: Job_Types,
     p_hash: str,
     redis_manager: RedisManager,
 ) -> JobStatus:

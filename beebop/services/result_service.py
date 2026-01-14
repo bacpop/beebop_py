@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from io import BytesIO
 
 import requests
@@ -29,6 +30,21 @@ def get_clusters_results(p_hash: str, fs: PoppunkFileStore) -> dict:
     failed_samples = get_failed_samples_internal(p_hash, fs)
 
     return {**cluster_dict, **failed_samples}
+
+
+def get_sublineage_results(p_hash: str, fs: PoppunkFileStore) -> dict:
+    """
+    [returns sub-lineage assignment results]
+
+    :param p_hash: [project hash]
+    :param fs: [PoppunkFileStore instance]
+    :return dict: [dictionary mapping sample hash to their sub-lineage assignment results]
+    """
+    sublineage_results_path = fs.sublineage_results(p_hash)
+    if not os.path.exists(sublineage_results_path):
+        return {}
+    with open(sublineage_results_path, "r") as f:
+        return json.load(f)
 
 
 def generate_zip(fs: PoppunkFileStore, p_hash: str, result_type: str, cluster: str) -> BytesIO:
@@ -117,6 +133,14 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
         f"Cluster {cluster_num} - {datetime.datetime.now(tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')}"
     )
 
+    # add sublineage ranks to tree blocks
+    json_microreact["trees"]["tree-1"]["blocks"] = [
+        "Rank_5_Lineage",
+        "Rank_10_Lineage",
+        "Rank_25_Lineage",
+        "Rank_50_Lineage",
+    ]
+
     # default columns to show with widths sorted by queries first
     default_cols_to_add = [
         {"field": "Status", "width": 103, "sort": "asc"},
@@ -125,5 +149,9 @@ def update_microreact_json(json_microreact: dict, cluster_num: str) -> None:
         {"field": "Erythromycin Resistance", "width": 209},
         {"field": "Tetracycline Resistance", "width": 202},
         {"field": "Cotrim Resistance", "width": 169},
+        {"field": "Rank_5_Lineage", "width": 160},
+        {"field": "Rank_10_Lineage", "width": 160},
+        {"field": "Rank_25_Lineage", "width": 160},
+        {"field": "Rank_50_Lineage", "width": 160},
     ]
     json_microreact["tables"]["table-1"]["columns"] += default_cols_to_add

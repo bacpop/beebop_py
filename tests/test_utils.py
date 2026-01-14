@@ -99,7 +99,6 @@ def assert_correct_poppunk_results(client, p_hash, cluster_nums):
     # retrieve cluster result when finished
     wait_until(lambda: assign_status_finished(client, p_hash), timeout=30000)
     run_assign_and_validate(client, p_hash)
-
     # check if visualisation files are stored
     wait_until(lambda: visualise_status_finished(client, p_hash), timeout=300000)
 
@@ -131,9 +130,11 @@ def run_test_job(p_hash):
     job_assign = q.enqueue(dummy_fct)
     job_visualise = q.enqueue(dummy_fct)
     job_network = q.enqueue(dummy_fct)
+    job_sublineage = q.enqueue(dummy_fct)
     redis.hset("beebop:hash:job:assign", p_hash, job_assign.id)
     redis.hset("beebop:hash:job:visualise", p_hash, job_visualise.id)
     redis.hset("beebop:hash:job:network", p_hash, job_network.id)
+    redis.hset("beebop:hash:job:sublineageAssign", p_hash, job_sublineage.id)
 
 
 def generate_json_pneumo():

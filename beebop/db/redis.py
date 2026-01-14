@@ -1,7 +1,7 @@
-from typing import Literal
-
 from redis import Redis
 from werkzeug.exceptions import InternalServerError
+
+from beebop.models import Job_Types
 
 
 class RedisManager:
@@ -22,7 +22,7 @@ class RedisManager:
 
     def get_job_status(
         self,
-        job_type: Literal["assign", "visualise"],
+        job_type: Job_Types,
         p_hash: str,
     ) -> bytes:
         """
@@ -36,7 +36,7 @@ class RedisManager:
 
     def set_job_status(
         self,
-        job_type: Literal["assign", "visualise"],
+        job_type: Job_Types,
         p_hash: str,
         job_id: str,
     ) -> None:

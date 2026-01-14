@@ -143,11 +143,11 @@ def test_handle_external_clusters_with_not_found(mocker, clustering_config):
 
 @patch("beebop.services.run_PopPUNK.assign.run.sketch_to_hdf5")
 @patch("beebop.services.run_PopPUNK.assign.run.assign_query_clusters")
-@patch("beebop.services.run_PopPUNK.assign.run.summarise_clusters")
+@patch("beebop.services.run_PopPUNK.assign.run.process_assign_clusters_csv")
 @patch("beebop.services.run_PopPUNK.assign.run.handle_files_manipulation")
 def test_handle_not_found_queries(
     mock_files_manipulation,
-    mock_summarise,
+    mock_process_assign_clusters_csv,
     mock_assign,
     mock_sketch_to_hdf5,
     clustering_config,
@@ -156,7 +156,7 @@ def test_handle_not_found_queries(
     not_found = ["hash2"]
     not_found_query_clusters = {"6969"}
     output_dir = "output_dir"
-    mock_summarise.return_value = ["hash1"], [10], "", "", "", "", ""
+    mock_process_assign_clusters_csv.return_value = ["hash1"], [10]
 
     query_names, query_clusters = handle_not_found_queries(
         clustering_config,
@@ -169,6 +169,12 @@ def test_handle_not_found_queries(
     mock_sketch_to_hdf5.assert_called_once_with({"hash2": "sketch sample 2"}, output_dir)
     mock_assign.assert_called_once_with(clustering_config, clustering_config.full_db_fs, not_found, output_dir)
     mock_files_manipulation.assert_called_once_with(clustering_config, output_dir, not_found_query_clusters)
+    mock_process_assign_clusters_csv.assert_called_once_with(
+        not_found,
+        clustering_config.p_hash,
+        clustering_config.full_db_fs,
+        clustering_config.fs.output_tmp(clustering_config.p_hash),
+    )
     assert query_names == ["hash1"]
     assert query_clusters == [10]
 

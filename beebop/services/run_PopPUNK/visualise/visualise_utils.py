@@ -23,11 +23,11 @@ def replace_filehashes(folder: str, filename_dict: dict) -> None:
     :param filename_dict: [dict that maps filehashes (keys) to
         corresponding filenames (values) of all query samples.]
     """
-    file_list = []
+    file_list: list[PurePath] = []
     for root, _dirs, files in os.walk(folder):
         for file in files:
             if not file.endswith(".h5"):
-                file_list.append(os.path.join(root, file))
+                file_list.append(PurePath(root, file))
     with fileinput.input(files=(file_list), inplace=True) as input_lines:
         for line in input_lines:
             processed_line = line.rstrip()

@@ -6,17 +6,16 @@ from typing import Optional
 from flask import current_app
 from redis import Redis
 from rq import Queue
+from rq.job import Dependency, Job
 from werkzeug.exceptions import BadRequest
 
 from beebop.config import PoppunkFileStore
 from beebop.db import RedisManager
 from beebop.models import SpeciesConfig
-from beebop.services.file_service import (
-    add_amr_to_metadata,
-    setup_db_file_stores,
-)
+from beebop.services.file_service import add_amr_to_metadata, setup_db_file_stores
 
 from .assign import assign_clusters
+from .sublineage import assign_sublineages
 from .visualise import visualise
 
 
@@ -45,6 +44,7 @@ class PopPUNKJobRunner:
             raise BadRequest(f"No database found for species: {self.species}")
 
         # Setup file stores and services
+        self.sublineages_db = self.species_args.sublineages_db
         self.ref_db_fs, self.full_db_fs = setup_db_file_stores(self.species_args, self.dbs_location)
         self.queue = Queue(connection=self.redis)
         self.fs = PoppunkFileStore(self.storage_location)
@@ -76,13 +76,23 @@ class PopPUNKJobRunner:
 
         # Submit cluster assignment job
         job_assign = self._submit_assign_job(hashes_list, p_hash, queue_kwargs)
+        viz_dependencies = [Dependency(jobs=[job_assign])]
 
-        # Submit visualization job
-        job_visualise = self._submit_visualization_job(p_hash, name_mapping, amr_metadata, job_assign, queue_kwargs)
+        # Submit sublineage assignment job - only if species supports it
+        job_sublineage_assign: Optional[Job] = None
+        if self.sublineages_db is not None:
+            job_sublineage_assign = self._submit_sublineage_assign_jobs(p_hash, job_assign, queue_kwargs)
+            viz_dependencies.append(Dependency(jobs=[job_sublineage_assign], allow_failure=True))
+
+        # Submit visualization job - only for valid species
+        job_visualise = self._submit_visualization_job(
+            p_hash, name_mapping, amr_metadata, viz_dependencies, queue_kwargs
+        )
 
         return {
             "assign": job_assign.id,
             "visualise": job_visualise.id,
+            **({} if job_sublineage_assign is None else {"sublineageAssign": job_sublineage_assign.id}),
         }
 
     def _store_sketches_and_setup_output(self, sketches: ItemsView, p_hash: str) -> list[str]:
@@ -127,12 +137,24 @@ class PopPUNKJobRunner:
         self.redis_manager.set_job_status("assign", p_hash, job_assign.id)
         return job_assign
 
+    def _submit_sublineage_assign_jobs(self, p_hash: str, job_assign: Job, queue_kwargs: dict):
+        """Submit sublineage assignment job to Redis queue"""
+        sublineage_assign_job = self.queue.enqueue(
+            assign_sublineages,
+            args=(p_hash, self.fs, self.full_db_fs, self.args, self.redis_host, self.species),
+            depends_on=job_assign,
+            **queue_kwargs,
+        )
+
+        self.redis_manager.set_job_status("sublineageAssign", p_hash, sublineage_assign_job.id)
+        return sublineage_assign_job
+
     def _submit_visualization_job(
         self,
         p_hash: str,
         name_mapping: dict,
         amr_metadata: list[dict],
-        job_assign,
+        jobs_dependencies: list[Dependency],
         queue_kwargs: dict,
     ):
         """Submit visualization job to Redis queue"""
@@ -154,7 +176,7 @@ class PopPUNKJobRunner:
                 self.redis_host,
                 queue_kwargs,
             ),
-            depends_on=job_assign,
+            depends_on=jobs_dependencies,
             **queue_kwargs,
         )
         self.redis_manager.set_job_status("visualise", p_hash, job_visualise.id)

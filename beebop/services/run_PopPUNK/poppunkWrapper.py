@@ -4,6 +4,7 @@ from PopPUNK.assign import assign_query_hdf5
 from PopPUNK.visualise import generate_visualisations
 
 from beebop.config import DatabaseFileStore, PoppunkFileStore
+from beebop.services.file_service import get_metadata_with_sublineages
 
 
 class PoppunkWrapper:
@@ -73,6 +74,51 @@ class PoppunkWrapper:
             use_full_network=self.args.assign.use_full_network,
         )
 
+    def assign_sublineages(
+        self,
+        db_funcs: dict,
+        qNames: list[str],
+        output: str,
+        model_folder: str,
+        distances: str,
+    ) -> None:
+        """
+        [Assign sub-lineages for query samples.]
+
+        :param db_funcs: [database functions, generated with poppunks
+            setupDBFuncs()]
+        :param qNames: [list of sample hashes]
+        :param output: [output folder for assign_sublineages]
+        :param model_folder: [folder containing sublineage model files]
+        :param distances: [path to distances file]
+        """
+        assign_query_hdf5(
+            dbFuncs=db_funcs,
+            ref_db=self.db_fs.db,
+            qNames=qNames,
+            output=output,
+            qc_dict={"run_qc": False},
+            update_db=self.args.assign.update_db,
+            write_references=self.args.assign.write_references,
+            distances=distances,
+            serial=self.args.assign.serial,
+            threads=self.args.assign.threads,
+            overwrite=False,
+            plot_fit=self.args.assign.plot_fit,
+            graph_weights=self.args.assign.graph_weights,
+            model_dir=model_folder,
+            strand_preserved=self.args.assign.strand_preserved,
+            previous_clustering=None,
+            external_clustering=None,
+            core=self.args.assign.core_only,
+            accessory=self.args.assign.accessory_only,
+            gpu_dist=self.args.assign.gpu_dist,
+            gpu_graph=self.args.assign.gpu_graph,
+            save_partial_query_graph=False,
+            stable=self.args.assign.stable,
+            use_full_network=self.args.assign.use_full_network,
+        )
+
     def create_visualisations(self, cluster: str, include_file: str) -> None:
         """
         [Generates visualisation outputs (microreact + network)
@@ -87,7 +133,7 @@ class PoppunkWrapper:
         generate_visualisations(
             query_db=self.fs.output(self.p_hash),
             ref_db=self.db_fs.db,
-            distances=self.db_fs.distances,
+            distances=None,
             rank_fit=None,
             threads=self.args.visualise.threads,
             output=self.fs.output_visualisations(self.p_hash, cluster),
@@ -109,14 +155,14 @@ class PoppunkWrapper:
             previous_distances=None,
             network_file=None,
             gpu_graph=self.args.visualise.gpu_graph,
-            info_csv=self.fs.tmp_output_metadata(self.p_hash),
+            info_csv=get_metadata_with_sublineages(self.fs, self.p_hash, cluster),
             rapidnj=shutil.which("rapidnj"),
             api_key=None,
             tree=self.args.visualise.tree,
             mst_distances=self.args.visualise.mst_distances,
             overwrite=self.args.visualise.overwrite,
             display_cluster=self.args.visualise.display_cluster,
-            recalculate_distances=self.args.visualise.recalculate_distances,
+            read_distances=self.args.visualise.read_distances,
             use_partial_query_graph=self.fs.partial_query_graph(self.p_hash),
             tmp=self.fs.tmp(self.p_hash),
             extend_query_graph=self.args.visualise.extend_query_graph,

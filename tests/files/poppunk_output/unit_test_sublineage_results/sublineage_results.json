@@ -1,0 +1,14 @@
+{
+  "sample1": {
+    "Rank_5_Lineage": 10,
+    "Rank_10_Lineage": 12,
+    "Rank_25_Lineage": 11,
+    "Rank_50_Lineage": 4
+  },
+  "sample2": {
+    "Rank_5_Lineage": 2,
+    "Rank_10_Lineage": 11,
+    "Rank_25_Lineage": 3,
+    "Rank_50_Lineage": 1
+  }
+}

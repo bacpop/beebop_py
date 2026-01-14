@@ -10,7 +10,7 @@
 To update the database being used for a species, update the `dbname` json property in `args.json`.
 Note: for development you may prefer to use the *ref* database to speed up PopPUNK runs.
 
-#### Adding a new species 
+#### Adding a new species
 
 The current species can be seen in `args.json` in the `species` object. To add a new species do the following:
 
@@ -41,7 +41,7 @@ or just the reference databases with:
 
 #### Install dependencies
 ##### Poetry
-You will need Python installed, as well as [Poetry](https://python-poetry.org/), which you can get on Linux with 
+You will need Python installed, as well as [Poetry](https://python-poetry.org/), which you can get on Linux with
 ```
 curl -sSL https://install.python-poetry.org | python3 -
 ```
@@ -71,7 +71,7 @@ If there are problems installing PopPUNK, you may need to install one or more of
 
 Please install the dependencies for PopPUNK with:
 ```
-conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj 
+conda install requests pandas networkx pp-sketchlib scikit-learn hdbscan biopython tqdm treeswift rapidnj
 ```
 
 The `graph-tool` and `mandrake` packages must be installed from `conda-forge`:
@@ -103,7 +103,7 @@ Before testing, Redis and rqworker must be running. From the root of beebop_py, 
 ```
 ./scripts/run_test_dependencies
 ```
-Testing can be done in a second terminal (make sure to activate 'beebop_py') by running 
+Testing can be done in a second terminal (make sure to activate 'beebop_py') by running
 ```
 TESTING=True poetry run pytest
 ```
@@ -116,11 +116,11 @@ To run the linter and formatter, you can use the following commands:
   ```
   poetry run ruff check
   ```
-- **Linting with Fix**: 
+- **Linting with Fix**:
   ```
   poetry run ruff check --fix
   ```
-- **Formatting**: 
+- **Formatting**:
   ```
   poetry run ruff format
   ```
@@ -142,7 +142,7 @@ You can build the image with `/docker/build --with-dev`, this new image can now 
 
 ### Deployment
 
-A pull request can be created so GHA pushes the images to the docker hub. Add `--with-dev` to the build & push commands `pipeline.yaml`.
+A pull request can be created so GHA pushes the images to the docker hub. Add `--with-dev` to the build & push commands `build_and_push.yaml`.
 **Ensure to remove the `--with-dev` flag before merging the PR.**
 Then on the `beebop-deploy` the api image can be updated with the new dev image.
 

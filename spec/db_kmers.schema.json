@@ -5,20 +5,30 @@
     "^.*$": {
       "type": "object",
       "properties": {
-        "kmerMax": {
-          "type": "integer",
-          "minimum": 1
+        "hasSublineages": {
+          "type": "boolean"
         },
-        "kmerMin": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "kmerStep": {
-          "type": "integer",
-          "minimum": 1
+        "kmerInfo": {
+          "type": "object",
+          "properties": {
+            "kmerMax": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "kmerMin": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "kmerStep": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": ["kmerMax", "kmerMin", "kmerStep"],
+          "additionalProperties": false
         }
       },
-      "required": ["kmerMax", "kmerMin", "kmerStep"],
+      "required": ["hasSublineages", "kmerInfo"],
       "additionalProperties": false
     }
   },

@@ -1,10 +1,11 @@
 import os
 import re
+from pathlib import PurePath
 
 import pandas as pd
 from PopPUNK.web import sketch_to_hdf5
 
-from beebop.config import PoppunkFileStore
+from beebop.config import DatabaseFileStore, PoppunkFileStore
 from beebop.models import ClusteringConfig, FailedSampleType
 from beebop.services.cluster_service import get_lowest_cluster
 
@@ -287,3 +288,83 @@ def process_unassignable_samples(unassignable_names: list[str], fs: PoppunkFileS
     with open(qc_report_path, "a") as report_file:
         for sample_hash in unassignable_names:
             report_file.write(f"{sample_hash}\t{strain_assignment_error}\t{FailedSampleType.WARNING.value}\n")
+
+
+def process_assign_clusters_csv(
+    qNames: list[str], p_hash: str, db: DatabaseFileStore, output_dir: str
+) -> tuple[list[str], list[str]]:
+    """
+    [Retrieve query names along with their assigned internal clusters and
+    write an ``include.txt`` for each cluster, including queries and all
+    references from the database.]
+
+    :param qNames list[str]: [list of sample hashes]
+    :param p_hash str: [project hash]
+    :param db: [DatabaseFileStore instance]
+    :param output_dir: [path to output directory]
+    :return tuple: [list of sample hashes, list of sample PopPUNK clusters]
+    """
+    output_clusters_df = pd.read_csv(PurePath(output_dir, f"{p_hash}_clusters.csv"))
+    query_df = output_clusters_df[output_clusters_df["Taxon"].isin(qNames)]
+
+    query_names, query_clusters = query_df["Taxon"].tolist(), query_df["Cluster"].tolist()
+
+    write_include_files(
+        db,
+        query_clusters,
+        output_clusters_df,
+        output_dir,
+    )
+
+    return query_names, query_clusters
+
+
+def write_include_files(
+    db: DatabaseFileStore,
+    query_clusters: list[str],
+    output_clusters_df: pd.DataFrame,
+    output_dir: str,
+) -> None:
+    """
+    [Write include files for each cluster which includes queries and references from assign result
+    and all references from database.]
+
+    :param db: [DatabaseFileStore instance]
+    :param query_clusters: [list of sample PopPUNK clusters]
+    :param output_clusters_df: [DataFrame containing assignment results]
+    :param output_dir: [path to output directory]
+    """
+    db_clusters_df = pd.read_csv(db.previous_clustering)
+
+    for cluster in set(query_clusters):
+        to_include = get_refs(db_clusters_df, output_clusters_df, cluster)
+
+        with open(PurePath(output_dir, f"include{cluster}.txt"), "w") as include_file:
+            include_file.write("\n".join(to_include))
+
+
+def get_refs(db_clusters_df: pd.DataFrame, output_clusters_df: pd.DataFrame, cluster: str) -> set[str]:
+    """
+    [Get all reference sample names from the database for a specific cluster
+    from both previous clustering and current output clustering dataframes.]
+
+    :param db_clusters_df: [DataFrame containing previous database clustering information]
+    :param output_clusters_df: [DataFrame containing current output clustering information]
+    :param cluster: [cluster identifier]
+    :return set[str]: [set of reference sample names]
+    """
+    return get_references_from_db_for_cluster(db_clusters_df, cluster) | get_references_from_db_for_cluster(
+        output_clusters_df, cluster
+    )
+
+
+def get_references_from_db_for_cluster(dataframe: pd.DataFrame, cluster: str) -> set[str]:
+    """
+    [Get reference sample names from the database for a specific cluster.]
+
+    :param dataframe: [DataFrame containing database clustering information]
+    :param cluster: [cluster identifier]
+    :return set[str]: [set of reference sample names]
+    """
+    cluster_df = dataframe[dataframe["Cluster"] == cluster]
+    return set(cluster_df["Taxon"])

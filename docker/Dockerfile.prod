@@ -1,14 +1,14 @@
 FROM continuumio/miniconda3
 
 # Needed as per current issue:https://www.anaconda.com/docs/getting-started/tos-plugin#troubleshooting
-ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes 
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=true 
 
 RUN conda config --append channels conda-forge
 RUN conda config --append channels bioconda
 
 RUN conda install python=3.10
 # change version as needed
-RUN conda install -c bioconda poppunk=2.7.6
+RUN conda install -c bioconda poppunk=2.7.8
 
 RUN pip install poetry==1.8.3
 COPY  *.toml *.lock /

@@ -29,29 +29,39 @@ def test_get_project_status_assign_finished(mocker):
         "assign": "finished",
         "visualise": "finished",
         "visualiseClusters": {"GPSC1": "finished", "GPSC2": "finished"},
+        "sublineageAssign": "finished",
     }
     assert mock_redis_manager.get_job_status.call_args_list == [
         call("assign", "test_project_hash"),
         call("visualise", "test_project_hash"),
+        call("sublineageAssign", "test_project_hash"),
     ]
 
 
-def test_get_project_status_assign_unfinished(mocker):
+def test_get_project_status_no_sublineage(mocker):
     """
-    Test the get_project_status function when the assign job is not finished.
+    Test the get_project_status function when there is no sublineageAssign job.
     """
     mock_redis_manager.reset_mock(side_effect=True)
 
     mock_job = Mock()
-    mock_job.get_status.return_value = "running"
+    mock_job.get_status.return_value = "finished"
+
+    # Simulate AttributeError for sublineageAssign job
+    def side_effect(job_type, _):
+        if job_type == "sublineageAssign":
+            raise AttributeError
+        return b"job_id"
+
+    mock_redis_manager.get_job_status.side_effect = side_effect
     mocker.patch("beebop.services.job_service.Job.fetch", return_value=mock_job)
 
     status = job_service.get_project_status("test_project_hash", mock_redis_manager)
 
     assert status == {
-        "assign": "running",
-        "visualise": "waiting",
-        "visualiseClusters": {},
+        "assign": "finished",
+        "visualise": "finished",
+        "visualiseClusters": {"GPSC1": "finished", "GPSC2": "finished"},
     }
 
 

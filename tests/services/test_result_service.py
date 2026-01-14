@@ -9,6 +9,7 @@ from beebop.services.result_service import (
     generate_microreact_url_internal,
     generate_zip,
     get_clusters_results,
+    get_sublineage_results,
     update_microreact_json,
 )
 from tests.setup import storage_location
@@ -20,6 +21,7 @@ def test_update_microreact_json():
     json_microreact = {
         "meta": {"name": "Old Title"},
         "tables": {"table-1": {"columns": [{"field": "ID"}]}},
+        "trees": {"tree-1": {"blocks": []}},
     }
     cluster_num = "123"
 
@@ -38,9 +40,21 @@ def test_update_microreact_json():
         {"field": "Erythromycin Resistance", "width": 209},
         {"field": "Tetracycline Resistance", "width": 202},
         {"field": "Cotrim Resistance", "width": 169},
+        {"field": "Rank_5_Lineage", "width": 160},
+        {"field": "Rank_10_Lineage", "width": 160},
+        {"field": "Rank_25_Lineage", "width": 160},
+        {"field": "Rank_50_Lineage", "width": 160},
     ]
 
     assert json_microreact["tables"]["table-1"]["columns"] == expected_columns
+
+    # assert sublineage ranks were added to tree blocks
+    assert json_microreact["trees"]["tree-1"]["blocks"] == [
+        "Rank_5_Lineage",
+        "Rank_10_Lineage",
+        "Rank_25_Lineage",
+        "Rank_50_Lineage",
+    ]
 
 
 @patch("beebop.services.result_service.get_cluster_assignments")
@@ -223,3 +237,29 @@ def test_generate_microreact_url_internal_API_other_error(mock_post):
     assert (
         e_info.value.description == f"Microreact API returned status code {status_code}. Response text: {error_text}."
     )
+
+
+def test_get_sublineage_results_file_exists(tmp_path):
+    fs = Mock(spec=PoppunkFileStore)
+    p_hash = "test_hash"
+    path = tmp_path / f"{p_hash}_sublineages_results.json"
+    fs.sublineage_results.return_value = path
+    # Create the file to simulate it exists
+    with open(path, "w") as f:
+        f.write('{"sublineage_results": "some_data"}')
+
+    result = get_sublineage_results(p_hash, fs)
+
+    assert result == {"sublineage_results": "some_data"}
+    fs.sublineage_results.assert_called_once_with(p_hash)
+
+
+def test_get_sublineage_results_file_not_exists():
+    fs = Mock(spec=PoppunkFileStore)
+    p_hash = "test_hash_nonexistent"
+    fs.sublineage_results.return_value = f"non_existent_path/{p_hash}_sublineages_results.json"
+
+    result = get_sublineage_results(p_hash, fs)
+
+    assert result == {}
+    fs.sublineage_results.assert_called_once_with(p_hash)

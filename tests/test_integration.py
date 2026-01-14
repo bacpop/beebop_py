@@ -49,6 +49,7 @@ def test_run_poppunk_pneumo(client):
 
     # check can load project data from client
     project_response = client.get("/project/" + p_hash)
+
     project_data = read_data(project_response)
     assert project_data["hash"] == p_hash
     assert len(project_data["samples"]) == 2
@@ -223,6 +224,7 @@ def test_get_status_response(client):
     assert data["assign"] in "finished"
     assert data["visualise"] in "finished"
     assert data["visualiseClusters"] == {}
+    assert data["sublineageAssign"] == "finished"
 
 
 def test_get_status_response_not_found(client):
@@ -268,3 +270,15 @@ def test_get_project_with_failed_samples(client):
     assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["hash"] == "6dfg6ff220d15f8b7ce9ee47aaa9b2i8"
     assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["failReasons"][0] == "Potential novel genotype"
     assert samples["6dfg6ff220d15f8b7ce9ee47aaa9b2i8"]["failType"] == "warning"
+
+
+def test_get_sublineage_results(client):
+    p_hash = "unit_test_sublineage_results"
+
+    res = client.post("/results/sublineageAssign", json={"projectHash": p_hash})
+
+    with open("tests/files/poppunk_output/unit_test_sublineage_results/sublineage_results.json") as f:
+        expected_data = json.load(f)
+
+    assert res.status_code == 200
+    assert read_data(res) == expected_data
