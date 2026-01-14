@@ -27,6 +27,9 @@
           "required": ["kmerMax", "kmerMin", "kmerStep"],
           "additionalProperties": false
         },
+        "hasLocationMetadata": {
+          "type": "boolean"
+        },
         "locationMetadata": {
           "type": ["array", "null"],
           "items": {
