@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import PurePath
 from types import SimpleNamespace
+from typing import Annotated
 
 from flask import Blueprint, Flask, current_app
 from flask.wrappers import Response
@@ -104,7 +105,7 @@ class ConfigRoutes:
             "kmerStep": int(kmers[1] - kmers[0]),
         }
 
-    def _get_location_metadata_info(self, location_metadata_file: str) -> list[LocationMetadata]:
+    def _get_location_metadata_info(self, location_metadata_file: str) -> Annotated[list[dict], LocationMetadata]:
         """
         Retrieve location metadata information from a JSON file.
 

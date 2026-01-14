@@ -29,8 +29,10 @@ def main():
     output_json_path = Path(input_csv_path.parent, input_csv_path.stem + "_location.json")
 
     metadata_df = pd.read_csv(input_csv_path)
-    aggregated_df = metadata_df.groupby(["latitude", "longitude", "country"]).size().reset_index(name="sampleCount")
-    aggregated_df.to_json(output_json_path, orient="records")
+    location_counts_df = (
+        metadata_df.groupby(["latitude", "longitude", "country"]).size().reset_index(name="sampleCount")
+    )
+    location_counts_df.to_json(output_json_path, orient="records")
 
 
 if __name__ == "__main__":
