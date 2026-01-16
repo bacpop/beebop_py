@@ -110,7 +110,7 @@ class ConfigRoutes:
         Retrieve location metadata information from a JSON file.
 
         :param location_metadata_file: [Path to the location metadata JSON file.]
-        :return dict: [A list containing location metadata information.]
+        :return list: [A list containing location metadata information.]
         """
         with open(PurePath("beebop", "resources", location_metadata_file), "r") as f:
             location_metadata = json.load(f)

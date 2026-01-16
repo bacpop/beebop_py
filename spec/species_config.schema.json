@@ -29,17 +29,6 @@
         },
         "hasLocationMetadata": {
           "type": "boolean"
-        },
-        "locationMetadata": {
-          "type": ["array", "null"],
-          "items": {
-            "type": "object",
-            "properties": {
-              "sampleCount": { "type": "integer" },
-              "latitude": { "type": "number" },
-              "longitude": { "type": "number" }
-            }
-          }
         }
       },
       "required": ["hasSublineages", "kmerInfo"],
