@@ -20,6 +20,7 @@ class Schema:
         self.run_poppunk = read_schema("runPoppunk")
         self.cluster = read_schema("cluster")
         self.project = read_schema("project")
-        self.db_kmers = read_schema("db_kmers")
+        self.species_config = read_schema("species_config")
+        self.location_metadata = read_schema("location_metadata")
         self.status = read_schema("status")
         # add new schemas here

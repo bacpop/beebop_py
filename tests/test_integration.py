@@ -247,7 +247,7 @@ def test_get_species_config(client):
     data = read_data(response)
 
     assert response.status_code == 200
-    assert jsonschema.validate(data, schemas.db_kmers) is None
+    assert jsonschema.validate(data, schemas.species_config) is None
     for species in setup.all_species:
         assert species in data
 
@@ -282,3 +282,34 @@ def test_get_sublineage_results(client):
 
     assert res.status_code == 200
     assert read_data(res) == expected_data
+
+
+def test_get_location_metadata_success(client):
+    res = client.get("/locationMetadata/Streptococcus pneumoniae")
+
+    assert res.status_code == 200
+    assert jsonschema.validate(read_data(res), schemas.location_metadata) is None
+
+
+def test_get_location_metadata_nonexistent_species(client):
+    species = "Non_existent_species"
+    res = client.get(f"/locationMetadata/{species}")
+
+    assert res.status_code == 404
+    response = json.loads(res.data)["error"]
+    assert response["status"] == "failure"
+    err = response["errors"][0]
+    assert err["error"] == "Resource not found"
+    assert err["detail"] == f"No location metadata configured for species: {species}"
+
+
+def test_get_location_metadata_no_metadata_configured(client):
+    species = "Streptococcus agalactiae"
+    res = client.get(f"/locationMetadata/{species}")
+
+    assert res.status_code == 404
+    response = json.loads(res.data)["error"]
+    assert response["status"] == "failure"
+    err = response["errors"][0]
+    assert err["error"] == "Resource not found"
+    assert err["detail"] == f"No location metadata configured for species: {species}"
